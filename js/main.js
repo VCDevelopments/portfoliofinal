@@ -12,6 +12,7 @@ import { Sound } from './audio.js';
 import { clamp01, easeOut } from './noise.js';
 import { SEASONS, SEASON_ORDER, SEASON_ICONS, initialSeason, seasonForDate } from './seasons.js';
 import { tintBlueprint } from './blueprint.js';
+import { installExternalLinks } from './links.js';
 
 // chapter i occupies scroll progress BOUNDS[i]..BOUNDS[i+1]; transitions straddle each boundary
 const BOUNDS = [0, 0.13, 0.66, 0.81, 1];
@@ -100,6 +101,7 @@ async function boot() {
     sound.blip(i % 2 ? 1320 : 990);
   });
   ui.bindSound(() => sound.toggle());
+  installExternalLinks(); // after the carousel and cards exist, so their links are covered too
   ui.bindSeason(() => {
     const next = SEASON_ORDER[(SEASON_ORDER.indexOf(season) + 1) % SEASON_ORDER.length];
     previewing = true; // a manual preview stops the automatic follow until the next visit

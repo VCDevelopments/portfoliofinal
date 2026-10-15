@@ -5,6 +5,7 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fbm3, rng } from './noise.js';
 import { getTextures, crackTexture } from './textures.js';
 import { PROJECTS } from './projects.js';
+import { openExternal } from './links.js';
 
 const BG = 0xb6b9bf;
 const SPACING = 15;
@@ -226,7 +227,7 @@ export function createCrystals(env) {
     }
     if (hovered) {
       ctx.cursor = true;
-      if (ctx.click) window.open(hovered.item.url, '_blank', 'noopener');
+      if (ctx.click) openExternal(hovered.item.url);
     }
 
     state.active = -1;
