@@ -89,6 +89,17 @@ body.is-intro .sound { opacity: 0; }
   text-align: right;
 }
 .manifesto h2 { font: inherit; margin-bottom: 14px; }
+.socials { list-style: none; margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px; }
+.socials a {
+  display: inline-block;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.3s, color 0.3s;
+}
+.socials a:hover, .socials a:focus-visible { background: #fff; color: #1e242e; text-shadow: none; outline: none; }
 
 .scroll-hint { left: var(--gutter); bottom: calc(var(--gutter) + 34px); }
 
