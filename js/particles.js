@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 import { rng, smoothstep } from './noise.js';
-import { blueprintMaterial, blueprintLineMaterial } from './blueprint.js';
+import { blueprintMaterial, blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
 
 const BG = 0x9ea3ab;
 const N = 16000;
@@ -115,7 +115,7 @@ export function createParticles(env) {
   geo.setAttribute('aRnd', new THREE.BufferAttribute(rnd, 1));
 
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) } },
+    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) }, uTint: blueprintLineColor },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -138,13 +138,13 @@ export function createParticles(env) {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      uniform vec3 uBurst;
+      uniform vec3 uBurst, uTint;
       varying float vAlpha;
       varying float vSnow;
       void main() {
         float d = length(gl_PointCoord - 0.5);
         if (d > 0.5) discard;
-        vec3 col = mix(vec3(0.45, 0.8, 1.3), uBurst, vSnow);  // the season's snow/petals/pollen/leaves turn blueprint cyan
+        vec3 col = mix(uTint * 0.68, uBurst, vSnow);  // the season's snow/petals/pollen/leaves turn blueprint cyan
         gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.2, d));
       }`,
   });

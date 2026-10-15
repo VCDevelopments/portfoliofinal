@@ -9,8 +9,11 @@ Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL
 
 ## Seasons
 
-The site has four versions: winter, spring, summer and autumn. Each changes the sky, ground, what
-covers the logo, the light and the particles in the air, plus the rings and finale colours. It
+The site has four versions: winter, spring, summer and autumn. Each changes the sky (with its own
+sun), the trees around the valley (snow-laden, blossom, green or autumn colour), the grass, what
+covers the logo, the light, the particles in the air, and the colour of every blueprint element
+(wireframes, scan, rings and finale logo). Switching shows a large season title, and the HUD reads
+"// Winter edition" etc. It
 picks the season from today's date, the "Season" button switches it, and `?season=spring`
 (or `winter`, `summer`, `autumn`) in the URL opens a specific one. Palettes live in `js/seasons.js`.
 

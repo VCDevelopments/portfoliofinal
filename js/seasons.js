@@ -19,6 +19,13 @@ export const SEASONS = {
     finale: 0x9ea3ab,
     floor: 0x9aa0a8,
     burst: [1.0, 1.0, 1.0], // colour of the particles before they form the logo
+    skyTop: 0x7a8494, // sky dome colour overhead (the horizon uses `sky`)
+    sunDir: [-0.55, 0.16, -0.82], sunGlow: 0.45, // where the sun sits and how strong its disc/glow is
+    foliage: { colors: [[0.95, 0.97, 1.0]], scale: 0.55 }, // tree crowns: snow clumps on bare branches
+    grass: { colors: [[0.9, 0.92, 0.95]], scale: 0 }, // buried under snow
+    bp: { base: [0.05, 0.22, 0.55], edge: [0.35, 0.72, 1.15], line: [0.7, 1.15, 1.9] }, // blueprint colours
+    icon: 'snow',
+    edition: 'Winter edition',
   },
   spring: {
     label: 'Spring',
@@ -36,6 +43,13 @@ export const SEASONS = {
     finale: 0x96bba8,
     floor: 0x86a891,
     burst: [1.0, 0.8, 0.86],
+    skyTop: 0x78b2cf,
+    sunDir: [-0.45, 0.42, -0.78], sunGlow: 0.7,
+    foliage: { colors: [[0.98, 0.72, 0.8], [1.0, 0.86, 0.9], [0.95, 0.6, 0.72]], scale: 1.0 }, // blossom
+    grass: { colors: [[0.33, 0.62, 0.24], [0.45, 0.72, 0.3], [0.38, 0.66, 0.22]], scale: 1.0 },
+    bp: { base: [0.04, 0.3, 0.12], edge: [0.4, 1.05, 0.5], line: [0.75, 1.7, 0.85] },
+    icon: 'flower',
+    edition: 'Spring edition',
   },
   summer: {
     label: 'Summer',
@@ -53,6 +67,13 @@ export const SEASONS = {
     finale: 0xcfa96c,
     floor: 0xbf9c66,
     burst: [1.0, 0.86, 0.52],
+    skyTop: 0x5a92c8,
+    sunDir: [0.25, 0.62, -0.74], sunGlow: 1.5,
+    foliage: { colors: [[0.28, 0.5, 0.18], [0.35, 0.58, 0.2], [0.22, 0.42, 0.14]], scale: 1.15 },
+    grass: { colors: [[0.8, 0.68, 0.3], [0.7, 0.62, 0.24], [0.56, 0.6, 0.24]], scale: 1.25 },
+    bp: { base: [0.42, 0.22, 0.03], edge: [1.15, 0.8, 0.28], line: [1.9, 1.35, 0.55] },
+    icon: 'sun',
+    edition: 'Summer edition',
   },
   autumn: {
     label: 'Autumn',
@@ -70,6 +91,13 @@ export const SEASONS = {
     finale: 0xb8866a,
     floor: 0xa3735a,
     burst: [1.0, 0.6, 0.28],
+    skyTop: 0x806878,
+    sunDir: [0.6, 0.14, -0.79], sunGlow: 1.1,
+    foliage: { colors: [[0.86, 0.38, 0.12], [0.93, 0.6, 0.16], [0.72, 0.2, 0.1], [0.95, 0.75, 0.25]], scale: 0.95 },
+    grass: { colors: [[0.55, 0.35, 0.18], [0.64, 0.45, 0.22]], scale: 0.7 },
+    bp: { base: [0.42, 0.1, 0.03], edge: [1.15, 0.45, 0.22], line: [1.9, 0.8, 0.42] },
+    icon: 'leaf',
+    edition: 'Autumn edition',
   },
 };
 
@@ -132,3 +160,11 @@ export function particleSprite(shape, THREE) {
   t.colorSpace = THREE.SRGBColorSpace;
   return (spriteCache[shape] = t);
 }
+
+// Small line icons for the Season button (16x16, stroke = currentColor).
+export const SEASON_ICONS = {
+  snow: '<path d="M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5M6.3 2.6 8 4.2l1.7-1.6M6.3 13.4 8 11.8l1.7 1.6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>',
+  flower: '<circle cx="8" cy="8" r="1.6" fill="currentColor"/><g fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="8" cy="4" rx="1.9" ry="2.4"/><ellipse cx="8" cy="12" rx="1.9" ry="2.4"/><ellipse cx="4" cy="8" rx="2.4" ry="1.9"/><ellipse cx="12" cy="8" rx="2.4" ry="1.9"/></g>',
+  sun: '<circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v2.2M8 12.8V15M1 8h2.2M12.8 8H15M3 3l1.6 1.6M11.4 11.4 13 13M3 13l1.6-1.6M11.4 4.6 13 3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+  leaf: '<path d="M3 13C3 6 7 2.5 13.5 2.5 13.5 9 10 13 3 13Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3 13 10 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>',
+};

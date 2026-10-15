@@ -10,7 +10,8 @@ import { createComposite } from './post.js';
 import { UI } from './ui.js';
 import { Sound } from './audio.js';
 import { clamp01, easeOut } from './noise.js';
-import { SEASONS, SEASON_ORDER, initialSeason, rememberSeason } from './seasons.js';
+import { SEASONS, SEASON_ORDER, SEASON_ICONS, initialSeason, rememberSeason } from './seasons.js';
+import { tintBlueprint } from './blueprint.js';
 
 // chapter i occupies scroll progress BOUNDS[i]..BOUNDS[i+1]; transitions straddle each boundary
 const BOUNDS = [0, 0.13, 0.66, 0.81, 1];
@@ -35,9 +36,11 @@ let chapters = [];
 // seasons: the page colour applies before boot so the loader already matches
 let season = initialSeason();
 document.documentElement.style.setProperty('--bg', SEASONS[season].css);
-function applySeason(name) {
+function applySeason(name, announce = false) {
   season = name;
   const S = SEASONS[name];
+  tintBlueprint(S);
+  ui.showSeason(S, SEASON_ICONS[S.icon], announce);
   document.documentElement.style.setProperty('--bg', S.css);
   document.body.dataset.season = name;
   for (const c of chapters) c.setSeason?.(S);
@@ -95,12 +98,11 @@ async function boot() {
     sound.blip(i % 2 ? 1320 : 990);
   });
   ui.bindSound(() => sound.toggle());
-  ui.bindSeason(SEASONS[season].label, () => {
+  ui.bindSeason(() => {
     const next = SEASON_ORDER[(SEASON_ORDER.indexOf(season) + 1) % SEASON_ORDER.length];
-    applySeason(next);
+    applySeason(next, true);
     rememberSeason(next);
     sound.blip(880);
-    return SEASONS[next].label;
   });
 
   await new Promise((r) => setTimeout(r, 350));

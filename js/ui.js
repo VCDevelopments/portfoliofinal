@@ -116,12 +116,33 @@ export class UI {
     }
   }
 
-  bindSeason(label, onNext) {
+  bindSeason(onNext) {
     const btn = document.querySelector('.season');
     if (!btn) return; // an older cached page without the button must still boot
-    const b = btn.querySelector('b');
-    b.textContent = label;
-    btn.addEventListener('click', () => scramble(b, onNext(), 400));
+    btn.addEventListener('click', onNext);
+  }
+
+  // Button label + icon, the "edition" line in the HUD, and (when switching) the big season title.
+  showSeason(S, icon, announce) {
+    const btn = document.querySelector('.season');
+    if (btn) {
+      scramble(btn.querySelector('b'), S.label, 400);
+      btn.querySelector('svg').innerHTML = icon;
+    }
+    const ed = document.querySelector('.edition');
+    if (ed) {
+      ed.dataset.text = `// ${S.edition} · 2026`;
+      if (!document.body.classList.contains('is-loading')) scramble(ed, ed.dataset.text, 600);
+      else ed.textContent = ed.dataset.text;
+    }
+    const title = document.getElementById('season-title');
+    if (!title || !announce) return;
+    title.querySelector('.big').textContent = S.label;
+    title.querySelector('.small').textContent = `${S.edition} of VCDevelopments`;
+    scramble(title.querySelector('.big'), S.label, 500);
+    title.classList.add('show');
+    clearTimeout(this.titleTimer);
+    this.titleTimer = setTimeout(() => title.classList.remove('show'), 1700);
   }
 
   bindSound(onToggle) {
