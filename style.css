@@ -9,7 +9,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body { background: var(--bg); color: var(--fg); }
+html, body { background: var(--bg); color: var(--fg); transition: background 0.8s; }
 
 body {
   font: 400 11px/1.35 var(--mono);
@@ -44,7 +44,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: grid;
   place-items: center;
   background: var(--bg);
-  transition: opacity 0.5s var(--ease), visibility 0.5s;
+  transition: opacity 0.5s var(--ease), visibility 0.5s, background 0.8s;
 }
 #loader.done { opacity: 0; visibility: hidden; }
 .loader-bar {
@@ -57,11 +57,12 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* HUD stays hidden while the wireframe intro plays */
 body.is-intro .hud,
 body.is-intro .scroll-hint.ch,
-body.is-intro .sound { opacity: 0; }
-.hud, .scroll-hint, .sound { transition: opacity 0.8s var(--ease); }
+body.is-intro .sound,
+body.is-intro .season { opacity: 0; }
+.hud, .scroll-hint, .sound, .season { transition: opacity 0.8s var(--ease); }
 
 /* ---------- HUD ---------- */
-.hud, .scroll-hint, .sound, .carousel { position: fixed; z-index: 10; }
+.hud, .scroll-hint, .sound, .season, .carousel { position: fixed; z-index: 10; }
 .hud { inset: 0 0 auto 0; padding: var(--gutter); pointer-events: none; }
 .hud a, .hud button { pointer-events: auto; }
 
@@ -115,7 +116,18 @@ body.is-intro .sound { opacity: 0; }
 .sound .wave { display: none; }
 .sound[aria-pressed="true"] .wave { display: block; }
 .sound[aria-pressed="true"] .mute { display: none; }
-.sound:focus-visible, .arrow:focus-visible, .carousel a:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
+.season {
+  left: calc(var(--gutter) + 118px);
+  bottom: var(--gutter);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+.season b { font-weight: 400; }
+.season:hover svg { transform: rotate(90deg); }
+.season svg { transition: transform 0.6s var(--ease); }
+.sound:focus-visible, .season:focus-visible, .arrow:focus-visible, .carousel a:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
 
 /* chapter-bound elements fade with the active chapter */
 .ch { opacity: 0; visibility: hidden; transition: opacity 0.6s var(--ease), visibility 0.6s; }

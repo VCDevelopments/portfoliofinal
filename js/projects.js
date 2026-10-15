@@ -6,6 +6,7 @@ export const PROJECTS = [
     stack: 'Swift · Claude Vision',
     url: 'https://github.com/VCDevelopments/roodai',
     image: 'img/projects/roodai.jpg',
+    colors: ['#2B0D10', '#7A1F26', '#C2414A'], // background gradient: top, bottom, glow (from the project's picture)
   },
   {
     name: 'My Chicago',
@@ -13,6 +14,7 @@ export const PROJECTS = [
     stack: 'JavaScript · WebGL',
     url: 'https://github.com/VCDevelopments/chicagofototjes',
     image: 'img/projects/mychicago.jpg',
+    colors: ['#0A0F1E', '#13305A', '#FFB547'], // background gradient: top, bottom, glow (from the project's picture)
   },
   {
     name: 'PhoneScout',
@@ -20,6 +22,7 @@ export const PROJECTS = [
     stack: 'TypeScript · Next.js',
     url: 'https://github.com/VCDevelopments/testscan',
     image: 'img/projects/phonescout.jpg',
+    colors: ['#5F8FD8', '#C9DCF7', '#FFFFFF'], // background gradient: top, bottom, glow (from the project's picture)
   },
   {
     name: 'Saxo MCP',
@@ -27,6 +30,7 @@ export const PROJECTS = [
     stack: 'Python · MCP',
     url: 'https://github.com/VCDevelopments/testtrade',
     image: 'img/projects/saxomcp.jpg',
+    colors: ['#0D1117', '#1B2A44', '#2F6FD6'], // background gradient: top, bottom, glow (from the project's picture)
   },
   {
     name: 'Fix on Wheels',
@@ -34,6 +38,7 @@ export const PROJECTS = [
     stack: 'HTML · CSS · JS',
     url: 'https://github.com/VCDevelopments/fixonwheels',
     image: 'img/projects/fixonwheels.jpg',
+    colors: ['#12352B', '#C79A2A', '#F5C842'], // background gradient: top, bottom, glow (from the project's picture)
   },
   {
     name: 'ChiActive',
@@ -41,6 +46,7 @@ export const PROJECTS = [
     stack: 'HTML · JavaScript',
     url: 'https://github.com/VCDevelopments/ChiActive',
     image: 'img/projects/chiactive.jpg',
+    colors: ['#111111', '#3B1C14', '#E4572E'], // background gradient: top, bottom, glow (from the project's picture)
   },
 ];
 

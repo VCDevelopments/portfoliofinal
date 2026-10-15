@@ -116,6 +116,13 @@ export class UI {
     }
   }
 
+  bindSeason(label, onNext) {
+    const btn = document.querySelector('.season');
+    const b = btn.querySelector('b');
+    b.textContent = label;
+    btn.addEventListener('click', () => scramble(b, onNext(), 400));
+  }
+
   bindSound(onToggle) {
     const btn = document.querySelector('.sound');
     const label = btn.querySelector('b');

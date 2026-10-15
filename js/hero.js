@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
+import { particleSprite } from './seasons.js';
 
 const BG = 0x9a9ea6;
 
@@ -33,6 +34,9 @@ function snowBlockMaterial(tex, scan) {
   m.onBeforeCompile = (s) => {
     s.uniforms.uScan = scan.uScan;
     s.uniforms.uTime = scan.uTime;
+    s.uniforms.uCap = scan.uCap;
+    s.uniforms.uGlint = scan.uGlint;
+    s.uniforms.uCover = scan.uCover;
     s.vertexShader = s.vertexShader
       .replace('#include <common>', '#include <common>\nvarying float vUpW;\nvarying vec3 vWPos;')
       .replace(
@@ -58,16 +62,17 @@ function snowBlockMaterial(tex, scan) {
                      mix(mix(hh(i + vec3(0,0,1)), hh(i + vec3(1,0,1)), f.x), mix(hh(i + vec3(0,1,1)), hh(i + vec3(1,1,1)), f.x), f.y), f.z);
         }
         float snowAmt;
-        uniform float uScan, uTime;`,
+        uniform float uScan, uTime, uGlint, uCover;
+        uniform vec3 uCap;`,
       )
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
         float sn = vn(vWPos * 5.0) * 0.6 + vn(vWPos * 13.0) * 0.4;
-        snowAmt = smoothstep(0.3, 0.75, vUpW + (sn - 0.5) * 0.55);
+        snowAmt = smoothstep(0.3 - uCover * 1.6, 0.75 - uCover, vUpW + (sn - 0.5) * (0.55 + uCover));
         // darker, denser snow in the crevices facing down
         diffuseColor.rgb *= mix(0.78, 1.0, smoothstep(-0.6, 0.2, vUpW));
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.94, 0.96, 1.0), snowAmt * 0.9);
+        diffuseColor.rgb = mix(diffuseColor.rgb, uCap, snowAmt * 0.9); // snow, moss, sand or leaves
         // faint diagonal saw strokes on the cut faces
         diffuseColor.rgb *= 1.0 - 0.035 * (1.0 - snowAmt) * smoothstep(0.6, 1.0, sin(dot(vWPos, vec3(21.0, 9.0, 15.0))));`,
       )
@@ -82,7 +87,7 @@ function snowBlockMaterial(tex, scan) {
         // ice-crystal glints in the powder
         vec3 cell = floor(vWPos * 70.0);
         float glint = step(0.997, hh(cell)) * (0.5 + 0.5 * sin(uTime * 4.0 + hh(cell + 7.0) * 60.0));
-        totalEmissiveRadiance += vec3(1.0) * glint * 0.9 * snowAmt;
+        totalEmissiveRadiance += vec3(1.0) * glint * 0.9 * snowAmt * uGlint;
         // blueprint scan band with fine contour lines inside it
         float band = exp(-pow((vWPos.y - uScan) * 5.0, 2.0));
         float contour = step(0.9, fract(vWPos.y * 14.0));
@@ -176,7 +181,8 @@ export function createHero(env) {
   const tp = tGeo.attributes.position;
   for (let i = 0; i < tp.count; i++) tp.setY(i, terrainHeight(tp.getX(i), tp.getZ(i)));
   tGeo.computeVertexNormals();
-  scene.add(new THREE.Mesh(tGeo, new THREE.MeshStandardMaterial({ color: 0xaeb3ba, roughness: 0.96, normalMap: tex.terrainNormal, normalScale: new THREE.Vector2(0.18, 0.18) })));
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0xaeb3ba, roughness: 0.96, normalMap: tex.terrainNormal, normalScale: new THREE.Vector2(0.18, 0.18) });
+  scene.add(new THREE.Mesh(tGeo, groundMat));
 
   const base = terrainHeight(0, 0) - 0.12;
   const { minX, maxX, W, H, center } = BOUNDS;
@@ -185,7 +191,7 @@ export function createHero(env) {
   monument.rotation.y = -0.12;
   scene.add(monument);
 
-  const scanU = { uScan: { value: -100 }, uTime: { value: 0 } };
+  const scanU = { uScan: { value: -100 }, uTime: { value: 0 }, uCap: { value: new THREE.Color(0.94, 0.96, 1.0) }, uGlint: { value: 1 }, uCover: { value: 0 } };
   const snowMat = snowBlockMaterial(tex, scanU);
 
   // the solid logo, carved from snow; it pivots around its own centre
@@ -275,7 +281,31 @@ export function createHero(env) {
   }
   const snowGeo = new THREE.BufferGeometry();
   snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
-  scene.add(new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.8, depthWrite: false })));
+  const airCol = new Float32Array(SN * 3).fill(1);
+  snowGeo.setAttribute('color', new THREE.BufferAttribute(airCol, 3));
+  const airMat = new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, alphaTest: 0.05 });
+  scene.add(new THREE.Points(snowGeo, airMat));
+  let air = { fall: 0.6, sway: 0.15 };
+
+  // swap the whole look of the scene for a season (see seasons.js)
+  function setSeason(S) {
+    scene.background.setHex(S.sky);
+    scene.fog.color.setHex(S.sky);
+    groundMat.color.setHex(S.ground);
+    snowMat.color.setHex(S.stone);
+    scanU.uCap.value.setRGB(...S.cap);
+    scanU.uGlint.value = S.glint;
+    scanU.uCover.value = S.cover;
+    sun.color.setHex(S.sun);
+    sun.intensity = S.sunIntensity;
+    air = S.air;
+    airMat.size = S.air.size;
+    airMat.map = particleSprite(S.air.shape, THREE);
+    airMat.needsUpdate = true;
+    const r = rng(17);
+    for (let i = 0; i < SN; i++) airCol.set(S.air.colors[Math.floor(r() * S.air.colors.length)], i * 3);
+    snowGeo.attributes.color.needsUpdate = true;
+  }
 
   // blueprint annotations: rotating polar grid under the logo, plus width and height dimensions
   const hud = new THREE.Group();
@@ -382,10 +412,12 @@ export function createHero(env) {
     grid.rotation.y = time * 0.05;
 
     for (let i = 0; i < SN; i++) {
-      let y = snowPos[i * 3 + 1] - dt * (0.6 + (i % 7) * 0.08);
+      let y = snowPos[i * 3 + 1] - dt * air.fall * (1 + (i % 7) * 0.13);
       if (y < 0) y += 20;
+      if (y > 20) y -= 20;
       snowPos[i * 3 + 1] = y;
-      snowPos[i * 3] += Math.sin(time * 0.6 + i) * dt * 0.15;
+      snowPos[i * 3] += Math.sin(time * 0.6 + i) * dt * air.sway;
+      snowPos[i * 3 + 2] += Math.cos(time * 0.45 + i * 1.3) * dt * air.sway * 0.5;
     }
     snowGeo.attributes.position.needsUpdate = true;
 
@@ -395,5 +427,5 @@ export function createHero(env) {
     }
   }
 
-  return { scene, camera, update, callouts };
+  return { scene, camera, update, callouts, setSeason };
 }

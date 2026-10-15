@@ -10,6 +10,7 @@ import { createComposite } from './post.js';
 import { UI } from './ui.js';
 import { Sound } from './audio.js';
 import { clamp01, easeOut } from './noise.js';
+import { SEASONS, SEASON_ORDER, initialSeason, rememberSeason } from './seasons.js';
 
 // chapter i occupies scroll progress BOUNDS[i]..BOUNDS[i+1]; transitions straddle each boundary
 const BOUNDS = [0, 0.13, 0.66, 0.81, 1];
@@ -30,6 +31,17 @@ const frame = () => new Promise((r) => setTimeout(r, 16));
 const ctx = { time: 0, dt: 0, mouse: { x: 0, y: 0 }, pointer: { x: 0, y: 0, inside: false }, click: false, cursor: false, intro: 0, introT: 0, pixelRatio: 1, height: 1 };
 const mouseTarget = { x: 0, y: 0 };
 let chapters = [];
+
+// seasons: the page colour applies before boot so the loader already matches
+let season = initialSeason();
+document.documentElement.style.setProperty('--bg', SEASONS[season].css);
+function applySeason(name) {
+  season = name;
+  const S = SEASONS[name];
+  document.documentElement.style.setProperty('--bg', S.css);
+  document.body.dataset.season = name;
+  for (const c of chapters) c.setSeason?.(S);
+}
 
 function resize() {
   const w = innerWidth, h = innerHeight;
@@ -69,6 +81,7 @@ async function boot() {
     ui.setProgress((i + 1) / (builders.length + 1));
   }
   resize();
+  applySeason(season);
   // pre-compile shaders so the first transition doesn't hitch
   for (const c of chapters) {
     c.update(0, ctx);
@@ -82,6 +95,13 @@ async function boot() {
     sound.blip(i % 2 ? 1320 : 990);
   });
   ui.bindSound(() => sound.toggle());
+  ui.bindSeason(SEASONS[season].label, () => {
+    const next = SEASON_ORDER[(SEASON_ORDER.indexOf(season) + 1) % SEASON_ORDER.length];
+    applySeason(next);
+    rememberSeason(next);
+    sound.blip(880);
+    return SEASONS[next].label;
+  });
 
   await new Promise((r) => setTimeout(r, 350));
   document.body.classList.add('is-intro');

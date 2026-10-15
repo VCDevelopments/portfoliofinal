@@ -140,5 +140,10 @@ export function createRings(env) {
     camera.rotation.z = fly * 0.6;
   }
 
-  return { scene, camera, update, callouts };
+  function setSeason(S) {
+    scene.background.setHex(S.rings);
+    scene.fog.color.setHex(S.rings);
+  }
+
+  return { scene, camera, update, callouts, setSeason };
 }

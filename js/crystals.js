@@ -151,6 +151,41 @@ export function createCrystals(env) {
   const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.045, transparent: true, opacity: 0.7, depthWrite: false }));
   scene.add(dustPts);
 
+  // full-screen gradient behind the blocks in each project's own colours, blending as you scroll;
+  // it is opaque, so the ice refracts it too
+  const palettes = ITEMS.map((it) => it.colors.map((c) => new THREE.Color(c)));
+  const bgMat = new THREE.ShaderMaterial({
+    uniforms: { uTop: { value: new THREE.Color() }, uBot: { value: new THREE.Color() }, uGlow: { value: new THREE.Color() } },
+    depthTest: false,
+    depthWrite: false,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }',
+    fragmentShader: `uniform vec3 uTop, uBot, uGlow; varying vec2 vUv;
+      void main(){
+        vec3 col = mix(uBot, uTop, smoothstep(0.0, 1.0, vUv.y));
+        float glow = exp(-dot(vUv - vec2(0.5, 0.45), vUv - vec2(0.5, 0.45)) * 7.0);
+        col = mix(col, uGlow, glow * 0.28);
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMat);
+  bg.frustumCulled = false;
+  bg.renderOrder = -1000;
+  scene.add(bg);
+  const fogCol = new THREE.Color();
+  function blendBackground(camY) {
+    const f = THREE.MathUtils.clamp((SPACING * 0.5 - camY) / SPACING - 0.5, 0, ITEMS.length - 1);
+    const i0 = Math.floor(f), i1 = Math.min(i0 + 1, ITEMS.length - 1);
+    const t = THREE.MathUtils.smoothstep(f - i0, 0.25, 0.75);
+    const [a, b] = [palettes[i0], palettes[i1]];
+    bgMat.uniforms.uTop.value.lerpColors(a[0], b[0], t);
+    bgMat.uniforms.uBot.value.lerpColors(a[1], b[1], t);
+    bgMat.uniforms.uGlow.value.lerpColors(a[2], b[2], t);
+    // fog fades distant blocks into the same colours instead of grey
+    fogCol.lerpColors(bgMat.uniforms.uTop.value, bgMat.uniforms.uBot.value, 0.55);
+    scene.fog.color.copy(fogCol);
+    scene.background.copy(fogCol);
+  }
+
   // three callouts per crystal; anchors are local points on the crystal
   const callouts = [];
   crystals.forEach((c, i) => {
@@ -172,6 +207,7 @@ export function createCrystals(env) {
     const { time, mouse } = ctx;
     // crystal i sits centred in the frame at local = (i + 0.5) / ITEMS.length
     const camY = SPACING * 0.5 - local * SPACING * ITEMS.length;
+    blendBackground(camY);
     const sway = Math.sin(local * Math.PI * ITEMS.length) * 0.7;
     camera.position.set(sway + mouse.x * 0.8, camY + mouse.y * 0.5, 10.5);
     // on wide screens the crystal moves aside to make room for the overview card
@@ -227,5 +263,10 @@ export function createCrystals(env) {
     });
   }
 
-  return { scene, camera, update, callouts, state };
+  // seasons only tint the drifting dust; the backgrounds belong to the projects
+  function setSeason(S) {
+    dustPts.material.color.setRGB(...S.air.colors[0]);
+  }
+
+  return { scene, camera, update, callouts, state, setSeason };
 }

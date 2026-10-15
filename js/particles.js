@@ -115,7 +115,7 @@ export function createParticles(env) {
   geo.setAttribute('aRnd', new THREE.BufferAttribute(rnd, 1));
 
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 } },
+    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) } },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
@@ -138,12 +138,13 @@ export function createParticles(env) {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
+      uniform vec3 uBurst;
       varying float vAlpha;
       varying float vSnow;
       void main() {
         float d = length(gl_PointCoord - 0.5);
         if (d > 0.5) discard;
-        vec3 col = mix(vec3(0.45, 0.8, 1.3), vec3(1.0), vSnow);  // white snow turns blueprint cyan
+        vec3 col = mix(vec3(0.45, 0.8, 1.3), uBurst, vSnow);  // the season's snow/petals/pollen/leaves turn blueprint cyan
         gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.2, d));
       }`,
   });
@@ -189,5 +190,13 @@ export function createParticles(env) {
     camera.lookAt(0, 0.55, 0);
   }
 
-  return { scene, camera, update, setShape, callouts: [] };
+  function setSeason(S) {
+    scene.background.setHex(S.finale);
+    scene.fog.color.setHex(S.finale);
+    floor.material.color.setHex(S.floor);
+    pedestal.material.color.setHex(S.floor).multiplyScalar(0.82);
+    mat.uniforms.uBurst.value.setRGB(...S.burst);
+  }
+
+  return { scene, camera, update, setShape, setSeason, callouts: [] };
 }
