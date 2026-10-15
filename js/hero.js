@@ -1,14 +1,12 @@
-// Chapter 0 — snowy valley with a monument of the VCDevelopments logo, built from hand-cut snow
-// bricks. Every few seconds a blueprint scan sweeps up it, briefly lighting its wireframe, grid and
-// measurements.
-// Hovering pushes nearby blocks outward on springs; clicking sends a ripple through the dome.
+// Chapter 0 — snowy valley with the VCDevelopments logo carved from snow. On load a wireframe of the
+// logo draws in large and spinning, then compacts down onto the solid sculpture. Every few seconds a
+// blueprint scan sweeps up the logo, briefly showing its wireframe, grid and measurements.
+// Hovering makes the wireframe flex out around the logo; clicking sends a pulse through it.
 import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { fbm3, smoothstep, lerp, easeInOut, rng } from './noise.js';
+import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
 
 const BG = 0x9a9ea6;
-const VARIANTS = 6;
 
 function terrainHeight(x, z) {
   const d = Math.hypot(x, z);
@@ -20,45 +18,6 @@ function terrainHeight(x, z) {
   const mound = 1.2 * Math.exp(-(d * d) / 140);
   const detail = fbm3(x * 0.45, 1.3, z * 0.45, 3) * 0.22 * smoothstep(3.5, 7, d);
   return mountains + rolling + mound + detail;
-}
-
-const angDiff = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
-
-// Re-average normals of vertices that share a position, hiding the seams between box faces.
-function smoothSeamNormals(g) {
-  const p = g.attributes.position, n = g.attributes.normal;
-  const acc = new Map();
-  const key = (i) => `${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`;
-  for (let i = 0; i < p.count; i++) {
-    const k = key(i);
-    const a = acc.get(k) ?? acc.set(k, new THREE.Vector3()).get(k);
-    a.x += n.getX(i); a.y += n.getY(i); a.z += n.getZ(i);
-  }
-  for (let i = 0; i < p.count; i++) {
-    const a = acc.get(key(i)).clone().normalize();
-    n.setXYZ(i, a.x, a.y, a.z);
-  }
-}
-
-// A slightly irregular, chipped snow block (unit size; scaled per instance).
-function blockGeometry(seed) {
-  const g = new RoundedBoxGeometry(1, 1, 1, 8, 0.08);
-  const p = g.attributes.position;
-  const v = new THREE.Vector3(), dir = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    dir.copy(v).normalize();
-    const lumps = fbm3(v.x * 2.6 + seed, v.y * 2.6, v.z * 2.6 - seed, 4) * 0.045;
-    const chips = Math.min(0, fbm3(v.x * 1.7 - seed, v.y * 1.7 + seed, v.z * 1.7, 3) + 0.12) * 0.22;
-    const marks = fbm3(v.x * 7 + seed, v.y * 7, v.z * 7, 3) * 0.012; // saw and tool marks
-    v.addScaledVector(dir, lumps + chips + marks);
-    // gentle taper so blocks look hand-cut rather than machined
-    v.x *= 1 - v.y * 0.05;
-    p.setXYZ(i, v.x, v.y, v.z);
-  }
-  g.computeVertexNormals();
-  smoothSeamNormals(g);
-  return g;
 }
 
 // Packed-snow material with powder settling on upward-facing surfaces.
@@ -133,59 +92,48 @@ function snowBlockMaterial(tex, scan) {
   return m;
 }
 
-// The VCDevelopments logo (a slanted V blade and an open C arc) as a monument of snow bricks:
-// bricks are laid in staggered courses, two layers deep, wherever they fall inside the logo shape.
-// Every brick is a slot: resting transform + an outward direction used for explode / hover.
+// Logo 28 (a slanted V blade and an open C arc) in world units, standing on y = 0.
 const LS = 24; // logo px per world unit
 const LX = (px) => (px - 108) / LS, LY = (py) => (165 - py) / LS;
 const LOGO = {
   a: new THREE.Vector2(LX(36), LY(52)), b: new THREE.Vector2(LX(80), LY(150)), rb: 15 / LS,
   c: new THREE.Vector2(LX(130), LY(100)), ra: 40 / LS, rt: 13 / LS, a0: THREE.MathUtils.degToRad(35), sweep: THREE.MathUtils.degToRad(290),
 };
+const DEPTH = 0.78; // front-to-back squash, so it reads as a thick carved slab
 const arcPoint = (t) => new THREE.Vector2(LOGO.c.x + Math.cos(LOGO.a0 + t * LOGO.sweep) * LOGO.ra, LOGO.c.y + Math.sin(LOGO.a0 + t * LOGO.sweep) * LOGO.ra);
-
-function insideLogo(x, y) {
-  const p = new THREE.Vector2(x, y), ab = LOGO.b.clone().sub(LOGO.a);
-  const t = THREE.MathUtils.clamp(p.clone().sub(LOGO.a).dot(ab) / ab.lengthSq(), 0, 1);
-  if (p.distanceTo(LOGO.a.clone().addScaledVector(ab, t)) < LOGO.rb) return true;
-  let ang = Math.atan2(y - LOGO.c.y, x - LOGO.c.x) - LOGO.a0;
-  ang = ((ang % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-  if (ang <= LOGO.sweep && Math.abs(p.distanceTo(LOGO.c) - LOGO.ra) < LOGO.rt) return true;
-  return p.distanceTo(arcPoint(0)) < LOGO.rt || p.distanceTo(arcPoint(1)) < LOGO.rt;
+class ArcCurve extends THREE.Curve {
+  getPoint(t, out = new THREE.Vector3()) { const p = arcPoint(t); return out.set(p.x, p.y, 0); }
 }
+const BOUNDS = { minX: LX(36) - LOGO.rb, maxX: LOGO.c.x + LOGO.ra + LOGO.rt, H: LY(52) + LOGO.rb };
+BOUNDS.W = BOUNDS.maxX - BOUNDS.minX;
+BOUNDS.center = new THREE.Vector3((BOUNDS.minX + BOUNDS.maxX) / 2, BOUNDS.H / 2, 0);
 
-function monumentSlots() {
-  const bw = 0.46, bh = 0.3, depth = 0.48;
-  const minX = LX(36) - LOGO.rb, maxX = LOGO.c.x + LOGO.ra + LOGO.rt;
-  const H = LY(52) + LOGO.rb;
-  const center = new THREE.Vector3((minX + maxX) / 2, H / 2, 0);
-  const slots = [];
-  let row = 0;
-  for (let y = bh / 2; y < H; y += bh, row++) {
-    for (let x = minX + (row % 2 ? bw / 2 : 0); x < maxX; x += bw) {
-      if (!insideLogo(x, y)) continue;
-      for (const z of [-depth / 2 - 0.01, depth / 2 + 0.01]) {
-        const pos = new THREE.Vector3(x, y, z);
-        const out = pos.clone().sub(center).multiply(new THREE.Vector3(1, 0.6, 3)).normalize();
-        slots.push({ pos, basis: [new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1)], size: [bw * 0.94, bh * 0.92, depth], out });
-      }
-    }
-  }
-  return { slots, minX, maxX, W: maxX - minX, H, center };
-}
-
-// Logo-shaped light slab between the two brick layers, so light leaks through the joints.
-function logoGlowGeometries() {
+// The logo's parts at a given resolution; `carve` roughens the surface like hand-cut snow.
+function logoGeometries(radial, length, carve = 0) {
   const ab = LOGO.b.clone().sub(LOGO.a);
-  const blade = new THREE.CapsuleGeometry(LOGO.rb * 0.8, ab.length(), 6, 16);
+  const blade = new THREE.CapsuleGeometry(LOGO.rb, ab.length(), Math.max(4, radial / 3), radial);
   blade.rotateZ(Math.atan2(ab.y, ab.x) - Math.PI / 2);
   blade.translate((LOGO.a.x + LOGO.b.x) / 2, (LOGO.a.y + LOGO.b.y) / 2, 0);
-  class Arc extends THREE.Curve {
-    getPoint(t, out = new THREE.Vector3()) { const p = arcPoint(t); return out.set(p.x, p.y, 0); }
+  const arc = new THREE.TubeGeometry(new ArcCurve(), length, LOGO.rt, radial, false);
+  const parts = [blade, arc];
+  if (carve) {
+    for (const t of [0, 1]) {
+      const p = arcPoint(t);
+      parts.push(new THREE.SphereGeometry(LOGO.rt, radial, radial / 2).translate(p.x, p.y, 0));
+    }
   }
-  const arc = new THREE.TubeGeometry(new Arc(), 64, LOGO.rt * 0.8, 12, false);
-  for (const g of [blade, arc]) g.scale(1, 1, 0.12);
-  return [blade, arc];
+  for (const g of parts) {
+    g.scale(1, 1, DEPTH);
+    if (!carve) continue;
+    const p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++) {
+      v.fromBufferAttribute(p, i);
+      const d = fbm3(v.x * 2.2, v.y * 2.2, v.z * 2.2, 4) * carve + fbm3(v.x * 9, v.y * 9, v.z * 9, 2) * carve * 0.25;
+      p.setXYZ(i, v.x + n.getX(i) * d, v.y + n.getY(i) * d, v.z + n.getZ(i) * d);
+    }
+    g.computeVertexNormals();
+  }
+  return parts;
 }
 
 // Wind-blown snow piled around the base.
@@ -231,22 +179,22 @@ export function createHero(env) {
   scene.add(new THREE.Mesh(tGeo, new THREE.MeshStandardMaterial({ color: 0xaeb3ba, roughness: 0.96, normalMap: tex.terrainNormal, normalScale: new THREE.Vector2(0.18, 0.18) })));
 
   const base = terrainHeight(0, 0) - 0.12;
+  const { minX, maxX, W, H, center } = BOUNDS;
   const monument = new THREE.Group();
   monument.position.y = base;
   monument.rotation.y = -0.12;
   scene.add(monument);
 
-  // inner light that leaks through the gaps between blocks
-  const glowMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.25, 2.4), fog: false, side: THREE.DoubleSide, transparent: true });
-  for (const g of logoGlowGeometries()) monument.add(new THREE.Mesh(g, glowMat));
-  const lamp = new THREE.PointLight(0xdfe8ff, 6, 9, 1.5);
-  lamp.position.set(0, 2.6, 0);
-  monument.add(lamp);
-
-  const { slots, minX, maxX, W, H, center } = monumentSlots();
   const scanU = { uScan: { value: -100 }, uTime: { value: 0 } };
   const snowMat = snowBlockMaterial(tex, scanU);
-  // soft contact shadow where the dome meets the snow
+
+  // the solid logo, carved from snow; it pivots around its own centre
+  const solid = new THREE.Group();
+  solid.position.copy(center);
+  for (const g of logoGeometries(48, 160, 0.02)) solid.add(new THREE.Mesh(g.translate(-center.x, -center.y, 0), snowMat));
+  monument.add(solid);
+
+  // soft contact shadow where the logo meets the snow
   {
     const c = document.createElement('canvas');
     c.width = c.height = 128;
@@ -269,32 +217,44 @@ export function createHero(env) {
     monument.add(drift);
   }
 
-  // blocks are split across a few geometry variants so neighbours never look identical
-  const rand = rng(7);
-  slots.forEach((sl, i) => { sl.variant = i % VARIANTS; });
-  const meshes = Array.from({ length: VARIANTS }, (_, v) => {
-    const owned = slots.filter((s) => s.variant === v);
-    const mesh = new THREE.InstancedMesh(blockGeometry(v * 3.1 + 0.7), snowMat, owned.length);
-    owned.forEach((s, k) => { s.mesh = mesh; s.index = k; });
-    monument.add(mesh);
-    return mesh;
+  // wireframe of the same logo: draws in bottom-up, glows in the scan band, flexes on hover
+  const wireMat = new THREE.ShaderMaterial({
+    uniforms: { uDraw: { value: -10 }, uA: { value: 0 }, uScan: scanU.uScan },
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `uniform float uDraw; varying float vLocalY; varying float vY;
+      void main(){ vLocalY = position.y + ${center.y.toFixed(3)}; vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uDraw, uA, uScan; varying float vLocalY; varying float vY;
+      void main(){
+        float on = 1.0 - smoothstep(uDraw - 0.2, uDraw, vLocalY);
+        float edge = exp(-pow((vLocalY - uDraw) * 7.0, 2.0)) * step(uDraw, ${(BOUNDS.H + 0.2).toFixed(3)});
+        float band = exp(-pow((vY - uScan) * 2.2, 2.0));
+        float a = max(uA * (on * 0.85 + edge * 1.2), band * 0.95);
+        gl_FragColor = vec4(vec3(0.75, 1.25, 2.1) * a, a);
+      }`,
   });
+  const wire = new THREE.Group();
+  wire.position.copy(center);
+  for (const g of logoGeometries(14, 48)) wire.add(new THREE.LineSegments(new THREE.WireframeGeometry(g.translate(-center.x, -center.y, 0)), wireMat));
+  monument.add(wire);
 
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), qr = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
-  const tint = new THREE.Color();
-  for (const sl of slots) {
-    sl.q = new THREE.Quaternion().setFromRotationMatrix(m4.makeBasis(...sl.basis));
-    sl.qRand = new THREE.Quaternion().setFromEuler(new THREE.Euler((rand() - 0.5) * 2, (rand() - 0.5) * 2, (rand() - 0.5) * 2));
-    // tiny resting irregularity: no two blocks sit perfectly
-    sl.qRest = new THREE.Quaternion().setFromEuler(new THREE.Euler((rand() - 0.5) * 0.06, (rand() - 0.5) * 0.06, (rand() - 0.5) * 0.08));
-    sl.dist = 0.5 + rand() * 1.1;
-    sl.lift = rand();
-    sl.h = 0; // hover displacement (spring)
-    sl.v = 0;
-    const l = 0.9 + rand() * 0.16;
-    sl.mesh.setColorAt(sl.index, tint.setRGB(l * 0.98, l, l * (1.02 + rand() * 0.04)));
+  // faint construction lines flickering around the wireframe while it loads
+  const rand = rng(7);
+  const guidePos = [];
+  for (let k = 0; k < 46; k++) {
+    const a = rand() * Math.PI * 2, r = 2 + rand() * 9, y = rand() * 7 - 1;
+    const p0 = new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
+    const dir = new THREE.Vector3(rand() - 0.5, (rand() - 0.5) * 0.6, rand() - 0.5).normalize();
+    const len = 2 + rand() * 9;
+    guidePos.push(p0.x, p0.y, p0.z, p0.x + dir.x * len, p0.y + dir.y * len, p0.z + dir.z * len);
   }
-  meshes.forEach((m) => { m.instanceColor.needsUpdate = true; });
+  const guideGeo = new THREE.BufferGeometry();
+  guideGeo.setAttribute('position', new THREE.Float32BufferAttribute(guidePos, 3));
+  const guideMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false, depthWrite: false });
+  const guides = new THREE.LineSegments(guideGeo, guideMat);
+  monument.add(guides);
 
   // invisible proxy the pointer is tested against
   const proxy = new THREE.Mesh(new THREE.BoxGeometry(W + 0.4, H + 0.4, 1.6), new THREE.MeshBasicMaterial());
@@ -303,39 +263,7 @@ export function createHero(env) {
   monument.add(proxy);
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  const hit = new THREE.Vector3();
-  let hovering = false, breath = 0, breathV = 0;
-  const ripples = [];
-
-  function layoutBlocks(e, time, dt) {
-    breathV += ((hovering ? 1 : 0) - breath) * 60 * dt - breathV * 9 * dt;
-    breath += breathV * dt;
-    for (let i = 0; i < slots.length; i++) {
-      const sl = slots[i];
-      // hover target: gaussian falloff around the pointer hit, springs give a little overshoot
-      const target = hovering ? Math.exp(-sl.pos.distanceToSquared(hit) / 1.5) : 0;
-      sl.v += (target - sl.h) * 110 * dt - sl.v * 11 * dt;
-      sl.h += sl.v * dt;
-
-      let ripple = 0;
-      for (const r of ripples) {
-        const t = time - r.t0;
-        const d = sl.pos.distanceTo(r.at);
-        ripple += Math.exp(-((d - t * 6.5) ** 2) / 0.5) * Math.exp(-t * 1.6) * 1.1;
-      }
-
-      const push = sl.h * 0.75 + breath * 0.12 + ripple;
-      const wob = Math.sin(time * 0.9 + i * 1.7) * 0.05 * Math.min(e, 1);
-      p.copy(sl.pos).addScaledVector(sl.out, e * sl.dist + wob + push);
-      p.y += e * e * sl.lift * 0.6 + ripple * 0.15;
-      qr.identity().slerp(sl.qRand, Math.min(1, e * 0.18 + (sl.h + ripple) * 0.12));
-      q.copy(sl.q).multiply(sl.qRest).premultiply(qr);
-      s.set(...sl.size);
-      sl.mesh.setMatrixAt(sl.index, m4.compose(p, q, s));
-    }
-    for (const m of meshes) m.instanceMatrix.needsUpdate = true;
-    while (ripples.length && time - ripples[0].t0 > 3) ripples.shift();
-  }
+  let hover = 0, hoverV = 0, pulseT = -10;
 
   // falling snow
   const SN = 1800;
@@ -349,18 +277,7 @@ export function createHero(env) {
   snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
   scene.add(new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.07, transparent: true, opacity: 0.8, depthWrite: false })));
 
-  // numbered tags on a handful of blocks while the monument is exploded
-  const tagged = [5, 19, 33, 46, 58, 70].map((i) => slots[i % slots.length]);
-  const callouts = tagged.map((sl, k) => ({
-    text: String(slots.indexOf(sl) + 1).padStart(2, '0'),
-    cls: 'tag',
-    anchor: new THREE.Vector3(),
-    offset: [k % 2 ? 26 : -26, -22],
-    visible: false,
-    sl,
-  }));
-
-  // blueprint annotations: rotating polar grid under the monument, plus height and diameter dimensions
+  // blueprint annotations: rotating polar grid under the logo, plus width and height dimensions
   const hud = new THREE.Group();
   monument.add(hud);
   const hudMat = new THREE.LineBasicMaterial({ color: new THREE.Color(0.6, 1.1, 1.9), transparent: true, opacity: 0, fog: false, depthTest: false, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -386,7 +303,6 @@ export function createHero(env) {
     grid.add(lines);
   }
   {
-    // dimension lines with end ticks: diameter in front, height on the left
     const z = 2.2, xL = minX - 0.9, x0 = minX, x1 = maxX;
     const pts = [
       x0, 0.02, z, x1, 0.02, z, x0, -0.15, z, x0, 0.2, z, x1, -0.15, z, x1, 0.2, z,
@@ -400,82 +316,29 @@ export function createHero(env) {
     dims.renderOrder = 3;
     hud.add(dims);
   }
-  callouts.push(
-    { text: `W ${W.toFixed(2)} M`, cls: 'tag', anchor: new THREE.Vector3(), local: new THREE.Vector3(center.x, 0.02, 2.2), offset: [20, 26], visible: false },
-    { text: `H ${H.toFixed(2)} M`, cls: 'tag', anchor: new THREE.Vector3(), local: new THREE.Vector3(minX - 0.9, H * 0.5, 0), offset: [-24, -10], visible: false },
-    { text: 'VCD // MONUMENT_01\nBRICKS ' + slots.length, anchor: new THREE.Vector3(), local: new THREE.Vector3(maxX - 0.4, H * 0.85, 0), offset: [90, -60], visible: false },
-  );
-
-  // intro: a glowing wireframe of every block draws in bottom-up, with faint construction lines,
-  // then the scene emerges from the fog behind it
-  const CORNERS = [];
-  for (let k = 0; k < 8; k++) CORNERS.push(new THREE.Vector3(k & 1 ? 0.5 : -0.5, k & 2 ? 0.5 : -0.5, k & 4 ? 0.5 : -0.5));
-  const EDGES = [];
-  for (let a = 0; a < 8; a++) for (const bit of [1, 2, 4]) if (!(a & bit)) EDGES.push(a, a | bit);
-  const wirePos = new Float32Array(slots.length * EDGES.length * 3);
-  const wireGeo = new THREE.BufferGeometry();
-  wireGeo.setAttribute('position', new THREE.BufferAttribute(wirePos, 3));
-  // wire glows fully during the intro, and only inside the scan band afterwards
-  const wireMat = new THREE.ShaderMaterial({
-    uniforms: { uIntro: { value: 0 }, uScan: scanU.uScan },
-    transparent: true,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    vertexShader: 'varying float vY; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vY = w.y; gl_Position = projectionMatrix * viewMatrix * w; }',
-    fragmentShader: 'uniform float uIntro, uScan; varying float vY; void main(){ float band = exp(-pow((vY - uScan) * 2.2, 2.0)); float a = max(uIntro, band * 0.95); gl_FragColor = vec4(vec3(0.75, 1.3, 2.2) * a, a); }',
-  });
-  const wire = new THREE.LineSegments(wireGeo, wireMat);
-  wire.frustumCulled = false;
-  monument.add(wire);
-
-  const guidePos = [];
-  for (let k = 0; k < 46; k++) {
-    const a = rand() * Math.PI * 2, r = 2 + rand() * 9, y = rand() * 7 - 1;
-    const p0 = new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r);
-    const dir = new THREE.Vector3(rand() - 0.5, (rand() - 0.5) * 0.6, rand() - 0.5).normalize();
-    const len = 2 + rand() * 9;
-    guidePos.push(p0.x, p0.y, p0.z, p0.x + dir.x * len, p0.y + dir.y * len, p0.z + dir.z * len);
-  }
-  const guideGeo = new THREE.BufferGeometry();
-  guideGeo.setAttribute('position', new THREE.Float32BufferAttribute(guidePos, 3));
-  const guideMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, fog: false, depthWrite: false });
-  const guides = new THREE.LineSegments(guideGeo, guideMat);
-  monument.add(guides);
-  const wv = new THREE.Vector3();
-
-  function updateWire(T) {
-    const draw = smoothstep(0.1, 1.5, T);
-    wireMat.uniforms.uIntro.value = smoothstep(0, 0.3, T) * (1 - smoothstep(1.9, 3.0, T));
-    guideMat.opacity = smoothstep(0.2, 0.6, T) * (1 - smoothstep(1.4, 2.4, T)) * (0.22 + 0.13 * Math.sin(T * 40));
-    wire.visible = wireMat.uniforms.uIntro.value > 0.001 || scanU.uScan.value > -50;
-    guides.visible = guideMat.opacity > 0.001;
-    if (!wire.visible) return;
-    let w = 0;
-    for (const sl of slots) {
-      sl.mesh.getMatrixAt(sl.index, m4);
-      for (const e of EDGES) {
-        wv.copy(CORNERS[e]).applyMatrix4(m4);
-        wirePos[w++] = wv.x; wirePos[w++] = wv.y; wirePos[w++] = wv.z;
-      }
-    }
-    wireGeo.attributes.position.needsUpdate = true;
-    wireGeo.setDrawRange(0, Math.floor(draw * slots.length) * EDGES.length);
-  }
+  const callouts = [
+    { text: `W ${W.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(center.x, 0.02, 2.2), offset: [20, 26] },
+    { text: `H ${H.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(minX - 0.9, H * 0.5, 0), offset: [-24, -10] },
+    { text: 'VCD // MONUMENT_01\nLOGO 28', local: new THREE.Vector3(maxX - 0.4, H * 0.85, 0), offset: [90, -60] },
+  ].map((c) => ({ ...c, anchor: new THREE.Vector3(), visible: false }));
 
   function update(local, ctx) {
     const { time, dt, mouse, intro } = ctx;
     const t = easeInOut(local);
     const T = ctx.introT;
-    const reveal = easeInOut(smoothstep(1.5, 3.2, T));
 
-    // blueprint scan: every 7 s after the intro, a band sweeps from the base to above the cap,
+    // intro timeline: draw in large and spinning -> compact onto the logo -> solid emerges
+    const compact = easeInOut(smoothstep(1.2, 2.6, T));
+    const reveal = easeInOut(smoothstep(2.1, 3.4, T));
+    const snap = Math.exp(-Math.pow((T - 2.6) * 5, 2)); // flash as it locks into place
+
+    // blueprint scan: every 7 s after the intro, a band sweeps from the base to above the top,
     // and the grid, dimensions and labels show while it runs
-    const sinceIntro = T - 3.5;
+    const sinceIntro = T - 4;
     const ph = sinceIntro > 0 ? sinceIntro % 7 : -1;
     scanU.uScan.value = ph >= 0 && ph < 2.6 ? base + lerp(-0.4, H + 0.8, ph / 2.6) : -100;
     const hudOn = ph >= 0 ? smoothstep(0, 0.4, ph) * (1 - smoothstep(2.4, 3.4, ph)) : 0;
 
-    const explode = (1 - intro) * 0.6 + (1 - smoothstep(0, 0.45, local)) * 0.32;
     scene.fog.density = lerp(0.35, 0.013, reveal);
 
     // slow orbit that settles as the scene appears
@@ -486,29 +349,37 @@ export function createHero(env) {
     camera.updateMatrixWorld();
     monument.updateMatrixWorld();
 
-    // pointer interaction only once the intro has landed and while the monument is on screen
-    hovering = false;
+    // pointer: hover flexes the wireframe out around the logo, a click sends a pulse through it
+    let hovering = false;
     if (ctx.pointer.inside && intro > 0.9 && local < 0.95) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
-      const h = raycaster.intersectObject(proxy, false)[0];
-      if (h) {
+      if (raycaster.intersectObject(proxy, false)[0]) {
         hovering = true;
-        hit.copy(monument.worldToLocal(h.point));
-        if (ctx.click) ripples.push({ at: hit.clone(), t0: time });
+        if (ctx.click) pulseT = time;
       }
     }
     ctx.cursor ||= hovering;
+    hoverV += ((hovering ? 1 : 0) - hover) * 70 * dt - hoverV * 9 * dt;
+    hover += hoverV * dt;
+    const pulse = Math.exp(-(time - pulseT) * 3.5) * (time >= pulseT ? 1 : 0);
 
-    layoutBlocks(explode, time, dt);
-    updateWire(T);
-    glowMat.color.setScalar(1.05 + explode * 0.6 + breath * 0.4);
-    glowMat.opacity = reveal;
+    wireMat.uniforms.uDraw.value = lerp(-0.3, H + 0.3, smoothstep(0.1, 1.4, T));
+    const introA = smoothstep(0, 0.3, T) * (1 - smoothstep(2.9, 3.6, T));
+    wireMat.uniforms.uA.value = Math.min(1.6, introA + snap * 0.8 + Math.max(0, hover) * 0.55 + pulse);
+    wire.scale.setScalar(lerp(1.9, 1, compact) + Math.max(0, hover) * 0.07 + pulse * 0.28);
+    wire.rotation.y = (1 - compact) * 2.6 + Math.sin(time * 1.3) * 0.02 * hover;
+    wire.visible = wireMat.uniforms.uA.value > 0.002 || scanU.uScan.value > -50;
+    guideMat.opacity = smoothstep(0.2, 0.6, T) * (1 - smoothstep(1.6, 2.6, T)) * (0.22 + 0.13 * Math.sin(T * 40));
+    guides.visible = guideMat.opacity > 0.001;
+
+    // the solid settles in with a tiny overshoot as the wire locks on
+    solid.scale.setScalar(lerp(0.92, 1, easeOut(smoothstep(2.3, 3.0, T))) + pulse * 0.03);
+
     scanU.uTime.value = time;
     hud.visible = hudOn > 0.01;
     hudMat.opacity = hudOn * 0.55;
     tickMat.opacity = hudOn * 0.8;
     grid.rotation.y = time * 0.05;
-    lamp.intensity = (5 + breath * 6) * reveal;
 
     for (let i = 0; i < SN; i++) {
       let y = snowPos[i * 3 + 1] - dt * (0.6 + (i % 7) * 0.08);
@@ -519,14 +390,8 @@ export function createHero(env) {
     snowGeo.attributes.position.needsUpdate = true;
 
     for (const c of callouts) {
-      if (c.local) {
-        c.anchor.copy(c.local).applyMatrix4(monument.matrixWorld);
-        c.visible = hudOn > 0.5 && local < 0.6;
-        continue;
-      }
-      c.sl.mesh.getMatrixAt(c.sl.index, m4);
-      c.anchor.setFromMatrixPosition(m4).applyMatrix4(monument.matrixWorld);
-      c.visible = T > 0.5 && explode > 0.15;
+      c.anchor.copy(c.local).applyMatrix4(monument.matrixWorld);
+      c.visible = hudOn > 0.5 && local < 0.6;
     }
   }
 
