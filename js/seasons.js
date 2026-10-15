@@ -21,8 +21,6 @@ export const SEASONS = {
     burst: [1.0, 1.0, 1.0], // colour of the particles before they form the logo
     skyTop: 0x7a8494, // sky dome colour overhead (the horizon uses `sky`)
     sunDir: [-0.55, 0.16, -0.82], sunGlow: 0.45, // where the sun sits and how strong its disc/glow is
-    foliage: { colors: [[0.95, 0.97, 1.0]], scale: 0.55 }, // tree crowns: snow clumps on bare branches
-    grass: { colors: [[0.9, 0.92, 0.95]], scale: 0 }, // buried under snow
     bp: { base: [0.05, 0.22, 0.55], edge: [0.35, 0.72, 1.15], line: [0.7, 1.15, 1.9] }, // blueprint colours
     icon: 'snow',
     edition: 'Winter edition',
@@ -45,32 +43,28 @@ export const SEASONS = {
     burst: [1.0, 0.8, 0.86],
     skyTop: 0x78b2cf,
     sunDir: [-0.45, 0.42, -0.78], sunGlow: 0.7,
-    foliage: { colors: [[0.98, 0.72, 0.8], [1.0, 0.86, 0.9], [0.95, 0.6, 0.72]], scale: 1.0 }, // blossom
-    grass: { colors: [[0.33, 0.62, 0.24], [0.45, 0.72, 0.3], [0.38, 0.66, 0.22]], scale: 1.0 },
     bp: { base: [0.04, 0.3, 0.12], edge: [0.4, 1.05, 0.5], line: [0.75, 1.7, 0.85] },
     icon: 'flower',
     edition: 'Spring edition',
   },
   summer: {
     label: 'Summer',
-    sky: 0xd9b26e,
-    css: '#c9a467',
-    ground: 0xd8b071,
-    stone: 0xe0c69a,
-    cap: [0.98, 0.86, 0.6], // sun-bleached sand
-    cover: 0.2,
-    glint: 0.5,
-    sun: 0xffe0a8,
-    sunIntensity: 2.5,
-    air: { colors: [[1, 0.9, 0.55], [1, 0.82, 0.45], [1, 0.95, 0.75]], shape: 'glow', size: 0.2, fall: -0.18, sway: 0.35 },
-    rings: 0xd6b274,
-    finale: 0xcfa96c,
-    floor: 0xbf9c66,
-    burst: [1.0, 0.86, 0.52],
-    skyTop: 0x5a92c8,
-    sunDir: [0.25, 0.62, -0.74], sunGlow: 1.5,
-    foliage: { colors: [[0.28, 0.5, 0.18], [0.35, 0.58, 0.2], [0.22, 0.42, 0.14]], scale: 1.15 },
-    grass: { colors: [[0.8, 0.68, 0.3], [0.7, 0.62, 0.24], [0.56, 0.6, 0.24]], scale: 1.25 },
+    sky: 0xf2cb8a, // warm, sunlit horizon
+    css: '#e0b673',
+    ground: 0xecc68a,
+    stone: 0xf4e3c0,
+    cap: [1.0, 0.93, 0.72], // sun-bleached sand
+    cover: 0.22,
+    glint: 0.8, // sand sparkling in the sun
+    sun: 0xfff3d0,
+    sunIntensity: 3.0,
+    air: { colors: [[1, 0.92, 0.6], [1, 0.84, 0.48], [1, 0.97, 0.8]], shape: 'glow', size: 0.24, fall: -0.2, sway: 0.4 },
+    rings: 0xeac381,
+    finale: 0xe4bb79,
+    floor: 0xd4aa6a,
+    burst: [1.0, 0.88, 0.55],
+    skyTop: 0x3d9ae8, // clear blue overhead
+    sunDir: [0.22, 0.2, -0.95], sunGlow: 2.4, // a big sun just above the hills, in view
     bp: { base: [0.42, 0.22, 0.03], edge: [1.15, 0.8, 0.28], line: [1.9, 1.35, 0.55] },
     icon: 'sun',
     edition: 'Summer edition',
@@ -93,8 +87,6 @@ export const SEASONS = {
     burst: [1.0, 0.6, 0.28],
     skyTop: 0x806878,
     sunDir: [0.6, 0.14, -0.79], sunGlow: 1.1,
-    foliage: { colors: [[0.86, 0.38, 0.12], [0.93, 0.6, 0.16], [0.72, 0.2, 0.1], [0.95, 0.75, 0.25]], scale: 0.95 },
-    grass: { colors: [[0.55, 0.35, 0.18], [0.64, 0.45, 0.22]], scale: 0.7 },
     bp: { base: [0.42, 0.1, 0.03], edge: [1.15, 0.45, 0.22], line: [1.9, 0.8, 0.42] },
     icon: 'leaf',
     edition: 'Autumn edition',
@@ -103,20 +95,17 @@ export const SEASONS = {
 
 export const SEASON_ORDER = ['winter', 'spring', 'summer', 'autumn'];
 
-// ?season=… wins, then the visitor's last choice, then the season of today's date (northern hemisphere)
-export function initialSeason() {
-  const fromUrl = new URLSearchParams(location.search).get('season');
-  if (fromUrl && SEASONS[fromUrl]) return fromUrl;
-  try {
-    const saved = localStorage.getItem('vcd-season');
-    if (saved && SEASONS[saved]) return saved;
-  } catch {}
-  const m = new Date().getMonth();
+// The season of a date (northern hemisphere, meteorological: Dec–Feb winter, Mar–May spring,
+// Jun–Aug summer, Sep–Nov autumn).
+export function seasonForDate(d = new Date()) {
+  const m = d.getMonth();
   return m === 11 || m < 2 ? 'winter' : m < 5 ? 'spring' : m < 8 ? 'summer' : 'autumn';
 }
 
-export function rememberSeason(name) {
-  try { localStorage.setItem('vcd-season', name); } catch {}
+// The site always follows today's season; ?season=… is only for previewing another one.
+export function initialSeason() {
+  const fromUrl = new URLSearchParams(location.search).get('season');
+  return fromUrl && SEASONS[fromUrl] ? fromUrl : seasonForDate();
 }
 
 // Small sprite for the airborne particles of each season.

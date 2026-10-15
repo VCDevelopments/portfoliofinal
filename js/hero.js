@@ -6,7 +6,6 @@ import * as THREE from 'three';
 import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
 import { particleSprite } from './seasons.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
 
 const BG = 0x9a9ea6;
@@ -207,75 +206,7 @@ export function createHero(env) {
   sky.renderOrder = -1;
   scene.add(sky);
 
-  // trees around the valley: a trunk with two branches and a crown of four blobs;
-  // the crown is the season (snow clumps on bare branches, blossom, green, or autumn colour)
-  const treeRand = rng(41);
-  const trunkGeo = (() => {
-    const t = new THREE.CylinderGeometry(0.07, 0.16, 2.3, 7).translate(0, 1.15, 0);
-    const b1 = new THREE.CylinderGeometry(0.03, 0.06, 1.0, 5).translate(0, 0.5, 0).rotateZ(0.8).translate(0.02, 1.45, 0);
-    const b2 = new THREE.CylinderGeometry(0.03, 0.06, 0.9, 5).translate(0, 0.45, 0).rotateZ(-0.75).rotateY(1.9).translate(0, 1.7, 0);
-    return mergeGeometries([t, b1, b2]);
-  })();
-  const blobGeo = (() => {
-    const g = new THREE.IcosahedronGeometry(1, 2);
-    const p = g.attributes.position, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) {
-      v.fromBufferAttribute(p, i);
-      v.multiplyScalar(1 + fbm3(v.x * 1.8, v.y * 1.8, v.z * 1.8, 3) * 0.35);
-      p.setXYZ(i, v.x, v.y, v.z);
-    }
-    g.computeVertexNormals();
-    return g;
-  })();
-  const trees = [];
-  while (trees.length < 70) {
-    const a = treeRand() * Math.PI * 2, r = 9 + Math.pow(treeRand(), 0.7) * 34;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (z > -2 && Math.abs(x) < 8) continue; // keep the view between camera and logo clear
-    trees.push({ x, z, y: terrainHeight(x, z) - 0.1, s: 0.8 + treeRand() * 0.7, rot: treeRand() * Math.PI * 2 });
-  }
-  const trunkMesh = new THREE.InstancedMesh(trunkGeo, new THREE.MeshStandardMaterial({ color: 0x4a3a2e, roughness: 0.9 }), trees.length);
-  const crownMat = new THREE.MeshStandardMaterial({ roughness: 0.85 });
-  const crownMesh = new THREE.InstancedMesh(blobGeo, crownMat, trees.length * 4);
-  const tm = new THREE.Matrix4(), tq = new THREE.Quaternion(), tv = new THREE.Vector3(), ts = new THREE.Vector3();
-  const crowns = [];
-  trees.forEach((t, i) => {
-    tq.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t.rot);
-    trunkMesh.setMatrixAt(i, tm.compose(tv.set(t.x, t.y, t.z), tq, ts.setScalar(t.s)));
-    for (let k = 0; k < 4; k++) {
-      const off = new THREE.Vector3(Math.cos(k * 1.7 + t.rot) * 0.45, 2.15 + k * 0.22, Math.sin(k * 1.7 + t.rot) * 0.45).multiplyScalar(t.s);
-      crowns.push({ pos: off.add(new THREE.Vector3(t.x, t.y, t.z)), r: (0.55 + treeRand() * 0.3) * t.s, pick: treeRand() });
-    }
-  });
-  scene.add(trunkMesh, crownMesh);
-
-  // grass tufts: sprout in spring, golden in summer, brown in autumn, buried in winter
-  const tufts = [];
-  while (tufts.length < 1100) {
-    const a = treeRand() * Math.PI * 2, r = 3 + Math.pow(treeRand(), 0.6) * 30;
-    const x = Math.cos(a) * r, z = Math.sin(a) * r;
-    if (Math.abs(x) < 3.6 && Math.abs(z) < 1.6) continue; // not through the logo
-    tufts.push({ x, z, y: terrainHeight(x, z) - 0.03, h: 0.5 + treeRand() * 0.9, tilt: (treeRand() - 0.5) * 0.5, rot: treeRand() * Math.PI, pick: treeRand() });
-  }
-  const grassMesh = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.5, 3).translate(0, 0.25, 0), new THREE.MeshStandardMaterial({ roughness: 0.9 }), tufts.length);
-  scene.add(grassMesh);
-  const tc = new THREE.Color();
-
   function seasonScenery(S) {
-    crowns.forEach((c, i) => {
-      crownMesh.setMatrixAt(i, tm.compose(c.pos, tq.identity(), ts.setScalar(c.r * S.foliage.scale)));
-      crownMesh.setColorAt(i, tc.setRGB(...S.foliage.colors[Math.floor(c.pick * S.foliage.colors.length)]));
-    });
-    crownMesh.instanceMatrix.needsUpdate = true;
-    crownMesh.instanceColor.needsUpdate = true;
-    grassMesh.visible = S.grass.scale > 0;
-    tufts.forEach((t, i) => {
-      tq.setFromEuler(new THREE.Euler(t.tilt, t.rot, t.tilt * 0.6));
-      grassMesh.setMatrixAt(i, tm.compose(tv.set(t.x, t.y, t.z), tq, ts.set(1, t.h * S.grass.scale, 1)));
-      grassMesh.setColorAt(i, tc.setRGB(...S.grass.colors[Math.floor(t.pick * S.grass.colors.length)]).multiplyScalar(0.8 + t.pick * 0.4));
-    });
-    grassMesh.instanceMatrix.needsUpdate = true;
-    if (grassMesh.instanceColor) grassMesh.instanceColor.needsUpdate = true;
     // sky and light
     skyMat.uniforms.uTop.value.setHex(S.skyTop);
     skyMat.uniforms.uHorizon.value.setHex(S.sky);

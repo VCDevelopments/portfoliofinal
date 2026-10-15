@@ -10,7 +10,7 @@ import { createComposite } from './post.js';
 import { UI } from './ui.js';
 import { Sound } from './audio.js';
 import { clamp01, easeOut } from './noise.js';
-import { SEASONS, SEASON_ORDER, SEASON_ICONS, initialSeason, rememberSeason } from './seasons.js';
+import { SEASONS, SEASON_ORDER, SEASON_ICONS, initialSeason, seasonForDate } from './seasons.js';
 import { tintBlueprint } from './blueprint.js';
 
 // chapter i occupies scroll progress BOUNDS[i]..BOUNDS[i+1]; transitions straddle each boundary
@@ -35,6 +35,8 @@ let chapters = [];
 
 // seasons: the page colour applies before boot so the loader already matches
 let season = initialSeason();
+const pinnedByUrl = new URLSearchParams(location.search).has('season');
+let previewing = false;
 document.documentElement.style.setProperty('--bg', SEASONS[season].css);
 function applySeason(name, announce = false) {
   season = name;
@@ -100,10 +102,16 @@ async function boot() {
   ui.bindSound(() => sound.toggle());
   ui.bindSeason(() => {
     const next = SEASON_ORDER[(SEASON_ORDER.indexOf(season) + 1) % SEASON_ORDER.length];
+    previewing = true; // a manual preview stops the automatic follow until the next visit
     applySeason(next, true);
-    rememberSeason(next);
     sound.blip(880);
   });
+
+  // follow the calendar: if the page is open when the season turns, switch to it live
+  setInterval(() => {
+    const today = seasonForDate();
+    if (!previewing && !pinnedByUrl && today !== season) applySeason(today, true);
+  }, 60 * 1000);
 
   await new Promise((r) => setTimeout(r, 350));
   document.body.classList.add('is-intro');
