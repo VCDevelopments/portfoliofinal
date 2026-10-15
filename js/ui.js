@@ -176,7 +176,7 @@ export class UI {
         a.style.order = order;
         a.hidden = order === 3;
         a.classList.toggle('active', rel === 0);
-        a.tabIndex = rel === 0 ? 0 : -1;
+        a.tabIndex = order === 3 ? -1 : 0;
       });
       scramble(items[index], links[index].label, 450);
       onChange(index);
@@ -184,8 +184,9 @@ export class UI {
     const go = (d) => { index = (index + d + links.length) % links.length; render(); };
     document.querySelector('.carousel .prev').addEventListener('click', () => go(-1));
     document.querySelector('.carousel .next').addEventListener('click', () => go(1));
-    items.forEach((a, i) => a.addEventListener('click', (e) => {
-      if (i !== index) { e.preventDefault(); go(((i - index + links.length) % links.length) === 1 ? 1 : -1); }
+    // every visible link opens its profile straight away (new tab); it also becomes the centred one
+    items.forEach((a, i) => a.addEventListener('click', () => {
+      if (i !== index) { index = i; render(); }
     }));
     addEventListener('keydown', (e) => {
       if (this.chapter !== 3) return;
