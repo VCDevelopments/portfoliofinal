@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VCDevelopments — Lothar Van Cauwenbergh</title>
+  <meta name="description" content="Portfolio of Lothar Van Cauwenbergh (VCDevelopments): websites, iOS apps and AI tools." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@200;800&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="brand/vcd-logo-28.svg" />
+  <link rel="apple-touch-icon" href="brand/vcd-avatar-28-dark.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body data-chapter="0" class="is-loading">
+  <div id="loader" aria-hidden="true">
+    <div class="loader-bar"></div>
+  </div>
+
+  <canvas id="gl" aria-label="Interactive 3D scene"></canvas>
+  <svg id="lines" aria-hidden="true"></svg>
+  <div id="callouts" aria-hidden="true"></div>
+
+  <header class="hud">
+    <a class="logo" href="#" aria-label="VCDevelopments home">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <defs><linearGradient id="logo-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF" /><stop offset="1" stop-color="#B5DEFF" /></linearGradient></defs>
+        <g fill="none" stroke="url(#logo-g)" stroke-linecap="round">
+          <line x1="36" y1="52" x2="80" y2="150" stroke-width="30" />
+          <path d="M170.3 71.7 A40 40 0 1 0 170.3 128.3" stroke-width="26" opacity="0.75" />
+        </g>
+      </svg>
+      <span><b>vc</b>developments</span>
+    </a>
+    <div class="meta ch ch-0">
+      <p data-scramble>// Portfolio © 2026</p>
+      <p data-scramble>Lothar Van Cauwenbergh
+Developer &amp; Designer</p>
+    </div>
+    <section class="manifesto ch ch-0" aria-labelledby="manifesto-title">
+      <h2 id="manifesto-title" data-scramble>////// About</h2>
+      <p data-scramble>I design and build
+websites, iOS apps and
+AI tools — from 3D web
+experiences to Claude-
+powered apps and MCP
+servers.</p>
+    </section>
+  </header>
+
+  <p class="scroll-hint ch ch-0" data-scramble>Scroll down to
+discover.</p>
+
+  <button class="sound" type="button" aria-pressed="false">
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" />
+      <path class="wave" d="M11 5.5c1 1.4 1 3.6 0 5M12.8 3.8c1.9 2.4 1.9 6 0 8.4" stroke="currentColor" fill="none" stroke-width="1.1" />
+      <path class="mute" d="M11 6l4 4M15 6l-4 4" stroke="currentColor" stroke-width="1.1" />
+    </svg>
+    <span>Sound: <b>Off</b></span>
+  </button>
+
+  <div id="project-cards" class="ch ch-1" aria-hidden="true"></div>
+
+  <nav class="sr-only" aria-label="Projects">
+    <h2>Projects</h2>
+    <ul id="project-list"></ul>
+  </nav>
+
+  <nav class="carousel ch ch-3" aria-label="Social links">
+    <button class="arrow prev" type="button" aria-label="Previous link"><i></i></button>
+    <div class="track"></div>
+    <button class="arrow next" type="button" aria-label="Next link"><i></i></button>
+  </nav>
+
+  <div class="scroll-space" aria-hidden="true"></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
