@@ -118,6 +118,7 @@ export class UI {
 
   bindSeason(label, onNext) {
     const btn = document.querySelector('.season');
+    if (!btn) return; // an older cached page without the button must still boot
     const b = btn.querySelector('b');
     b.textContent = label;
     btn.addEventListener('click', () => scramble(b, onNext(), 400));
