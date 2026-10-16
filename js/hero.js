@@ -1,5 +1,5 @@
-// Chapter 0 — snowy valley with the VCDevelopments logo carved from snow. On load a wireframe of the
-// logo draws in large and spinning, then compacts down onto the solid sculpture. Every few seconds a
+// Chapter 0 — snowy valley with the VCDevelopments logo as a glowing neon outline. On load a wireframe of
+// the logo draws in large and spinning, then compacts down onto the neon logo. Every few seconds a
 // blueprint scan sweeps up the logo, briefly showing its wireframe, grid and measurements.
 // Hovering makes the wireframe flex out around the logo; clicking bursts it into particles that reassemble.
 import * as THREE from 'three';
@@ -137,6 +137,31 @@ function logoGeometries(radial, length, carve = 0) {
   return parts;
 }
 
+// The logo as flat 2D outlines (a stadium for the V, a round-capped open ring for the C).
+function logoShapes() {
+  const ab = LOGO.b.clone().sub(LOGO.a), ang = Math.atan2(ab.y, ab.x);
+  const blade = new THREE.Shape();
+  blade.absarc(LOGO.a.x, LOGO.a.y, LOGO.rb, ang + Math.PI / 2, ang + Math.PI * 1.5, false);
+  blade.absarc(LOGO.b.x, LOGO.b.y, LOGO.rb, ang - Math.PI / 2, ang + Math.PI / 2, false);
+  const a0 = LOGO.a0, a1 = LOGO.a0 + LOGO.sweep, ro = LOGO.ra + LOGO.rt, ri = LOGO.ra - LOGO.rt;
+  const e0 = arcPoint(0), e1 = arcPoint(1);
+  const arc = new THREE.Shape();
+  arc.absarc(LOGO.c.x, LOGO.c.y, ro, a0, a1, false);
+  arc.absarc(e1.x, e1.y, LOGO.rt, a1, a1 + Math.PI, false);
+  arc.absarc(LOGO.c.x, LOGO.c.y, ri, a1, a0, true);
+  arc.absarc(e0.x, e0.y, LOGO.rt, a0 + Math.PI, a0 + Math.PI * 2, false);
+  return [blade, arc];
+}
+
+// The neon logo: thin light tubes tracing each part's outline, on its front and back faces.
+const NEON_Z = 0.38, NEON_R = 0.05;
+function neonGeometries() {
+  return logoShapes().flatMap((shape) => {
+    const pts = shape.getPoints(160);
+    return [-NEON_Z, NEON_Z].map((z) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, z)), true), 600, NEON_R, 10, true));
+  });
+}
+
 // Wind-blown snow piled around the base.
 function driftGeometry(R) {
   const pts = [];
@@ -189,18 +214,19 @@ export function createHero(env) {
   const scanU = { uScan: { value: -100 }, uTime: { value: 0 } };
   const snowMat = snowBlockMaterial(tex, scanU);
 
-  // the solid logo, carved from snow; it pivots around its own centre
+  // the neon logo; it pivots around its own centre
   const solid = new THREE.Group();
   solid.position.copy(center);
-  const solidMat = snowBlockMaterial(tex, scanU); // its own material, so only the logo is clipped while it rebuilds
-  for (const g of logoGeometries(48, 160, 0.02)) solid.add(new THREE.Mesh(g.translate(-center.x, -center.y, 0), solidMat));
+  const neonGeos = neonGeometries().map((g) => g.translate(-center.x, -center.y, 0));
+  const neonMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, 2.4, 4), toneMapped: false });
+  solid.add(...neonGeos.map((g) => new THREE.Mesh(g, neonMat)));
   monument.add(solid);
 
-  // click: the logo bursts into snow grains that land back bottom-up, the solid growing behind them
-  const shatter = createShatter(logoGeometries(24, 80).map((g) => g.translate(-center.x, -center.y, 0)), { count: 6000, spread: 2.4, size: 110 });
+  // click: the outline bursts into sparks that land back bottom-up, the neon growing behind them
+  const shatter = createShatter(neonGeos, { count: 6000, spread: 2.4, size: 110, color: new THREE.Color(0.85, 0.97, 1) });
   shatter.points.position.copy(center);
   monument.add(shatter.points);
-  solidMat.clippingPlanes = [shatter.plane];
+  neonMat.clippingPlanes = [shatter.plane];
 
   // soft contact shadow where the logo meets the snow
   {
