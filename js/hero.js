@@ -1,10 +1,11 @@
 // Chapter 0 — snowy valley with the VCDevelopments logo carved from snow. On load a wireframe of the
 // logo draws in large and spinning, then compacts down onto the solid sculpture. Every few seconds a
 // blueprint scan sweeps up the logo, briefly showing its wireframe, grid and measurements.
-// Hovering makes the wireframe flex out around the logo; clicking sends a pulse through it.
+// Hovering makes the wireframe flex out around the logo; clicking bursts it into particles that reassemble.
 import * as THREE from 'three';
 import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
+import { createShatter, solidVisibility, SHATTER_DURATION } from './shatter.js';
 
 const BG = 0x9a9ea6;
 
@@ -194,6 +195,11 @@ export function createHero(env) {
   for (const g of logoGeometries(48, 160, 0.02)) solid.add(new THREE.Mesh(g.translate(-center.x, -center.y, 0), snowMat));
   monument.add(solid);
 
+  // click: the logo bursts into snow grains that reassemble it
+  const shatter = createShatter(logoGeometries(24, 80).map((g) => g.translate(-center.x, -center.y, 0)), { count: 6000, spread: 2.4, size: 110 });
+  shatter.points.position.copy(center);
+  monument.add(shatter.points);
+
   // soft contact shadow where the logo meets the snow
   {
     const c = document.createElement('canvas');
@@ -349,13 +355,13 @@ export function createHero(env) {
     camera.updateMatrixWorld();
     monument.updateMatrixWorld();
 
-    // pointer: hover flexes the wireframe out around the logo, a click sends a pulse through it
+    // pointer: hover flexes the wireframe out around the logo, a click bursts it into particles
     let hovering = false;
     if (ctx.pointer.inside && intro > 0.9 && local < 0.95) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
       if (raycaster.intersectObject(proxy, false)[0]) {
         hovering = true;
-        if (ctx.click) pulseT = time;
+        if (ctx.click && shatter.trigger(time)) pulseT = time + SHATTER_DURATION - 0.2; // the wireframe flashes as it locks back together
       }
     }
     ctx.cursor ||= hovering;
@@ -363,17 +369,19 @@ export function createHero(env) {
     hover += hoverV * dt;
     const pulse = Math.exp(-(time - pulseT) * 3.5) * (time >= pulseT ? 1 : 0);
 
+    const whole = solidVisibility(shatter.update(time, ctx)); // 0 while the logo is in pieces
     wireMat.uniforms.uDraw.value = lerp(-0.3, H + 0.3, smoothstep(0.1, 1.4, T));
     const introA = smoothstep(0, 0.3, T) * (1 - smoothstep(2.9, 3.6, T));
-    wireMat.uniforms.uA.value = Math.min(1.6, introA + snap * 0.8 + Math.max(0, hover) * 0.55 + pulse);
+    wireMat.uniforms.uA.value = Math.min(1.6, introA + snap * 0.8 + Math.max(0, hover) * 0.55 * whole + pulse);
     wire.scale.setScalar(lerp(1.9, 1, compact) + Math.max(0, hover) * 0.07 + pulse * 0.28);
     wire.rotation.y = (1 - compact) * 2.6 + Math.sin(time * 1.3) * 0.02 * hover;
-    wire.visible = wireMat.uniforms.uA.value > 0.002 || scanU.uScan.value > -50;
+    wire.visible = (wireMat.uniforms.uA.value > 0.002 || scanU.uScan.value > -50) && whole > 0.3; // no scan lines on the scattered pieces
     guideMat.opacity = smoothstep(0.2, 0.6, T) * (1 - smoothstep(1.6, 2.6, T)) * (0.22 + 0.13 * Math.sin(T * 40));
     guides.visible = guideMat.opacity > 0.001;
 
-    // the solid settles in with a tiny overshoot as the wire locks on
-    solid.scale.setScalar(lerp(0.92, 1, easeOut(smoothstep(2.3, 3.0, T))) + pulse * 0.03);
+    // the solid settles in with a tiny overshoot as the wire locks on, and hides while it is in pieces
+    solid.visible = whole > 0.01;
+    solid.scale.setScalar(lerp(0.92, 1, easeOut(smoothstep(2.3, 3.0, T))) * lerp(0.9, 1, whole) + pulse * 0.03);
 
     scanU.uTime.value = time;
     hud.visible = hudOn > 0.01;

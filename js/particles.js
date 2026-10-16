@@ -1,10 +1,12 @@
 // Chapter 3 — loose snow on a lit pedestal bursts into the VCDevelopments logo, shown as one
 // spinning blueprint: translucent shell, wireframe and particles all on the same shape.
-// Switching social links in the carousel makes the logo burst and re-form.
+// Switching social links in the carousel makes the logo burst and re-form; clicking it shatters it
+// into particles that reassemble.
 import * as THREE from 'three';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 import { rng, smoothstep } from './noise.js';
 import { blueprintMaterial, blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
+import { createShatter, solidVisibility } from './shatter.js';
 
 const BG = 0x9ea3ab;
 const N = 16000;
@@ -100,7 +102,8 @@ export function createParticles(env) {
   const shellMat = blueprintMaterial();
   const lineMat = blueprintLineMaterial(0);
   const { blade, arc } = logoParts(120, 24);
-  for (const g of [blade, arc]) logo.add(new THREE.Mesh(g, shellMat));
+  const shells = [blade, arc].map((g) => new THREE.Mesh(g, shellMat));
+  logo.add(...shells);
   const wireParts = logoParts(40, 10);
   for (const g of [wireParts.blade, wireParts.arc]) logo.add(new THREE.LineSegments(new THREE.WireframeGeometry(g), lineMat));
 
@@ -115,14 +118,14 @@ export function createParticles(env) {
   geo.setAttribute('aRnd', new THREE.BufferAttribute(rnd, 1));
 
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) }, uTint: blueprintLineColor },
+    uniforms: { uMorph: { value: 0 }, uFade: { value: 1 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) }, uTint: blueprintLineColor },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
       attribute vec3 aFrom;
       attribute float aRnd;
-      uniform float uMorph, uTime, uSize, uPix;
+      uniform float uMorph, uFade, uTime, uSize, uPix;
       varying float vAlpha;
       varying float vSnow;
       void main() {
@@ -132,7 +135,7 @@ export function createParticles(env) {
         p += dir * sin(3.14159 * m) * (0.8 + aRnd * 2.2);   // the pop: grains overshoot outward
         p += vec3(sin(uTime * 0.7 + aRnd * 40.0), cos(uTime * 0.6 + aRnd * 31.0), sin(uTime * 0.5 + aRnd * 23.0)) * 0.02;
         vSnow = 1.0 - m;
-        vAlpha = mix(0.75, 0.55, m);
+        vAlpha = mix(0.75, 0.55, m) * uFade;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_PointSize = uSize * uPix * (0.5 + aRnd * 0.8) / -mv.z;
         gl_Position = projectionMatrix * mv;
@@ -151,6 +154,12 @@ export function createParticles(env) {
   const points = new THREE.Points(geo, mat);
   points.frustumCulled = false;
   logo.add(points);
+
+  // click: the whole logo shatters into particles that reassemble
+  const shatter = createShatter([blade, arc], { count: 8000, spread: 2.1, size: 90, color: blueprintLineColor.value.clone().multiplyScalar(0.68), blending: THREE.AdditiveBlending });
+  logo.add(shatter.points);
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
 
   let morphStart = Infinity;
   let entered = false;
@@ -176,8 +185,19 @@ export function createParticles(env) {
     const m = Math.min(1, Math.max(0, (time - morphStart) / 1.8));
     mat.uniforms.uMorph.value = m;
 
-    // shell and wireframe resolve once the grains have landed
-    const solid = smoothstep(0.55, 1, m);
+    // pointer: clicking the logo (once it has formed) shatters it
+    if (m >= 1 && ctx.pointer.inside) {
+      raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
+      if (raycaster.intersectObjects(shells, false)[0]) {
+        ctx.cursor = true;
+        if (ctx.click) shatter.trigger(time);
+      }
+    }
+    const whole = solidVisibility(shatter.update(time, ctx));
+    mat.uniforms.uFade.value = whole;
+
+    // shell and wireframe resolve once the grains have landed, and hide while it is in pieces
+    const solid = smoothstep(0.55, 1, m) * whole;
     shellMat.uniforms.uReveal.value = solid;
     shellMat.uniforms.uTime.value = time;
     shellMat.uniforms.uScan.value = ((time * 0.4) % 1.6) * 5 - 3;
