@@ -100,42 +100,10 @@ const LOGO = {
   a: new THREE.Vector2(LX(36), LY(52)), b: new THREE.Vector2(LX(80), LY(150)), rb: 15 / LS,
   c: new THREE.Vector2(LX(130), LY(100)), ra: 40 / LS, rt: 13 / LS, a0: THREE.MathUtils.degToRad(35), sweep: THREE.MathUtils.degToRad(290),
 };
-const DEPTH = 0.78; // front-to-back squash, so it reads as a thick carved slab
 const arcPoint = (t) => new THREE.Vector2(LOGO.c.x + Math.cos(LOGO.a0 + t * LOGO.sweep) * LOGO.ra, LOGO.c.y + Math.sin(LOGO.a0 + t * LOGO.sweep) * LOGO.ra);
-class ArcCurve extends THREE.Curve {
-  getPoint(t, out = new THREE.Vector3()) { const p = arcPoint(t); return out.set(p.x, p.y, 0); }
-}
 const BOUNDS = { minX: LX(36) - LOGO.rb, maxX: LOGO.c.x + LOGO.ra + LOGO.rt, H: LY(52) + LOGO.rb };
 BOUNDS.W = BOUNDS.maxX - BOUNDS.minX;
 BOUNDS.center = new THREE.Vector3((BOUNDS.minX + BOUNDS.maxX) / 2, BOUNDS.H / 2, 0);
-
-// The logo's parts at a given resolution; `carve` roughens the surface like hand-cut snow.
-function logoGeometries(radial, length, carve = 0) {
-  const ab = LOGO.b.clone().sub(LOGO.a);
-  const blade = new THREE.CapsuleGeometry(LOGO.rb, ab.length(), Math.max(4, radial / 3), radial);
-  blade.rotateZ(Math.atan2(ab.y, ab.x) - Math.PI / 2);
-  blade.translate((LOGO.a.x + LOGO.b.x) / 2, (LOGO.a.y + LOGO.b.y) / 2, 0);
-  const arc = new THREE.TubeGeometry(new ArcCurve(), length, LOGO.rt, radial, false);
-  const parts = [blade, arc];
-  if (carve) {
-    for (const t of [0, 1]) {
-      const p = arcPoint(t);
-      parts.push(new THREE.SphereGeometry(LOGO.rt, radial, radial / 2).translate(p.x, p.y, 0));
-    }
-  }
-  for (const g of parts) {
-    g.scale(1, 1, DEPTH);
-    if (!carve) continue;
-    const p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) {
-      v.fromBufferAttribute(p, i);
-      const d = fbm3(v.x * 2.2, v.y * 2.2, v.z * 2.2, 4) * carve + fbm3(v.x * 9, v.y * 9, v.z * 9, 2) * carve * 0.25;
-      p.setXYZ(i, v.x + n.getX(i) * d, v.y + n.getY(i) * d, v.z + n.getZ(i) * d);
-    }
-    g.computeVertexNormals();
-  }
-  return parts;
-}
 
 // The logo as flat 2D outlines (a stadium for the V, a round-capped open ring for the C).
 function logoShapes() {
@@ -151,6 +119,22 @@ function logoShapes() {
   arc.absarc(LOGO.c.x, LOGO.c.y, ri, a1, a0, true);
   arc.absarc(e0.x, e0.y, LOGO.rt, a0 + Math.PI, a0 + Math.PI * 2, false);
   return [blade, arc];
+}
+
+// Wireframe of the neon logo: the front and back outlines joined by depth lines.
+function neonWireGeometry() {
+  const pos = [];
+  for (const shape of logoShapes()) {
+    const pts = shape.getSpacedPoints(96);
+    for (let i = 0; i < pts.length - 1; i++) {
+      const a = pts[i], b = pts[i + 1];
+      for (const z of [-NEON_Z, NEON_Z]) pos.push(a.x, a.y, z, b.x, b.y, z);
+      if (i % 3 === 0) pos.push(a.x, a.y, -NEON_Z, a.x, a.y, NEON_Z);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  return g;
 }
 
 // The neon logo: thin light tubes tracing each part's outline, on its front and back faces.
@@ -271,7 +255,7 @@ export function createHero(env) {
   });
   const wire = new THREE.Group();
   wire.position.copy(center);
-  for (const g of logoGeometries(14, 48)) wire.add(new THREE.LineSegments(new THREE.WireframeGeometry(g.translate(-center.x, -center.y, 0)), wireMat));
+  wire.add(new THREE.LineSegments(neonWireGeometry().translate(-center.x, -center.y, 0), wireMat));
   monument.add(wire);
 
   // faint construction lines flickering around the wireframe while it loads
