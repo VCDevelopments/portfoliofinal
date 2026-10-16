@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 import { rng, smoothstep } from './noise.js';
 import { blueprintMaterial, blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
-import { createShatter, solidVisibility } from './shatter.js';
+import { createShatter } from './shatter.js';
 
 const BG = 0x9ea3ab;
 const N = 16000;
@@ -118,14 +118,16 @@ export function createParticles(env) {
   geo.setAttribute('aRnd', new THREE.BufferAttribute(rnd, 1));
 
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uMorph: { value: 0 }, uFade: { value: 1 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) }, uTint: blueprintLineColor },
+    uniforms: { uMorph: { value: 0 }, uTime: { value: 0 }, uSize: { value: 40 }, uPix: { value: 1 }, uBurst: { value: new THREE.Color(1, 1, 1) }, uTint: blueprintLineColor },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
+    clipping: true,
     vertexShader: /* glsl */ `
       attribute vec3 aFrom;
       attribute float aRnd;
-      uniform float uMorph, uFade, uTime, uSize, uPix;
+      #include <clipping_planes_pars_vertex>
+      uniform float uMorph, uTime, uSize, uPix;
       varying float vAlpha;
       varying float vSnow;
       void main() {
@@ -135,16 +137,20 @@ export function createParticles(env) {
         p += dir * sin(3.14159 * m) * (0.8 + aRnd * 2.2);   // the pop: grains overshoot outward
         p += vec3(sin(uTime * 0.7 + aRnd * 40.0), cos(uTime * 0.6 + aRnd * 31.0), sin(uTime * 0.5 + aRnd * 23.0)) * 0.02;
         vSnow = 1.0 - m;
-        vAlpha = mix(0.75, 0.55, m) * uFade;
+        vAlpha = mix(0.75, 0.55, m);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        vec4 mvPosition = mv;
+        #include <clipping_planes_vertex>
         gl_PointSize = uSize * uPix * (0.5 + aRnd * 0.8) / -mv.z;
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
+      #include <clipping_planes_pars_fragment>
       uniform vec3 uBurst, uTint;
       varying float vAlpha;
       varying float vSnow;
       void main() {
+        #include <clipping_planes_fragment>
         float d = length(gl_PointCoord - 0.5);
         if (d > 0.5) discard;
         vec3 col = mix(uTint * 0.68, uBurst, vSnow);  // white snow turns blueprint cyan
@@ -155,9 +161,11 @@ export function createParticles(env) {
   points.frustumCulled = false;
   logo.add(points);
 
-  // click: the whole logo shatters into particles that reassemble
+  // click: the whole logo shatters into particles that land back bottom-up; shell, wireframe and
+  // grains grow back behind them
   const shatter = createShatter([blade, arc], { count: 8000, spread: 2.1, size: 90, color: blueprintLineColor.value.clone().multiplyScalar(0.68), blending: THREE.AdditiveBlending });
   logo.add(shatter.points);
+  for (const m of [shellMat, lineMat, mat]) m.clippingPlanes = [shatter.plane];
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
 
@@ -193,11 +201,10 @@ export function createParticles(env) {
         if (ctx.click) shatter.trigger(time);
       }
     }
-    const whole = solidVisibility(shatter.update(time, ctx));
-    mat.uniforms.uFade.value = whole;
+    shatter.update(time, ctx);
 
-    // shell and wireframe resolve once the grains have landed, and hide while it is in pieces
-    const solid = smoothstep(0.55, 1, m) * whole;
+    // shell and wireframe resolve once the grains have landed
+    const solid = smoothstep(0.55, 1, m);
     shellMat.uniforms.uReveal.value = solid;
     shellMat.uniforms.uTime.value = time;
     shellMat.uniforms.uScan.value = ((time * 0.4) % 1.6) * 5 - 3;

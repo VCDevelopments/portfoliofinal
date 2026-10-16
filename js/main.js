@@ -18,6 +18,7 @@ const TW = 0.028;
 
 const canvas = document.getElementById('gl');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+renderer.localClippingEnabled = true; // the logos rebuild behind a rising clip plane after a click (shatter.js)
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.82;
 

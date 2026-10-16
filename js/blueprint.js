@@ -16,7 +16,9 @@ export function blueprintMaterial() {
     transparent: true,
     depthWrite: false,
     side: THREE.DoubleSide,
+    clipping: true, // honours clippingPlanes (the finale logo rebuilds behind one)
     vertexShader: /* glsl */ `
+      #include <clipping_planes_pars_vertex>
       varying vec3 vN, vV, vW;
       void main() {
         vec4 p = vec4(position, 1.0);
@@ -28,15 +30,19 @@ export function blueprintMaterial() {
         vec4 w = modelMatrix * p;
         vW = w.xyz;
         vec4 mv = viewMatrix * w;
+        vec4 mvPosition = mv;
+        #include <clipping_planes_vertex>
         vN = normalize(mat3(modelViewMatrix) * n);
         vV = normalize(-mv.xyz);
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
+      #include <clipping_planes_pars_fragment>
       uniform float uTime, uScan, uReveal;
       uniform vec3 uBase, uEdge;
       varying vec3 vN, vV, vW;
       void main() {
+        #include <clipping_planes_fragment>
         float fres = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.2);
         float lines = 0.75 + 0.25 * step(0.5, fract(vW.y * 14.0));
         float scan = exp(-pow((vW.y - uScan) * 3.0, 2.0));

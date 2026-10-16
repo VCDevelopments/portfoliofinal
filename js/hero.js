@@ -5,7 +5,7 @@
 import * as THREE from 'three';
 import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
-import { createShatter, solidVisibility, SHATTER_DURATION } from './shatter.js';
+import { createShatter, SHATTER_DURATION } from './shatter.js';
 
 const BG = 0x9a9ea6;
 
@@ -192,13 +192,15 @@ export function createHero(env) {
   // the solid logo, carved from snow; it pivots around its own centre
   const solid = new THREE.Group();
   solid.position.copy(center);
-  for (const g of logoGeometries(48, 160, 0.02)) solid.add(new THREE.Mesh(g.translate(-center.x, -center.y, 0), snowMat));
+  const solidMat = snowBlockMaterial(tex, scanU); // its own material, so only the logo is clipped while it rebuilds
+  for (const g of logoGeometries(48, 160, 0.02)) solid.add(new THREE.Mesh(g.translate(-center.x, -center.y, 0), solidMat));
   monument.add(solid);
 
-  // click: the logo bursts into snow grains that reassemble it
+  // click: the logo bursts into snow grains that land back bottom-up, the solid growing behind them
   const shatter = createShatter(logoGeometries(24, 80).map((g) => g.translate(-center.x, -center.y, 0)), { count: 6000, spread: 2.4, size: 110 });
   shatter.points.position.copy(center);
   monument.add(shatter.points);
+  solidMat.clippingPlanes = [shatter.plane];
 
   // soft contact shadow where the logo meets the snow
   {
@@ -369,19 +371,18 @@ export function createHero(env) {
     hover += hoverV * dt;
     const pulse = Math.exp(-(time - pulseT) * 3.5) * (time >= pulseT ? 1 : 0);
 
-    const whole = solidVisibility(shatter.update(time, ctx)); // 0 while the logo is in pieces
+    const whole = shatter.update(time, ctx); // 0 while the logo is in pieces, back to 1 as it rebuilds
     wireMat.uniforms.uDraw.value = lerp(-0.3, H + 0.3, smoothstep(0.1, 1.4, T));
     const introA = smoothstep(0, 0.3, T) * (1 - smoothstep(2.9, 3.6, T));
     wireMat.uniforms.uA.value = Math.min(1.6, introA + snap * 0.8 + Math.max(0, hover) * 0.55 * whole + pulse);
     wire.scale.setScalar(lerp(1.9, 1, compact) + Math.max(0, hover) * 0.07 + pulse * 0.28);
     wire.rotation.y = (1 - compact) * 2.6 + Math.sin(time * 1.3) * 0.02 * hover;
-    wire.visible = (wireMat.uniforms.uA.value > 0.002 || scanU.uScan.value > -50) && whole > 0.3; // no scan lines on the scattered pieces
+    wire.visible = (wireMat.uniforms.uA.value > 0.002 || scanU.uScan.value > -50) && whole >= 1; // no wireframe or scan lines until it has rebuilt
     guideMat.opacity = smoothstep(0.2, 0.6, T) * (1 - smoothstep(1.6, 2.6, T)) * (0.22 + 0.13 * Math.sin(T * 40));
     guides.visible = guideMat.opacity > 0.001;
 
-    // the solid settles in with a tiny overshoot as the wire locks on, and hides while it is in pieces
-    solid.visible = whole > 0.01;
-    solid.scale.setScalar(lerp(0.92, 1, easeOut(smoothstep(2.3, 3.0, T))) * lerp(0.9, 1, whole) + pulse * 0.03);
+    // the solid settles in with a tiny overshoot as the wire locks on
+    solid.scale.setScalar(lerp(0.92, 1, easeOut(smoothstep(2.3, 3.0, T))) + pulse * 0.03);
 
     scanU.uTime.value = time;
     hud.visible = hudOn > 0.01;
