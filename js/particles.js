@@ -1,12 +1,13 @@
-// Chapter 3 — loose snow on a lit pedestal bursts into the VCDevelopments logo, shown as one
-// spinning blueprint: translucent shell, wireframe and particles all on the same shape.
+// Chapter 3 — loose snow on a lit pedestal bursts into the VCDevelopments logo, shown as the same
+// spinning neon sign as the landing page: light tubes, wireframe and particles all on one shape.
 // Switching social links in the carousel makes the logo burst and re-form; clicking it shatters it
 // into particles that reassemble.
 import * as THREE from 'three';
 import { MeshSurfaceSampler } from 'three/addons/math/MeshSurfaceSampler.js';
 import { rng, smoothstep } from './noise.js';
-import { blueprintMaterial, blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
+import { blueprintLineMaterial, blueprintLineColor } from './blueprint.js';
 import { createShatter } from './shatter.js';
+import { BOUNDS, neonGeometries, neonWireGeometry, neonMaterial } from './neonLogo.js';
 
 const BG = 0x9ea3ab;
 const N = 16000;
@@ -22,29 +23,14 @@ function sampleGeometry(geo, count, seed) {
   return out;
 }
 
-// Logo 28 in 3D: a capsule blade for the V and a thick open arc for the C (logo units -> world).
-const LX = (px) => (px - 108) / 28, LY = (py) => -(py - 100) / 28;
-class ArcCurve extends THREE.Curve {
-  getPoint(t, out = new THREE.Vector3()) {
-    const a = THREE.MathUtils.degToRad(35 + t * 290);
-    return out.set(LX(130) + Math.cos(a) * (40 / 28), Math.sin(a) * (40 / 28), 0);
-  }
-}
-function logoParts(tubular, radial) {
-  const a = new THREE.Vector3(LX(36), LY(52), 0), b = new THREE.Vector3(LX(80), LY(150), 0);
-  const blade = new THREE.CapsuleGeometry(15 / 28, a.distanceTo(b), 12, radial);
-  blade.rotateZ(Math.atan2(b.y - a.y, b.x - a.x) - Math.PI / 2);
-  blade.translate((a.x + b.x) / 2, (a.y + b.y) / 2, 0);
-  const arc = new THREE.TubeGeometry(new ArcCurve(), tubular, 13 / 28, radial, false);
-  return { blade, arc };
-}
-
-function logoPoints() {
-  const { blade, arc } = logoParts(120, 24);
-  const nb = Math.floor(N * 0.42);
+// grains spread evenly over the neon tubes
+function logoPoints(geos) {
   const pos = new Float32Array(N * 3);
-  pos.set(sampleGeometry(blade, nb, 6));
-  pos.set(sampleGeometry(arc, N - nb, 7), nb * 3);
+  const per = Math.ceil(N / geos.length);
+  geos.forEach((g, k) => {
+    const n = Math.min(per, N - k * per);
+    pos.set(sampleGeometry(g, n, 6 + k), k * per * 3);
+  });
   return pos;
 }
 
@@ -95,20 +81,23 @@ export function createParticles(env) {
   halo.position.y = 7.5;
   scene.add(halo);
 
-  // the logo: blueprint shell + wireframe on the exact same geometry, spinning together
+  // the logo: neon tubes + their wireframe, spinning together
   const logo = new THREE.Group();
   logo.position.y = 0.4;
+  logo.scale.setScalar(0.86); // the neon logo is built for the landing scene; fit it to this stage
   scene.add(logo);
-  const shellMat = blueprintMaterial();
+  const neonGeos = neonGeometries();
+  const neonMat = neonMaterial({ transparent: true, opacity: 0 });
+  logo.add(...neonGeos.map((g) => new THREE.Mesh(g, neonMat)));
   const lineMat = blueprintLineMaterial(0);
-  const { blade, arc } = logoParts(120, 24);
-  const shells = [blade, arc].map((g) => new THREE.Mesh(g, shellMat));
-  logo.add(...shells);
-  const wireParts = logoParts(40, 10);
-  for (const g of [wireParts.blade, wireParts.arc]) logo.add(new THREE.LineSegments(new THREE.WireframeGeometry(g), lineMat));
+  logo.add(new THREE.LineSegments(neonWireGeometry(), lineMat));
+  // invisible box the pointer is tested against (the tubes alone are too thin to hit)
+  const proxy = new THREE.Mesh(new THREE.BoxGeometry(BOUNDS.W + 0.4, BOUNDS.H + 0.4, 1.2), new THREE.MeshBasicMaterial());
+  proxy.visible = false;
+  logo.add(proxy);
 
-  // particles: start as snow, burst onto the logo's surface
-  const target = logoPoints();
+  // particles: start as snow, burst onto the neon outline
+  const target = logoPoints(neonGeos);
   const geo = new THREE.BufferGeometry();
   const rnd = new Float32Array(N);
   const r = rng(31);
@@ -161,11 +150,11 @@ export function createParticles(env) {
   points.frustumCulled = false;
   logo.add(points);
 
-  // click: the whole logo shatters into particles that land back bottom-up; shell, wireframe and
+  // click: the whole logo shatters into particles that land back bottom-up; neon, wireframe and
   // grains grow back behind them
-  const shatter = createShatter([blade, arc], { count: 8000, spread: 2.1, size: 90, color: blueprintLineColor.value.clone().multiplyScalar(0.68), blending: THREE.AdditiveBlending });
+  const shatter = createShatter(neonGeos, { count: 8000, spread: 2.1, size: 90, color: blueprintLineColor.value.clone().multiplyScalar(0.68), blending: THREE.AdditiveBlending });
   logo.add(shatter.points);
-  for (const m of [shellMat, lineMat, mat]) m.clippingPlanes = [shatter.plane];
+  for (const m of [neonMat, lineMat, mat]) m.clippingPlanes = [shatter.plane];
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
 
@@ -196,19 +185,17 @@ export function createParticles(env) {
     // pointer: clicking the logo (once it has formed) shatters it
     if (m >= 1 && ctx.pointer.inside) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
-      if (raycaster.intersectObjects(shells, false)[0]) {
+      if (raycaster.intersectObject(proxy, false)[0]) {
         ctx.cursor = true;
         if (ctx.click) shatter.trigger(time);
       }
     }
     shatter.update(time, ctx);
 
-    // shell and wireframe resolve once the grains have landed
+    // neon and wireframe light up once the grains have landed
     const solid = smoothstep(0.55, 1, m);
-    shellMat.uniforms.uReveal.value = solid;
-    shellMat.uniforms.uTime.value = time;
-    shellMat.uniforms.uScan.value = ((time * 0.4) % 1.6) * 5 - 3;
-    lineMat.opacity = solid * 0.55;
+    neonMat.opacity = solid;
+    lineMat.opacity = solid * 0.4;
     logo.rotation.y = time * 0.5;
 
     const a = mouse.x * 0.35;
