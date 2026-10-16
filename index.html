@@ -10,12 +10,27 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@200;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="brand/vcd-logo-28.svg" />
   <link rel="apple-touch-icon" href="brand/vcd-avatar-28-dark.png" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
+  <!-- Bump v= on style.css and every ./js/ entry below with each deploy, so browsers fetch fresh files
+       instead of a cached copy (GitHub Pages lets them keep files for 10 minutes). -->
   <script type="importmap">
     {
       "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+        "./js/audio.js": "./js/audio.js?v=2",
+        "./js/blueprint.js": "./js/blueprint.js?v=2",
+        "./js/crystals.js": "./js/crystals.js?v=2",
+        "./js/hero.js": "./js/hero.js?v=2",
+        "./js/links.js": "./js/links.js?v=2",
+        "./js/main.js": "./js/main.js?v=2",
+        "./js/noise.js": "./js/noise.js?v=2",
+        "./js/particles.js": "./js/particles.js?v=2",
+        "./js/post.js": "./js/post.js?v=2",
+        "./js/projects.js": "./js/projects.js?v=2",
+        "./js/rings.js": "./js/rings.js?v=2",
+        "./js/textures.js": "./js/textures.js?v=2",
+        "./js/ui.js": "./js/ui.js?v=2"
       }
     }
   </script>
@@ -98,6 +113,6 @@ discover.</p>
 
   <div class="scroll-space" aria-hidden="true"></div>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=2"></script>
 </body>
 </html>
