@@ -13,7 +13,7 @@ import { clamp01, easeOut } from './noise.js';
 import { installExternalLinks } from './links.js';
 
 // chapter i occupies scroll progress BOUNDS[i]..BOUNDS[i+1]; transitions straddle each boundary
-const BOUNDS = [0, 0.13, 0.66, 0.81, 1];
+const BOUNDS = [0, 0.158, 0.586, 0.767, 1];
 const TW = 0.028;
 
 const canvas = document.getElementById('gl');
@@ -153,7 +153,7 @@ addEventListener('pointermove', (e) => {
 });
 document.documentElement.addEventListener('pointerleave', () => { ctx.pointer.inside = false; });
 addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('a, button')) ctx.click = true;
+  if (!e.target.closest('a, button, dialog')) ctx.click = true;
 });
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -166,12 +166,13 @@ const cards = PROJECTS.map((p, i) => {
   el.innerHTML = `<span class="num">PROJECT ${String(i + 1).padStart(2, '0')} / ${String(PROJECTS.length).padStart(2, '0')}</span>
     <img alt="" loading="lazy" />
     <h3></h3><p></p><span class="stack"></span>
-    <a target="_blank" rel="noopener" tabindex="-1">View on GitHub ↗</a>`;
+    ${p.url ? '<a target="_blank" rel="noopener" tabindex="-1">View on GitHub ↗</a>' : '<button type="button" tabindex="-1">Read more +</button>'}`;
   el.querySelector('img').src = p.image;
   el.querySelector('h3').textContent = p.name;
   el.querySelector('p').textContent = p.blurb.replace('\n', ' ');
   el.querySelector('.stack').textContent = p.stack;
-  el.querySelector('a').href = p.url;
+  if (p.url) el.querySelector('a').href = p.url;
+  else el.querySelector('button').addEventListener('click', () => openProject(i));
   return el;
 });
 document.getElementById('project-cards').append(...cards);
@@ -184,10 +185,29 @@ function updateCards(active) {
 
 // screen-reader / keyboard access to the projects shown in the 3D ice blocks
 document.getElementById('project-list').append(
-  ...PROJECTS.map((p) => {
+  ...PROJECTS.map((p, i) => {
     const li = document.createElement('li');
-    const a = Object.assign(document.createElement('a'), { href: p.url, target: '_blank', rel: 'noopener', textContent: `${p.name} — ${p.blurb.replace('\n', ' ')} (${p.stack})` });
-    li.append(a);
+    const label = `${p.name} — ${p.blurb.replace('\n', ' ')} (${p.stack})`;
+    const el = p.url
+      ? Object.assign(document.createElement('a'), { href: p.url, target: '_blank', rel: 'noopener', textContent: label })
+      : Object.assign(document.createElement('button'), { type: 'button', textContent: label, onclick: () => openProject(i) });
+    li.append(el);
     return li;
   }),
 );
+
+// pop-up explaining a project that has no link (like igloo.inc's project overlay);
+// <dialog> handles focus, Esc and the inert page behind it
+const dialog = document.getElementById('project-dialog');
+function openProject(i) {
+  const p = PROJECTS[i];
+  dialog.querySelector('.status').textContent = p.details.status;
+  dialog.querySelector('h2').textContent = p.name;
+  dialog.querySelector('img').src = p.image;
+  dialog.querySelector('.stack').textContent = p.stack;
+  dialog.querySelector('.body').replaceChildren(...p.details.body.map((t) => Object.assign(document.createElement('p'), { textContent: t })));
+  dialog.style.setProperty('--glow', p.colors[2]);
+  dialog.showModal();
+}
+ctx.openProject = openProject;
+dialog.addEventListener('click', (e) => { if (e.target === dialog || e.target.closest('.close')) dialog.close(); });

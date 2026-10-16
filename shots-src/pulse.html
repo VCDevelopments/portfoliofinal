@@ -1,0 +1,48 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Pulse</title><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"><style>html,body{margin:0}</style></head><body>
+<div style="position: relative; width: 1200px; height: 800px; overflow: hidden; background: linear-gradient(135deg, #12102B, #3C2A7A); display: flex; align-items: center; justify-content: center; font-family: 'Outfit', sans-serif">
+  <div style="width: 1060px; height: 660px; border-radius: 16px; background: #0F0E1F; box-shadow: 0 40px 80px rgba(0,0,0,0.45); display: flex; overflow: hidden; color: #ECEAF7">
+    <!-- sidebar -->
+    <div style="width: 200px; background: #16142C; padding: 24px 18px; display: flex; flex-direction: column; gap: 6px">
+      <div style="font: 800 24px/1 'Outfit', sans-serif; margin-bottom: 22px; display: flex; align-items: center; gap: 10px"><span style="width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #8B6CF6, #4FD1C5)"></span>Pulse</div>
+      <div style="padding: 10px 12px; border-radius: 8px; background: #2A2550; font: 500 14px/1 'Outfit', sans-serif">Overview</div>
+      <div style="padding: 10px 12px; font: 400 14px/1 'Outfit', sans-serif; color: #A9A4C9">Campaigns</div>
+      <div style="padding: 10px 12px; font: 400 14px/1 'Outfit', sans-serif; color: #A9A4C9">Automations</div>
+      <div style="padding: 10px 12px; font: 400 14px/1 'Outfit', sans-serif; color: #A9A4C9">Creatives</div>
+      <div style="padding: 10px 12px; font: 400 14px/1 'Outfit', sans-serif; color: #A9A4C9">Reports</div>
+    </div>
+    <!-- main -->
+    <div style="flex: 1; padding: 26px 30px; display: flex; flex-direction: column; gap: 20px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <div style="font: 700 26px/1 'Outfit', sans-serif">Overview</div>
+        <div style="padding: 9px 14px; border-radius: 8px; background: #8B6CF6; color: #fff; font: 500 13px/1 'Outfit', sans-serif">+ New automation</div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px"><div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px"><div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Spend</div><div style="font: 700 26px/1 'Outfit', sans-serif">€4,820</div><div style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #A9A4C9">+6% WEEK</div></div><div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px"><div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Results</div><div style="font: 700 26px/1 'Outfit', sans-serif">1,312</div><div style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #8FF0E3">+18% WEEK</div></div><div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px"><div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Cost per result</div><div style="font: 700 26px/1 'Outfit', sans-serif">€3.67</div><div style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #8FF0E3">−11% WEEK</div></div><div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 8px"><div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Rules run</div><div style="font: 700 26px/1 'Outfit', sans-serif">47</div><div style="font: 500 12px/1 'IBM Plex Mono', monospace; color: #C9B8FF">TODAY</div></div></div>
+      <!-- chart -->
+      <div style="border-radius: 12px; background: #16142C; padding: 18px 20px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9"><span>Spend vs. results</span><span style="font-family: 'IBM Plex Mono', monospace">LAST 30 DAYS</span></div>
+        <svg width="100%" height="170" viewBox="0 0 760 170" preserveAspectRatio="none" aria-hidden="true">
+          <defs><linearGradient id="a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B6CF6" stop-opacity="0.45"></stop><stop offset="1" stop-color="#8B6CF6" stop-opacity="0"></stop></linearGradient></defs>
+          <g stroke="#2A2550" stroke-width="1"><line x1="0" y1="40" x2="760" y2="40"></line><line x1="0" y1="90" x2="760" y2="90"></line><line x1="0" y1="140" x2="760" y2="140"></line></g>
+          <path d="M0,120 C60,110 100,90 160,96 S260,70 320,74 S420,52 480,60 S600,34 660,40 S730,30 760,28 L760,170 L0,170 Z" fill="url(#a)"></path>
+          <path d="M0,120 C60,110 100,90 160,96 S260,70 320,74 S420,52 480,60 S600,34 660,40 S730,30 760,28" fill="none" stroke="#8B6CF6" stroke-width="3"></path>
+          <path d="M0,130 C80,128 140,118 220,120 S360,104 440,106 S580,92 660,90 S730,86 760,84" fill="none" stroke="#4FD1C5" stroke-width="2.5" stroke-dasharray="6 6"></path>
+        </svg>
+      </div>
+      <!-- rows -->
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+        <div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Automation</div>
+          <div style="font: 400 15px/1.45 'Outfit', sans-serif">When <b style="color: #C9B8FF">cost per result</b> rises above target for 2 days, <b style="color: #8FF0E3">lower the budget 10%</b> and notify me.</div>
+          <div style="display: flex; gap: 8px"><span style="padding: 5px 9px; border-radius: 6px; background: #1F3B39; color: #8FF0E3; font: 500 11px/1 'IBM Plex Mono', monospace">ACTIVE</span><span style="padding: 5px 9px; border-radius: 6px; background: #2A2550; color: #C9B8FF; font: 500 11px/1 'IBM Plex Mono', monospace">ALL CAMPAIGNS</span></div>
+        </div>
+        <div style="border-radius: 12px; background: #16142C; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px">
+          <div style="font: 500 13px/1 'Outfit', sans-serif; color: #A9A4C9">Campaigns</div>
+          <div style="display: flex; justify-content: space-between; font: 400 14px/1 'Outfit', sans-serif"><span>Spring launch</span><span style="color: #8FF0E3">Scaling</span></div>
+          <div style="display: flex; justify-content: space-between; font: 400 14px/1 'Outfit', sans-serif"><span>Retargeting</span><span style="color: #C9B8FF">Learning</span></div>
+          <div style="display: flex; justify-content: space-between; font: 400 14px/1 'Outfit', sans-serif"><span>Brand video</span><span style="color: #A9A4C9">Paused by rule</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body></html>

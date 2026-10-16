@@ -32,7 +32,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 #lines, #callouts { pointer-events: none; }
 #lines path { fill: none; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1; }
 
-.scroll-space { height: 1600vh; }
+.scroll-space { height: 1320vh; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
@@ -236,7 +236,7 @@ body.is-grab { cursor: pointer; }
 .project-card h3 { font: 800 30px/1 "Outfit", sans-serif; letter-spacing: -0.03em; margin: 2px 0 0; }
 .project-card p { font: 300 15px/1.4 "Outfit", sans-serif; margin: 0; text-shadow: none; }
 .project-card .stack { font: 500 11px/1.4 var(--mono); color: rgba(255, 255, 255, 0.75); }
-.project-card a {
+.project-card a, .project-card button {
   align-self: flex-start;
   margin-top: 4px;
   padding: 10px 14px;
@@ -246,7 +246,8 @@ body.is-grab { cursor: pointer; }
   font: 500 12px/1 var(--mono);
   transition: background 0.3s, color 0.3s;
 }
-.project-card a:hover, .project-card a:focus-visible { background: #fff; color: #1e242e; }
+.project-card a:hover, .project-card a:focus-visible,
+.project-card button:hover, .project-card button:focus-visible { background: #fff; color: #1e242e; }
 
 @media (max-width: 720px), (max-aspect-ratio: 11/10) {
   .project-card { top: auto; bottom: 64px; left: 16px; right: 16px; width: auto; transform: translateY(var(--dx, 0)); }
@@ -254,3 +255,31 @@ body.is-grab { cursor: pointer; }
   .project-card.active { --dx: 0px; }
   .project-card img { display: none; }
 }
+
+/* ---------- project pop-up ---------- */
+#project-dialog {
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(30, 36, 46, 0.55);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  color: var(--fg);
+  box-shadow: 0 0 80px -20px var(--glow, #7dc8ff);
+  overflow: auto;
+}
+#project-dialog::backdrop { background: rgba(20, 24, 32, 0.45); }
+#project-dialog[open] { animation: dialog-in 0.5s var(--ease); }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(24px); } }
+#project-dialog .sheet { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+#project-dialog .close { align-self: flex-end; padding: 8px 12px; border: 1px solid rgba(255, 255, 255, 0.6); font: 500 11px/1 var(--mono); }
+#project-dialog .close:hover, #project-dialog .close:focus-visible { background: #fff; color: #1e242e; }
+#project-dialog .status { font: 500 11px/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--glow, #fff); text-shadow: none; }
+#project-dialog h2 { font: 800 40px/1 "Outfit", sans-serif; letter-spacing: -0.03em; }
+#project-dialog img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+#project-dialog .body { display: flex; flex-direction: column; gap: 10px; }
+#project-dialog .body p { font: 300 16px/1.5 "Outfit", sans-serif; text-shadow: none; }
+#project-dialog .stack { font: 500 11px/1.4 var(--mono); color: rgba(255, 255, 255, 0.75); }
+@media (prefers-reduced-motion: reduce) { #project-dialog[open] { animation: none; } }
