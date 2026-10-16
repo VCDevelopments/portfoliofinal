@@ -264,10 +264,5 @@ export function createCrystals(env) {
     });
   }
 
-  // seasons only tint the drifting dust; the backgrounds belong to the projects
-  function setSeason(S) {
-    dustPts.material.color.setRGB(...S.air.colors[0]);
-  }
-
-  return { scene, camera, update, callouts, state, setSeason };
+  return { scene, camera, update, callouts, state };
 }

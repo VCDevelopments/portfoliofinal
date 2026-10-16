@@ -1,5 +1,5 @@
 // Shared holographic "blueprint" look used by the opening scan, the rings and the finale logo.
-// All blueprint materials share one tint, so tintBlueprint() recolours them together per season.
+// All blueprint materials share one cyan tint.
 import * as THREE from 'three';
 
 const TINT = {
@@ -7,7 +7,6 @@ const TINT = {
   uEdge: { value: new THREE.Color(0.35, 0.72, 1.15) },
   uLine: { value: new THREE.Color(0.7, 1.15, 1.9) },
 };
-const lineMaterials = [];
 
 // Translucent faces that brighten toward the silhouette (fresnel), faint scan lines,
 // and a bright band sweeping upward.
@@ -48,19 +47,10 @@ export function blueprintMaterial() {
   });
 }
 
-// Bright linework for blueprint wireframes and annotations, in the current season's tint.
+// Bright linework for blueprint wireframes and annotations.
 export function blueprintLineMaterial(opacity = 0.6, extra = {}) {
-  const m = new THREE.LineBasicMaterial({ color: TINT.uLine.value.clone(), transparent: true, opacity, fog: false, depthWrite: false, blending: THREE.AdditiveBlending, ...extra });
-  lineMaterials.push(m);
-  return m;
+  return new THREE.LineBasicMaterial({ color: TINT.uLine.value.clone(), transparent: true, opacity, fog: false, depthWrite: false, blending: THREE.AdditiveBlending, ...extra });
 }
 
 // The line colour as a shared uniform, for custom shaders that draw blueprint lines.
 export const blueprintLineColor = TINT.uLine;
-
-export function tintBlueprint(S) {
-  TINT.uBase.value.setRGB(...S.bp.base);
-  TINT.uEdge.value.setRGB(...S.bp.edge);
-  TINT.uLine.value.setRGB(...S.bp.line);
-  for (const m of lineMaterials) m.color.copy(TINT.uLine.value);
-}

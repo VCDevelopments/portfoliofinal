@@ -144,7 +144,7 @@ export function createParticles(env) {
       void main() {
         float d = length(gl_PointCoord - 0.5);
         if (d > 0.5) discard;
-        vec3 col = mix(uTint * 0.68, uBurst, vSnow);  // the season's snow/petals/pollen/leaves turn blueprint cyan
+        vec3 col = mix(uTint * 0.68, uBurst, vSnow);  // white snow turns blueprint cyan
         gl_FragColor = vec4(col, vAlpha * smoothstep(0.5, 0.2, d));
       }`,
   });
@@ -190,13 +190,5 @@ export function createParticles(env) {
     camera.lookAt(0, 0.55, 0);
   }
 
-  function setSeason(S) {
-    scene.background.setHex(S.finale);
-    scene.fog.color.setHex(S.finale);
-    floor.material.color.setHex(S.floor);
-    pedestal.material.color.setHex(S.floor).multiplyScalar(0.82);
-    mat.uniforms.uBurst.value.setRGB(...S.burst);
-  }
-
-  return { scene, camera, update, setShape, setSeason, callouts: [] };
+  return { scene, camera, update, setShape, callouts: [] };
 }

@@ -9,7 +9,7 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body { background: var(--bg); color: var(--fg); transition: background 0.8s; }
+html, body { background: var(--bg); color: var(--fg); }
 
 body {
   font: 400 11px/1.35 var(--mono);
@@ -44,7 +44,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   display: grid;
   place-items: center;
   background: var(--bg);
-  transition: opacity 0.5s var(--ease), visibility 0.5s, background 0.8s;
+  transition: opacity 0.5s var(--ease), visibility 0.5s;
 }
 #loader.done { opacity: 0; visibility: hidden; }
 .loader-bar {
@@ -57,12 +57,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 /* HUD stays hidden while the wireframe intro plays */
 body.is-intro .hud,
 body.is-intro .scroll-hint.ch,
-body.is-intro .sound,
-body.is-intro .season { opacity: 0; }
-.hud, .scroll-hint, .sound, .season { transition: opacity 0.8s var(--ease); }
+body.is-intro .sound { opacity: 0; }
+.hud, .scroll-hint, .sound { transition: opacity 0.8s var(--ease); }
 
 /* ---------- HUD ---------- */
-.hud, .scroll-hint, .sound, .season, .carousel { position: fixed; z-index: 10; }
+.hud, .scroll-hint, .sound, .carousel { position: fixed; z-index: 10; }
 .hud { inset: 0 0 auto 0; padding: var(--gutter); pointer-events: none; }
 .hud a, .hud button { pointer-events: auto; }
 
@@ -116,41 +115,7 @@ body.is-intro .season { opacity: 0; }
 .sound .wave { display: none; }
 .sound[aria-pressed="true"] .wave { display: block; }
 .sound[aria-pressed="true"] .mute { display: none; }
-.season {
-  left: calc(var(--gutter) + 118px);
-  bottom: var(--gutter);
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  padding: 4px 0;
-}
-.season b { font-weight: 400; }
-
-/* big season title that flashes up when the season changes */
-#season-title {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(1.04);
-  transition: opacity 0.6s var(--ease), transform 1.6s var(--ease);
-}
-#season-title.show { opacity: 1; transform: scale(1); }
-#season-title .big {
-  font: 800 clamp(64px, 15vw, 220px)/0.9 "Outfit", sans-serif;
-  letter-spacing: -0.05em;
-  text-shadow: 0 6px 40px rgba(20, 24, 30, 0.35);
-}
-#season-title .small { font: 500 12px/1 var(--mono); letter-spacing: 0.3em; text-transform: uppercase; }
-.season:hover svg { transform: rotate(90deg); }
-.season svg { transition: transform 0.6s var(--ease); }
-.sound:focus-visible, .season:focus-visible, .arrow:focus-visible, .carousel a:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
+.sound:focus-visible, .arrow:focus-visible, .carousel a:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
 
 /* chapter-bound elements fade with the active chapter */
 .ch { opacity: 0; visibility: hidden; transition: opacity 0.6s var(--ease), visibility 0.6s; }

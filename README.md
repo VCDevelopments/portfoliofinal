@@ -7,18 +7,6 @@ Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL
 3. Segmented blueprint rings that assemble, then a fly-through.
 4. Snow that bursts into the logo as a spinning blueprint, with GitHub and LinkedIn links.
 
-## Seasons
-
-The site has four versions: winter, spring, summer and autumn. Each changes the sky (with its own
-sun), the trees around the valley (snow-laden, blossom, green or autumn colour), the grass, what
-covers the logo, the light, the particles in the air, and the colour of every blueprint element
-(wireframes, scan, rings and finale logo). Switching shows a large season title, and the HUD reads
-"// Winter edition" etc. It
-always follows today's date (Dec–Feb winter, Mar–May spring, Jun–Aug summer, Sep–Nov autumn) and
-switches by itself when the season turns, even on an open page. The "Season" button previews the
-others for that visit only, and `?season=spring` (or `winter`, `summer`, `autumn`) in the URL opens
-a specific one. Palettes live in `js/seasons.js`.
-
 Each project's ice block sits on its own background gradient, taken from its picture
 (`colors` in `js/projects.js`).
 
