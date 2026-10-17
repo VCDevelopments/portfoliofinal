@@ -27,6 +27,7 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   inset: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh; /* mobile: the visible height, so the scene isn't stretched when the browser bars show */
 }
 #gl { display: block; }
 #lines, #callouts { pointer-events: none; }
@@ -137,6 +138,14 @@ body[data-chapter="3"] .ch-3 { opacity: 1; visibility: visible; }
   transition: opacity 0.35s;
   opacity: 0;
 }
+.callout.timer {
+  padding: 0;
+  text-align: center;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+.callout.timer::first-line { font-size: 10px; letter-spacing: 0.16em; }
 .callout.tag {
   font-size: 10px;
   border: 1px solid rgba(255, 255, 255, 0.9);

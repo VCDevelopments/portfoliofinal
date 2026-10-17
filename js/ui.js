@@ -108,9 +108,16 @@ export class UI {
       // behind the camera, or a degenerate (e.g. zero-size) viewport
       if (this.v.z > 1 || !Number.isFinite(ax + ay)) { c.el.style.opacity = 0; c.path.style.opacity = 0; continue; }
       const [dx, dy] = c.offset;
-      const lx = ax + dx, ly = ay + dy;
+      if (c.center) {
+        // centred under its anchor, no leader line (e.g. the project timers)
+        c.el.style.transform = `translate(${ax + dx - c.el.offsetWidth / 2}px, ${ay + dy}px)`;
+        c.path.setAttribute('d', '');
+        continue;
+      }
       const left = dx < 0;
       const width = c.el.offsetWidth;
+      // keep the label on screen (narrow phones): pull its elbow in from the edge if needed
+      const lx = left ? Math.max(ax + dx, width + 8) : Math.min(ax + dx, this.w - width - 8), ly = ay + dy;
       c.el.style.transform = `translate(${left ? lx - width : lx}px, ${ly - c.el.offsetHeight}px)`;
       c.path.setAttribute('d', `M${ax.toFixed(1)},${ay.toFixed(1)}L${lx.toFixed(1)},${ly.toFixed(1)}L${(left ? lx - width : lx + width).toFixed(1)},${ly.toFixed(1)}`);
     }

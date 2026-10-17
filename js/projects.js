@@ -3,6 +3,7 @@
 export const PROJECTS = [
   {
     name: 'Pulse',
+    started: '2026-10-13', // first day of work; older projects melt and drip more
     blurb: 'Ads automation dashboard:\nrules that run your campaigns',
     stack: 'In progress · Dashboard',
     image: 'img/projects/pulse.jpg',
@@ -19,6 +20,7 @@ export const PROJECTS = [
   },
   {
     name: 'Relay',
+    started: '2026-10-15',
     blurb: 'Share files between laptop\nand phone with a QR code',
     stack: 'Python · HTML · QR',
     image: 'img/projects/relay.jpg',
@@ -34,6 +36,7 @@ export const PROJECTS = [
   },
   {
     name: 'ChiActive',
+    started: '2026-09-30',
     blurb: 'Activewear store + design\ngallery and studio',
     stack: 'HTML · JavaScript',
     url: 'https://github.com/VCDevelopments/ChiActive',
@@ -42,6 +45,7 @@ export const PROJECTS = [
   },
   {
     name: 'VCDevelopments',
+    started: '2026-10-15',
     blurb: 'This portfolio: a scroll-driven\n3D site built with Three.js',
     stack: 'JavaScript · Three.js · WebGL',
     url: 'https://github.com/VCDevelopments/portfoliofinal',

@@ -309,7 +309,9 @@ export function createHero(env) {
 
     // slow orbit that settles as the scene appears
     const orbit = (1 - reveal) * 0.55;
-    const cx = lerp(0, 2.6, t) + mouse.x * 0.9, cz = lerp(30, 12.5, t);
+    // portrait screens: step back so the logo keeps breathing room at the sides
+    const fit = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 0.5 : 1;
+    const cx = (lerp(0, 2.6, t) + mouse.x * 0.9) * fit, cz = lerp(30, 12.5, t) * fit;
     camera.position.set(cx * Math.cos(orbit) - cz * Math.sin(orbit), base + lerp(6.6, 4.0, t) + mouse.y * 0.45 + (1 - reveal) * 2, cx * Math.sin(orbit) + cz * Math.cos(orbit));
     camera.lookAt(0, base + lerp(3.0, 2.6, t), 0);
     camera.updateMatrixWorld();

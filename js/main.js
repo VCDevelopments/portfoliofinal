@@ -38,7 +38,7 @@ function resize() {
   if (!w || !h) return; // hidden/zero-size viewport would give NaN aspect
   const pr = Math.min(devicePixelRatio, 1.75);
   renderer.setPixelRatio(pr);
-  renderer.setSize(w, h, false);
+  renderer.setSize(w, h); // also sizes the canvas element, so it always matches the pixels drawn
   composite.setSize(Math.floor(w * pr), Math.floor(h * pr));
   ui.setSize(w, h);
   ctx.pixelRatio = pr;
@@ -71,6 +71,8 @@ async function boot() {
     ui.setProgress((i + 1) / (builders.length + 1));
   }
   resize();
+  // upload the project pictures now, so scrolling into the ice blocks doesn't hitch on them
+  for (const t of await chapters[1].ready) renderer.initTexture(t);
   // pre-compile shaders so the first transition doesn't hitch
   for (const c of chapters) {
     c.update(0, ctx);
@@ -95,7 +97,8 @@ async function boot() {
 }
 
 let introStart = 0;
-let progress = 0, prevProgress = 0, last = performance.now();
+let progress = 0, progressVel = 0, last = performance.now();
+const SCROLL_RESPONSE = 6.5; // spring stiffness (1/s): higher follows the scrollbar more tightly
 
 function loop(now) {
   requestAnimationFrame(loop);
@@ -113,9 +116,11 @@ function loop(now) {
 
   const max = document.documentElement.scrollHeight - innerHeight;
   const target = max > 0 ? scrollY / max : 0;
-  progress += (target - progress) * (1 - Math.exp(-dt * 4.5));
-  const velocity = (progress - prevProgress) / Math.max(dt, 1e-3);
-  prevProgress = progress;
+  // critically damped spring: each wheel tick eases in and out instead of jumping to full speed
+  const w = SCROLL_RESPONSE;
+  progressVel += (w * w * (target - progress) - 2 * w * progressVel) * dt;
+  progress += progressVel * dt;
+  const velocity = progressVel;
   sound.setVelocity(velocity);
 
   const k = 1 - Math.exp(-dt * 3);
