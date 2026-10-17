@@ -150,7 +150,8 @@ export function createHero(env) {
   const solid = new THREE.Group();
   solid.position.copy(center);
   const neonGeos = neonGeometries();
-  const neonMat = neonMaterial();
+  // a light source: not fogged (the intro fog would hide its farther tubes first), it fades in whole instead
+  const neonMat = neonMaterial({ fog: false, transparent: true, opacity: 0 });
   solid.add(...neonGeos.map((g) => new THREE.Mesh(g, neonMat)));
   monument.add(solid);
 
@@ -306,6 +307,7 @@ export function createHero(env) {
     const hudOn = ph >= 0 ? smoothstep(0, 0.4, ph) * (1 - smoothstep(2.4, 3.4, ph)) : 0;
 
     scene.fog.density = lerp(0.35, 0.013, reveal);
+    neonMat.opacity = reveal;
 
     // slow orbit that settles as the scene appears
     const orbit = (1 - reveal) * 0.55;
