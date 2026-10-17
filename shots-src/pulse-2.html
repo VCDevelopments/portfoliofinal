@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Pulse: autopilot</title><link rel="stylesheet" href="_kit.css">
+<style>
+.row { display: grid; grid-template-columns: 210px 1fr 90px 130px; align-items: center; gap: 18px; padding: 14px 20px; border-top: 1px solid #2C2758; font-size: 18px; }
+.bar { height: 14px; border-radius: 7px; background: #2C2758; position: relative; overflow: hidden; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px; background: linear-gradient(90deg, #8B6CF6, #B9A2FF); }
+</style></head><body>
+<div class="stage" style="background: linear-gradient(135deg, #12102B, #3C2A7A); color: #F3F0FF">
+  <div class="head"><div class="kicker">Pulse · autopilot run</div><div class="title">The daily budget moves to what works</div></div>
+  <div class="box" style="position: absolute; left: 64px; top: 210px; width: 700px; background: #16142C; border-color: #2C2758; overflow: hidden">
+    <div style="display: flex; justify-content: space-between; padding: 18px 20px; font-size: 16px; color: #B9AEF0"><span>Ad set</span><span class="mono">€20 / DAY · SPLIT BY CHANCE OF PROFIT</span></div>
+    <div class="row"><span>Spring launch</span><div class="bar"><i style="width: 40%"></i></div><span class="mono">€8.00</span><span style="color: #8FF0E3">▲ scaling</span></div>
+    <div class="row"><span>Retargeting</span><div class="bar"><i style="width: 27%"></i></div><span class="mono">€5.40</span><span style="color: #8FF0E3">▲ +18%</span></div>
+    <div class="row"><span>UGC test</span><div class="bar"><i style="width: 18%"></i></div><span class="mono">€3.60</span><span style="color: #C9B8FF">learning</span></div>
+    <div class="row"><span>Lookalike</span><div class="bar"><i style="width: 15%"></i></div><span class="mono">€3.00</span><span style="color: #C9B8FF">minimum</span></div>
+    <div class="row" style="opacity: 0.55"><span>Brand video</span><div class="bar"><i style="width: 0%"></i></div><span class="mono">€0.00</span><span>paused</span></div>
+  </div>
+  <div style="position: absolute; left: 800px; top: 210px; width: 336px; display: flex; flex-direction: column; gap: 16px">
+    <div class="box" style="padding: 20px; background: #2B1630; border-color: #6B2E5E">
+      <div class="mono" style="font-size: 13px; color: #FFB3D9">AD PAUSED</div>
+      <div style="font-size: 19px; margin-top: 8px; line-height: 1.35">“Brand video · hook=none” spent twice its margin without a sale.</div>
+    </div>
+    <div class="box" style="padding: 20px; background: #16142C; border-color: #2C2758">
+      <div class="mono" style="font-size: 13px; color: #B9AEF0">GUARDRAILS</div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px; font-size: 17px">
+        <span>✓ At least €3 per ad set to learn</span>
+        <span>✓ Max 40% of budget in one</span>
+        <span>✓ ±30% change, once per 20 h</span>
+        <span>✓ Never above the daily total</span>
+      </div>
+    </div>
+    <div class="chip" style="align-self: flex-start; background: #1F3B39; color: #8FF0E3">RUNS EVERY 4 HOURS</div>
+  </div>
+</div></body></html>

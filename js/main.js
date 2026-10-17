@@ -172,13 +172,12 @@ const cards = PROJECTS.map((p, i) => {
   el.innerHTML = `<span class="num">PROJECT ${String(i + 1).padStart(2, '0')} / ${String(PROJECTS.length).padStart(2, '0')}</span>
     <img alt="" loading="lazy" />
     <h3></h3><p></p><span class="stack"></span>
-    ${p.url ? '<a target="_blank" rel="noopener" tabindex="-1">View on GitHub ↗</a>' : '<button type="button" tabindex="-1">Read more +</button>'}`;
+    <button type="button" tabindex="-1">Learn more +</button>`;
   el.querySelector('img').src = p.image;
   el.querySelector('h3').textContent = p.name;
   el.querySelector('p').textContent = p.blurb.replace('\n', ' ');
   el.querySelector('.stack').textContent = p.stack;
-  if (p.url) el.querySelector('a').href = p.url;
-  else el.querySelector('button').addEventListener('click', () => openProject(i));
+  el.querySelector('button').addEventListener('click', () => openProject(i));
   return el;
 });
 document.getElementById('project-cards').append(...cards);
@@ -194,26 +193,59 @@ document.getElementById('project-list').append(
   ...PROJECTS.map((p, i) => {
     const li = document.createElement('li');
     const label = `${p.name} — ${p.blurb.replace('\n', ' ')} (${p.stack})`;
-    const el = p.url
-      ? Object.assign(document.createElement('a'), { href: p.url, target: '_blank', rel: 'noopener', textContent: label })
-      : Object.assign(document.createElement('button'), { type: 'button', textContent: label, onclick: () => openProject(i) });
+    const el = Object.assign(document.createElement('button'), { type: 'button', textContent: label, onclick: () => openProject(i) });
     li.append(el);
     return li;
   }),
 );
 
-// pop-up explaining a project that has no link (like igloo.inc's project overlay);
+// pop-up with a project's full story and pictures (like igloo.inc's project overlay);
 // <dialog> handles focus, Esc and the inert page behind it
 const dialog = document.getElementById('project-dialog');
+const el = (tag, props) => Object.assign(document.createElement(tag), props);
+let gallery = [], shown = 0;
+function showPicture(k) {
+  shown = (k + gallery.length) % gallery.length;
+  const g = gallery[shown];
+  const img = dialog.querySelector('.main');
+  img.src = g.src;
+  img.alt = g.caption;
+  dialog.querySelector('figcaption').textContent = `${shown + 1} / ${gallery.length} · ${g.caption}`;
+  dialog.querySelectorAll('.thumbs button').forEach((b, n) => b.setAttribute('aria-pressed', String(n === shown)));
+}
 function openProject(i) {
   const p = PROJECTS[i];
+  gallery = p.gallery;
   dialog.querySelector('.status').textContent = p.details.status;
   dialog.querySelector('h2').textContent = p.name;
-  dialog.querySelector('img').src = p.image;
+  dialog.querySelector('.intro').textContent = p.details.intro;
+  dialog.querySelector('.thumbs').replaceChildren(...gallery.map((g, n) => {
+    const b = el('button', { type: 'button', onclick: () => showPicture(n) });
+    b.setAttribute('aria-label', `Picture ${n + 1}: ${g.caption}`);
+    b.append(el('img', { src: g.src, alt: '' }));
+    return b;
+  }));
+  dialog.querySelector('.sections').replaceChildren(...p.details.sections.map((sec) => {
+    const s = el('section');
+    s.append(el('h3', { textContent: sec.title }), el('p', { textContent: sec.text }));
+    return s;
+  }));
   dialog.querySelector('.stack').textContent = p.stack;
-  dialog.querySelector('.body').replaceChildren(...p.details.body.map((t) => Object.assign(document.createElement('p'), { textContent: t })));
+  const code = dialog.querySelector('.code');
+  code.hidden = !p.url;
+  if (p.url) code.href = p.url;
   dialog.style.setProperty('--glow', p.colors[2]);
+  showPicture(0);
   dialog.showModal();
+  dialog.querySelector('.sheet').scrollTop = 0;
 }
 ctx.openProject = openProject;
-dialog.addEventListener('click', (e) => { if (e.target === dialog || e.target.closest('.close')) dialog.close(); });
+dialog.addEventListener('click', (e) => {
+  if (e.target === dialog || e.target.closest('.close')) dialog.close();
+  else if (e.target.closest('.prev')) showPicture(shown - 1);
+  else if (e.target.closest('.next')) showPicture(shown + 1);
+});
+dialog.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowLeft') showPicture(shown - 1);
+  if (e.key === 'ArrowRight') showPicture(shown + 1);
+});

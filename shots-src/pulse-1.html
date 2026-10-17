@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Pulse: how it works</title><link rel="stylesheet" href="_kit.css">
+<style>
+.node { position: absolute; padding: 16px 18px; border-radius: 14px; background: #1C1838; border: 1px solid #3A3270; font: 500 18px/1.2 'Outfit', sans-serif; }
+.node small { display: block; margin-top: 6px; font: 400 13px/1.3 'IBM Plex Mono', monospace; color: #B9AEF0; }
+.src { width: 150px; }
+.out { width: 200px; }
+</style></head><body>
+<div class="stage" style="background: linear-gradient(135deg, #12102B, #3C2A7A); color: #F3F0FF">
+  <div class="head"><div class="kicker">Pulse · how it works</div><div class="title">One loop: measure, learn, act</div></div>
+  <div class="node src" style="left: 64px; top: 220px">Shopify<small>orders + products</small></div>
+  <div class="node src" style="left: 64px; top: 330px">Meta ads<small>ad sets + results</small></div>
+  <div class="node src" style="left: 64px; top: 440px">TikTok ads<small>ad groups + results</small></div>
+  <div class="node src" style="left: 64px; top: 550px">CRM<small>leads + contacts</small></div>
+  <div class="arrow" style="left: 236px; top: 418px; width: 70px; color: #8B6CF6"></div>
+  <div class="node" style="left: 318px; top: 330px; width: 220px; height: 160px; box-sizing: border-box; background: #2A2160; border-color: #8B6CF6">
+    Sync every 15 min<small>one database: every order matched to the ad that brought it in</small>
+  </div>
+  <div class="arrow" style="left: 550px; top: 410px; width: 70px; color: #8B6CF6"></div>
+  <div class="node" style="left: 632px; top: 300px; width: 220px; height: 220px; box-sizing: border-box; background: #2A2160; border-color: #8B6CF6">
+    Models retrain<small>predict clicks, sales and virality from how each ad is made: UGC, hook, length, captions</small>
+  </div>
+  <div class="arrow" style="left: 864px; top: 410px; width: 50px; color: #8B6CF6"></div>
+  <div class="node out" style="left: 924px; top: 220px">Budgets<small>moved toward winners</small></div>
+  <div class="node out" style="left: 924px; top: 330px">Audiences<small>scale · exclude · test next</small></div>
+  <div class="node out" style="left: 924px; top: 440px">Creatives<small>ranked, briefs for new ones</small></div>
+  <div class="node out" style="left: 924px; top: 550px; background: #134E4A; border-color: #4FD1C5">Applied to Meta + TikTok<small style="color: #9FF0E4">with guardrails, logged</small></div>
+  <svg width="1200" height="800" style="position: absolute; left: 0; top: 0" aria-hidden="true"><path d="M1050 640 C 1050 730, 160 730, 150 650" fill="none" stroke="#4FD1C5" stroke-width="2" stroke-dasharray="7 7"/><path d="M150 650 l -7 12 m 7 -12 l 7 12" stroke="#4FD1C5" stroke-width="2" fill="none"/></svg>
+  <div class="mono" style="position: absolute; left: 470px; top: 708px; font-size: 15px; color: #9FF0E4">results flow back in · the next run learns from them</div>
+</div></body></html>

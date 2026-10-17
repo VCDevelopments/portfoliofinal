@@ -1,11 +1,10 @@
 // Chapter 1 — portfolio: each project is an object frozen inside a drifting ice block.
-// Callouts name it; clicking the block opens the repository, or the project's pop-up when it has none.
+// Callouts name it; clicking the block opens the project's pop-up.
 import * as THREE from 'three';
 import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { fbm3, rng } from './noise.js';
 import { getTextures, crackTexture } from './textures.js';
 import { PROJECTS } from './projects.js';
-import { openExternal } from './links.js';
 
 const BG = 0xb6b9bf;
 const SPACING = 15;
@@ -454,7 +453,7 @@ export function createCrystals(env) {
 
     camera.updateMatrixWorld();
 
-    // pointer: hovering a block brightens it, clicking opens its repository (or its pop-up)
+    // pointer: hovering a block brightens it, clicking opens the project's pop-up
     let hovered = null;
     if (ctx.pointer.inside) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
@@ -464,7 +463,7 @@ export function createCrystals(env) {
     }
     if (hovered) {
       ctx.cursor = true;
-      if (ctx.click) hovered.item.url ? openExternal(hovered.item.url) : ctx.openProject(crystals.indexOf(hovered));
+      if (ctx.click) ctx.openProject(crystals.indexOf(hovered));
     }
 
     state.active = -1;

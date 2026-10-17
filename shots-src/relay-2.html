@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Relay: how files travel</title><link rel="stylesheet" href="_kit.css">
+<style>.node { position: absolute; padding: 22px; border-radius: 18px; background: #0F3A3C; border: 1px solid #2B7A74; }
+.node h3 { margin: 0; font: 700 24px/1 'Outfit'; } .node p { margin: 10px 0 0; font: 400 15px/1.5 'IBM Plex Mono', monospace; color: #A8E6DC; }</style></head><body>
+<div class="stage" style="background: linear-gradient(135deg, #0B2A2E, #11605F)">
+  <div class="head"><div class="kicker">Relay · how files travel</div><div class="title">Straight across your own Wi-Fi</div><div class="sub">No cloud in between: files go from one device to the other inside your home network.</div></div>
+  <div style="position: absolute; left: 330px; top: 300px; width: 540px; height: 360px; border-radius: 50%; border: 2px dashed #3DE0C0; opacity: 0.55"></div>
+  <div class="mono" style="position: absolute; left: 520px; top: 280px; font-size: 14px; color: #9FF0E4; background: #0F3F41; padding: 4px 10px">HOME WI-FI</div>
+  <div class="node" style="left: 64px; top: 380px; width: 340px">
+    <h3>Laptop</h3>
+    <p>small Python server<br>files kept in ./shared<br>web page on :8000</p>
+  </div>
+  <div class="node" style="left: 796px; top: 380px; width: 340px">
+    <h3>Phone</h3>
+    <p>opens the same page<br>HTTPS on :8443<br>private key from the QR</p>
+  </div>
+  <div class="arrow" style="left: 420px; top: 440px; width: 360px; color: #3DE0C0"></div>
+  <div class="arrow" style="left: 420px; top: 500px; width: 360px; color: #3DE0C0; transform: rotate(180deg)"></div>
+  <div class="mono" style="position: absolute; left: 470px; top: 410px; font-size: 14px; color: #CFF7F0">upload · drag &amp; drop</div>
+  <div class="mono" style="position: absolute; left: 470px; top: 512px; font-size: 14px; color: #CFF7F0">download · save to Photos</div>
+  <div style="position: absolute; left: 64px; right: 64px; bottom: 56px; display: flex; gap: 14px; justify-content: center">
+    <span class="chip" style="background: #134E4A; color: #CFF7F0">NO ACCOUNT</span>
+    <span class="chip" style="background: #134E4A; color: #CFF7F0">NO CLOUD</span>
+    <span class="chip" style="background: #134E4A; color: #CFF7F0">NO CABLES</span>
+    <span class="chip" style="background: #134E4A; color: #CFF7F0">KEY-PROTECTED</span>
+  </div>
+</div></body></html>

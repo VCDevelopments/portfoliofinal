@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>VCDevelopments: how it's built</title><link rel="stylesheet" href="_kit.css">
+<style>.sc { position: absolute; left: 64px; width: 360px; padding: 16px 18px; border-radius: 14px; background: #262C36; border: 1px solid #45505F; } .sc b { font: 700 19px/1.2 'Outfit'; } .sc p { margin: 6px 0 0; font: 400 14px/1.45 'IBM Plex Mono', monospace; color: #AFC4D8; }</style></head><body>
+<div class="stage" style="background: linear-gradient(135deg, #2E3440, #6C7A8C)">
+  <div class="head"><div class="kicker">VCDevelopments · how it's built</div><div class="title">Four 3D scenes, one scroll</div></div>
+  <div class="sc" style="top: 200px"><b>1 · Snowy valley</b><p>neon logo, blueprint scan, click to shatter</p></div>
+  <div class="sc" style="top: 318px"><b>2 · Projects in ice</b><p>generated ice chunks, melting by age</p></div>
+  <div class="sc" style="top: 436px"><b>3 · Blueprint rings</b><p>wireframe gyroscope, fly-through</p></div>
+  <div class="sc" style="top: 554px"><b>4 · Snow to logo</b><p>16,000 particles form the neon sign</p></div>
+  <div class="arrow" style="left: 440px; top: 448px; width: 90px; color: #7DC8FF"></div>
+  <div style="position: absolute; left: 546px; top: 330px; width: 260px; height: 240px; border-radius: 18px; background: #1E2530; border: 1px solid #7DC8FF; padding: 22px; box-sizing: border-box">
+    <div class="mono" style="font-size: 13px; color: #7DC8FF">EACH FRAME</div>
+    <div style="font: 700 22px/1.25 'Outfit'; margin-top: 12px">Scenes render off-screen</div>
+    <div style="font-size: 16px; line-height: 1.45; color: #C6D3E0; margin-top: 10px">Only the one or two in view are drawn, at full resolution with anti-aliasing.</div>
+  </div>
+  <div class="arrow" style="left: 822px; top: 448px; width: 70px; color: #7DC8FF"></div>
+  <div style="position: absolute; left: 906px; top: 330px; width: 230px; height: 240px; border-radius: 18px; background: #1E2530; border: 1px solid #7DC8FF; padding: 22px; box-sizing: border-box">
+    <div class="mono" style="font-size: 13px; color: #7DC8FF">COMPOSITE SHADER</div>
+    <div style="font: 700 22px/1.25 'Outfit'; margin-top: 12px">Glitch blend</div>
+    <div style="font-size: 16px; line-height: 1.45; color: #C6D3E0; margin-top: 10px">Smear, colour split, grain and vignette between scenes.</div>
+  </div>
+  <div style="position: absolute; left: 546px; bottom: 64px; right: 64px; display: flex; flex-wrap: wrap; gap: 10px">
+    <span class="chip" style="background: #1E2530">Three.js</span><span class="chip" style="background: #1E2530">GLSL shaders</span><span class="chip" style="background: #1E2530">No framework</span><span class="chip" style="background: #1E2530">No build step</span><span class="chip" style="background: #1E2530">GitHub Pages</span>
+  </div>
+</div></body></html>
