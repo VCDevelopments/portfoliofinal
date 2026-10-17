@@ -20,6 +20,7 @@ function logoShapes() {
   const blade = new THREE.Shape();
   blade.absarc(LOGO.a.x, LOGO.a.y, LOGO.rb, ang + Math.PI / 2, ang + Math.PI * 1.5, false);
   blade.absarc(LOGO.b.x, LOGO.b.y, LOGO.rb, ang - Math.PI / 2, ang + Math.PI / 2, false);
+  blade.closePath(); // the second long side of the V
   const a0 = LOGO.a0, a1 = LOGO.a0 + LOGO.sweep, ro = LOGO.ra + LOGO.rt, ri = LOGO.ra - LOGO.rt;
   const e0 = arcPoint(0), e1 = arcPoint(1);
   const arc = new THREE.Shape();
@@ -31,12 +32,19 @@ function logoShapes() {
 }
 
 const NEON_Z = 0.38, NEON_R = 0.05;
+
+// Points evenly spaced along a closed outline, straight sides included, without repeating the first one.
+function outlinePoints(shape, n) {
+  const pts = shape.getSpacedPoints(n);
+  if (pts.length > 1 && pts[0].distanceTo(pts[pts.length - 1]) < 1e-6) pts.pop();
+  return pts;
+}
 const centred = (g) => g.translate(-BOUNDS.center.x, -BOUNDS.center.y, 0);
 
 // Thin light tubes tracing each part's outline, on the logo's front and back faces.
 export function neonGeometries() {
   return logoShapes().flatMap((shape) => {
-    const pts = shape.getPoints(160);
+    const pts = outlinePoints(shape, 240);
     return [-NEON_Z, NEON_Z].map((z) => centred(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, z)), true), 600, NEON_R, 10, true)));
   });
 }
@@ -45,9 +53,9 @@ export function neonGeometries() {
 export function neonWireGeometry() {
   const pos = [];
   for (const shape of logoShapes()) {
-    const pts = shape.getSpacedPoints(96);
-    for (let i = 0; i < pts.length - 1; i++) {
-      const a = pts[i], b = pts[i + 1];
+    const pts = outlinePoints(shape, 96);
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
       for (const z of [-NEON_Z, NEON_Z]) pos.push(a.x, a.y, z, b.x, b.y, z);
       if (i % 3 === 0) pos.push(a.x, a.y, -NEON_Z, a.x, a.y, NEON_Z);
     }
