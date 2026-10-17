@@ -101,6 +101,9 @@ export const PROJECTS = [
   },
 ];
 
+// URL-safe name, used for each project's page (projects/<slug>/) and deep link (#project-<slug>)
+export const slugOf = (p) => p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 export const LINKS = [
   { label: 'GitHub', href: 'https://github.com/VCDevelopments' },
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/lotharvancauwenbergh/' },

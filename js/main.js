@@ -5,7 +5,7 @@ import { createHero } from './hero.js';
 import { createCrystals } from './crystals.js';
 import { createRings } from './rings.js';
 import { createParticles } from './particles.js';
-import { LINKS, PROJECTS } from './projects.js';
+import { LINKS, PROJECTS, slugOf } from './projects.js';
 import { createComposite } from './post.js';
 import { UI } from './ui.js';
 import { Sound } from './audio.js';
@@ -24,19 +24,25 @@ renderer.toneMappingExposure = 0.82;
 
 const ui = new UI();
 const sound = new Sound();
-const composite = createComposite(renderer);
+// visitors who asked their device for less motion get calm transitions and no spinning intro
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+// phones and tablets: lower pixel density and less anti-aliasing, so the site stays fast
+const lightweight = matchMedia('(pointer: coarse)').matches || Math.min(screen.width, screen.height) < 600;
+const composite = createComposite(renderer, { samples: lightweight ? 2 : 4 });
 // yield so the loader can paint; a timer (not rAF) keeps booting in background tabs
 const frame = () => new Promise((r) => setTimeout(r, 16));
 
 // pointer: raw NDC for raycasting; click: true for one frame; cursor: set by chapters that want a pointer cursor
-const ctx = { time: 0, dt: 0, mouse: { x: 0, y: 0 }, pointer: { x: 0, y: 0, inside: false }, click: false, cursor: false, intro: 0, introT: 0, pixelRatio: 1, height: 1 };
+const ctx = { time: 0, dt: 0, mouse: { x: 0, y: 0 }, pointer: { x: 0, y: 0, inside: false }, click: false, cursor: false, intro: 0, introT: 0, pixelRatio: 1, height: 1, reduced: reducedMotion.matches };
+composite.setCalm(ctx.reduced);
+reducedMotion.addEventListener('change', (e) => { ctx.reduced = e.matches; composite.setCalm(e.matches); });
 const mouseTarget = { x: 0, y: 0 };
 let chapters = [];
 
 function resize() {
   const w = innerWidth, h = innerHeight;
   if (!w || !h) return; // hidden/zero-size viewport would give NaN aspect
-  const pr = Math.min(devicePixelRatio, 1.75);
+  const pr = Math.min(devicePixelRatio, lightweight ? 1.25 : 1.75);
   renderer.setPixelRatio(pr);
   renderer.setSize(w, h); // also sizes the canvas element, so it always matches the pixels drawn
   composite.setSize(Math.floor(w * pr), Math.floor(h * pr));
@@ -86,13 +92,24 @@ async function boot() {
     sound.blip(i % 2 ? 1320 : 990);
   });
   ui.bindSound(() => sound.toggle());
+  // night mode: remembered per visitor, else follows the device's dark mode
+  let night = matchMedia('(prefers-color-scheme: dark)').matches;
+  try { const saved = localStorage.getItem('vcd-night'); if (saved !== null) night = saved === '1'; } catch {}
+  chapters[0].setNight(night, true);
+  ui.bindNight(night, (on) => {
+    chapters[0].setNight(on);
+    try { localStorage.setItem('vcd-night', on ? '1' : '0'); } catch {}
+  });
   installExternalLinks(); // after the carousel and cards exist, so their links are covered too
+  // deep link: #project-<slug> opens that project's pop-up once the site has loaded
+  const linked = PROJECTS.findIndex((p) => location.hash === `#project-${slugOf(p)}`);
 
   await new Promise((r) => setTimeout(r, 350));
   document.body.classList.add('is-intro');
   ui.finishLoading();
   scrollTo(0, 0);
-  introStart = performance.now();
+  introStart = performance.now() - (ctx.reduced ? 20000 : 0); // reduced motion: start with the intro already played
+  if (linked >= 0) setTimeout(() => openProject(linked), 400);
   requestAnimationFrame(loop);
 }
 
@@ -194,7 +211,8 @@ document.getElementById('project-list').append(
     const li = document.createElement('li');
     const label = `${p.name} — ${p.blurb.replace('\n', ' ')} (${p.stack})`;
     const el = Object.assign(document.createElement('button'), { type: 'button', textContent: label, onclick: () => openProject(i) });
-    li.append(el);
+    // the project's own page, so it can be found and shared
+    li.append(el, ' ', Object.assign(document.createElement('a'), { href: `projects/${slugOf(p)}/`, textContent: `${p.name} project page` }));
     return li;
   }),
 );
@@ -231,6 +249,7 @@ function openProject(i) {
     return s;
   }));
   dialog.querySelector('.stack').textContent = p.stack;
+  dialog.querySelector('.page').href = `projects/${slugOf(p)}/`;
   const code = dialog.querySelector('.code');
   code.hidden = !p.url;
   if (p.url) code.href = p.url;

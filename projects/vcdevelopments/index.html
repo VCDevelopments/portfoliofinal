@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VCDevelopments · VCDevelopments</title>
+  <meta name="description" content="The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step." />
+  <link rel="canonical" href="https://vcdevelopments.info/projects/vcdevelopments/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="VCDevelopments" />
+  <meta property="og:title" content="VCDevelopments · VCDevelopments" />
+  <meta property="og:description" content="The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step." />
+  <meta property="og:url" content="https://vcdevelopments.info/projects/vcdevelopments/" />
+  <meta property="og:image" content="https://vcdevelopments.info/img/projects/portfolio.jpg" />
+  <meta property="og:image:width" content="2400" />
+  <meta property="og:image:height" content="1600" />
+  <meta property="og:image:alt" content="The landing page: the neon logo in a snowy valley." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#1e242e" />
+  <link rel="icon" type="image/svg+xml" href="../../brand/vcd-logo-28.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Outfit:wght@300;700;800&display=swap" rel="stylesheet" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"CreativeWork","name":"VCDevelopments","description":"The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step.","url":"https://vcdevelopments.info/projects/vcdevelopments/","image":"https://vcdevelopments.info/img/projects/portfolio.jpg","author":{"@type":"Person","name":"Lothar Van Cauwenbergh","url":"https://vcdevelopments.info"},"codeRepository":"https://github.com/VCDevelopments/portfoliofinal"}</script>
+  <style>
+    body { margin: 0; background: #1e242e; color: #f2f5f8; font: 300 18px/1.6 "Outfit", sans-serif; }
+    main { max-width: 920px; margin: 0 auto; padding: 32px 20px 72px; }
+    a { color: #fff; }
+    .top { display: flex; justify-content: space-between; align-items: center; gap: 16px; font: 500 12px/1 "IBM Plex Mono", monospace; }
+    .top a { text-decoration: none; }
+    .status { margin-top: 56px; font: 500 12px/1 "IBM Plex Mono", monospace; letter-spacing: 0.14em; text-transform: uppercase; color: #7DC8FF; }
+    h1 { font: 800 clamp(44px, 8vw, 72px)/1 "Outfit", sans-serif; letter-spacing: -0.04em; margin: 12px 0 18px; }
+    .intro { font-size: 21px; max-width: 62ch; color: #e8edf3; }
+    figure { margin: 32px 0 0; }
+    figure img { width: 100%; height: auto; display: block; }
+    figcaption { margin-top: 8px; font: 500 13px/1.4 "IBM Plex Mono", monospace; color: rgba(255, 255, 255, 0.75); }
+    .sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 36px; margin-top: 40px; }
+    h2 { font: 700 22px/1.2 "Outfit", sans-serif; margin: 0 0 8px; }
+    section p { margin: 0; color: #dbe2ea; }
+    .foot { margin-top: 48px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.15); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; align-items: center; font: 500 13px/1.5 "IBM Plex Mono", monospace; }
+    .btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid #fff; text-decoration: none; }
+    .btn:hover, .btn:focus-visible { background: #fff; color: #1e242e; }
+  </style>
+</head>
+<body>
+  <main>
+    <nav class="top" aria-label="Site"><a href="../../">← VCDevelopments</a><a href="../../#project-vcdevelopments">View in the 3D portfolio</a></nav>
+    <p class="status">Live</p>
+    <h1>VCDevelopments</h1>
+    <p class="intro">The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step.</p>
+    <div class="gallery">
+      <figure><img src="../../img/projects/portfolio.jpg" alt="The landing page: the neon logo in a snowy valley." width="1200" height="800" loading="lazy" /><figcaption>The landing page: the neon logo in a snowy valley.</figcaption></figure>
+      <figure><img src="../../img/projects/portfolio-2.jpg" alt="How it is built: four scenes blended by one shader." width="1200" height="800" loading="lazy" /><figcaption>How it is built: four scenes blended by one shader.</figcaption></figure>
+      <figure><img src="../../img/projects/portfolio-3.jpg" alt="The details: shattering logos, melting ice, previews that slide out." width="1200" height="800" loading="lazy" /><figcaption>The details: shattering logos, melting ice, previews that slide out.</figcaption></figure>
+    </div>
+    <div class="sections">
+      <section><h2>Four scenes, one scroll</h2><p>A snowy valley with the neon logo, these projects frozen in ice, a wireframe blueprint gyroscope, and a cloud of snow that becomes the logo. Each scene is drawn off-screen, and a final shader blends them with a glitch transition as you scroll.</p></section>
+      <section><h2>Generated, not modelled</h2><p>The terrain, the ice chunks, their textures and the logo are all built in code from noise, so every ice block has its own shape. The longer a project has been running, the more its block melts and drips, with a live timer underneath.</p></section>
+      <section><h2>Made to be played with</h2><p>Click a logo and it bursts into particles that rebuild it from the bottom up. Hover a block and its preview slides out of the ice. The sound follows how fast you scroll.</p></section>
+      <section><h2>Kept smooth</h2><p>Scrolling follows a spring for smooth motion, pictures are loaded before they are needed, scenes out of view skip their work, and every file is versioned so visitors always get the latest one.</p></section>
+    </div>
+    <div class="foot">
+      <span>JavaScript · Three.js · GLSL · WebGL</span>
+      <span><a class="btn" href="https://github.com/VCDevelopments/portfoliofinal" target="_blank" rel="noopener">View the code on GitHub ↗</a> <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a></span>
+    </div>
+  </main>
+</body>
+</html>

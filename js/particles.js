@@ -10,7 +10,8 @@ import { createShatter } from './shatter.js';
 import { BOUNDS, neonGeometries, neonWireGeometry, neonMaterial } from './neonLogo.js';
 
 const BG = 0x9ea3ab;
-const N = 16000;
+// grains in the logo; fewer on phones and tablets
+const N = matchMedia('(pointer: coarse)').matches ? 9000 : 16000;
 
 function sampleGeometry(geo, count, seed) {
   const sampler = new MeshSurfaceSampler(new THREE.Mesh(geo)).setRandomGenerator(rng(seed)).build();
@@ -196,7 +197,7 @@ export function createParticles(env) {
     const solid = smoothstep(0.55, 1, m);
     neonMat.opacity = solid;
     lineMat.opacity = solid * 0.4;
-    logo.rotation.y = time * 0.5;
+    logo.rotation.y = time * (ctx.reduced ? 0.12 : 0.5);
 
     const a = mouse.x * 0.35;
     const dist = 18 - local * 2.5;

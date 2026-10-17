@@ -2,10 +2,12 @@
 
 Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL experience built with Three.js.
 
-1. A monument of the VCDevelopments logo built from snow bricks, with a periodic blueprint scan.
+1. The neon VCDevelopments logo in a snowy valley, with a periodic blueprint scan. Click it to shatter it; click anywhere else for a gust of snow (which also drifts away from the cursor). The Night switch darkens the valley.
 2. Projects frozen in ice blocks, each with an overview card. Hover a block to reveal its picture; click (or use Learn more) for a pop-up with the project's full story and pictures.
 3. Segmented blueprint rings that assemble, then a fly-through.
-4. Snow that bursts into the logo as a spinning blueprint, with GitHub and LinkedIn links.
+4. Snow that bursts into the spinning neon logo, with a contact section and GitHub / LinkedIn links.
+
+With reduced motion turned on in the device settings, the intro is skipped and scene changes are plain crossfades. Phones get a lighter render (lower pixel density, less anti-aliasing, fewer particles).
 
 Each project's ice block sits on its own background gradient, taken from its picture
 (`colors` in `js/projects.js`).
@@ -23,5 +25,7 @@ Then open http://localhost:5173.
 ## Editing content
 
 - Projects and social links: `js/projects.js`
+  - after editing projects, run `node tools/build-pages.mjs` to regenerate each project's shareable page (`projects/<slug>/`), `sitemap.xml` and `robots.txt`
+  - `#project-<slug>` on the home page opens that project's pop-up (e.g. `/#project-shotguide`)
 - Project pictures: `img/projects/` (rendered from the designs in `shots-src/`)
 - Logo and LinkedIn banner files: `brand/`

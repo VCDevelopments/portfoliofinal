@@ -123,7 +123,8 @@ export function createHero(env) {
 
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 500);
 
-  scene.add(new THREE.HemisphereLight(0xdfe5ee, 0x40444b, 0.75));
+  const sky = new THREE.HemisphereLight(0xdfe5ee, 0x40444b, 0.75);
+  scene.add(sky);
   const sun = new THREE.DirectionalLight(0xffffff, 1.9);
   sun.position.set(-18, 26, 14);
   scene.add(sun);
@@ -154,6 +155,20 @@ export function createHero(env) {
   const neonMat = neonMaterial({ fog: false, transparent: true, opacity: 0 });
   solid.add(...neonGeos.map((g) => new THREE.Mesh(g, neonMat)));
   monument.add(solid);
+
+  // night mode (the Night switch): the valley goes dark, the neon burns brighter and lights the snow
+  // around it, with a short flicker as it switches
+  const DAY_BG = new THREE.Color(BG), NIGHT_BG = new THREE.Color(0x0a0e15);
+  const DAY_NEON = neonMat.color.clone(), NIGHT_NEON = new THREE.Color(1.5, 3.1, 5.4);
+  const glow = new THREE.PointLight(0x7cc4ff, 0, 20, 1.4);
+  glow.position.set(center.x, center.y, 1.6);
+  monument.add(glow);
+  let night = 0, nightTarget = 0, flickerStart = -Infinity;
+  function setNight(on, instant = false) {
+    nightTarget = on ? 1 : 0;
+    if (instant) night = nightTarget;
+    else flickerStart = performance.now();
+  }
 
   // click: the outline bursts into sparks that land back bottom-up, the neon growing behind them
   const shatter = createShatter(neonGeos, { count: 6000, spread: 2.4, size: 110, color: new THREE.Color(0.85, 0.97, 1) });
@@ -235,6 +250,9 @@ export function createHero(env) {
   // falling snow
   const SN = 1800;
   const snowPos = new Float32Array(SN * 3);
+  const snowVel = new Float32Array(SN * 3); // pushes from the cursor and gusts, damped back to still
+  const flake = new THREE.Vector3(), camRight = new THREE.Vector3(), camUp = new THREE.Vector3();
+  let gust = 0, gustDir = 1;
   for (let i = 0; i < SN; i++) {
     snowPos[i * 3] = (rand() - 0.5) * 50;
     snowPos[i * 3 + 1] = rand() * 20;
@@ -307,7 +325,16 @@ export function createHero(env) {
     const hudOn = ph >= 0 ? smoothstep(0, 0.4, ph) * (1 - smoothstep(2.4, 3.4, ph)) : 0;
 
     scene.fog.density = lerp(0.35, 0.013, reveal);
-    neonMat.opacity = reveal;
+    night += (nightTarget - night) * (1 - Math.exp(-dt * 3));
+    scene.background.lerpColors(DAY_BG, NIGHT_BG, night);
+    scene.fog.color.copy(scene.background);
+    sky.intensity = lerp(0.75, 0.08, night);
+    sun.intensity = lerp(1.9, 0.1, night);
+    scene.environmentIntensity = lerp(0.35, 0.06, night);
+    neonMat.color.lerpColors(DAY_NEON, NIGHT_NEON, night);
+    const flicker = performance.now() - flickerStart < 650 && Math.random() < 0.4 ? 0.25 : 1;
+    neonMat.opacity = reveal * flicker;
+    glow.intensity = night * 45 * neonMat.opacity;
 
     // slow orbit that settles as the scene appears
     const orbit = (1 - reveal) * 0.55;
@@ -327,6 +354,11 @@ export function createHero(env) {
         hovering = true;
         if (ctx.click && shatter.trigger(time)) pulseT = time + SHATTER_DURATION - 0.2; // the wireframe flashes as it locks back together
       }
+    }
+    // a click anywhere else sends a gust through the valley, away from where you clicked
+    if (ctx.click && !hovering && intro > 0.9) {
+      gust = 1;
+      gustDir = ctx.pointer.x > 0 ? -1 : 1;
     }
     ctx.cursor ||= hovering;
     hoverV += ((hovering ? 1 : 0) - hover) * 70 * dt - hoverV * 9 * dt;
@@ -352,11 +384,39 @@ export function createHero(env) {
     tickMat.opacity = hudOn * 0.8;
     grid.rotation.y = time * 0.05;
 
+    // falling snow; flakes near the cursor drift away from it (in screen space), gusts blow sideways
+    camRight.setFromMatrixColumn(camera.matrixWorld, 0);
+    camUp.setFromMatrixColumn(camera.matrixWorld, 1);
+    const pushing = ctx.pointer.inside && !ctx.reduced;
+    const damp = Math.exp(-dt * 1.6);
+    gust *= Math.exp(-dt * 1.1);
     for (let i = 0; i < SN; i++) {
-      let y = snowPos[i * 3 + 1] - dt * (0.6 + (i % 7) * 0.08);
+      const k = i * 3;
+      let vx = snowVel[k] * damp, vy = snowVel[k + 1] * damp, vz = snowVel[k + 2] * damp;
+      if (pushing) {
+        flake.set(snowPos[k], snowPos[k + 1], snowPos[k + 2]).project(camera);
+        const dx = (flake.x - ctx.pointer.x) * camera.aspect, dy = flake.y - ctx.pointer.y;
+        const d = Math.hypot(dx, dy);
+        if (flake.z < 1 && d < 0.16 && d > 1e-4) {
+          const f = (1 - d / 0.16) * 14 * dt / d;
+          vx += (camRight.x * dx + camUp.x * dy) * f;
+          vy += (camRight.y * dx + camUp.y * dy) * f;
+          vz += (camRight.z * dx + camUp.z * dy) * f;
+        }
+      }
+      if (gust > 0.01) {
+        const g = gust * gustDir * (0.6 + (i % 5) * 0.15) * 22 * dt;
+        vx += camRight.x * g; vz += camRight.z * g; vy += gust * 1.5 * dt;
+      }
+      snowVel[k] = vx; snowVel[k + 1] = vy; snowVel[k + 2] = vz;
+      let x = snowPos[k] + vx * dt + Math.sin(time * 0.6 + i) * dt * 0.15;
+      let y = snowPos[k + 1] + vy * dt - dt * (0.6 + (i % 7) * 0.08);
+      let z = snowPos[k + 2] + vz * dt;
       if (y < 0) y += 20;
-      snowPos[i * 3 + 1] = y;
-      snowPos[i * 3] += Math.sin(time * 0.6 + i) * dt * 0.15;
+      if (y > 20) y -= 20;
+      if (x > 25) x -= 50; else if (x < -25) x += 50; // blown out one side, back in the other
+      if (z > 25) z -= 50; else if (z < -25) z += 50;
+      snowPos[k] = x; snowPos[k + 1] = y; snowPos[k + 2] = z;
     }
     snowGeo.attributes.position.needsUpdate = true;
 
@@ -366,5 +426,5 @@ export function createHero(env) {
     }
   }
 
-  return { scene, camera, update, callouts };
+  return { scene, camera, update, callouts, setNight };
 }

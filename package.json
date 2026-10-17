@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": { "pages": "node tools/build-pages.mjs" }
+}

@@ -133,6 +133,24 @@ export class UI {
     });
   }
 
+  // Night switch: `initial` is the starting state, `onToggle(on)` applies a change
+  bindNight(initial, onToggle) {
+    const btn = document.querySelector('.lights');
+    const label = btn.querySelector('b');
+    let on = initial;
+    const show = (animate) => {
+      btn.setAttribute('aria-pressed', String(on));
+      if (animate) scramble(label, on ? 'On' : 'Off', 300);
+      else label.textContent = on ? 'On' : 'Off';
+    };
+    show(false);
+    btn.addEventListener('click', () => {
+      on = !on;
+      onToggle(on);
+      show(true);
+    });
+  }
+
   buildCarousel(links, onChange) {
     const track = document.querySelector('.track');
     const items = links.map((l) => {

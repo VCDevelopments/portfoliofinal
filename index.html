@@ -4,13 +4,27 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>VCDevelopments — Lothar Van Cauwenbergh</title>
-  <meta name="description" content="Portfolio of Lothar Van Cauwenbergh (VCDevelopments): websites, iOS apps and AI tools." />
+  <meta name="description" content="Portfolio of Lothar Van Cauwenbergh (VCDevelopments): websites, iOS apps and AI tools, designed and built end to end." />
+  <link rel="canonical" href="https://vcdevelopments.info/" />
+  <meta name="theme-color" content="#9a9ea6" />
+  <!-- link previews (LinkedIn, WhatsApp, Slack, X…) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="VCDevelopments" />
+  <meta property="og:title" content="Lothar Van Cauwenbergh · VCDevelopments" />
+  <meta property="og:description" content="Websites, iOS apps and AI tools, designed and built end to end. A 3D portfolio built from scratch with Three.js." />
+  <meta property="og:url" content="https://vcdevelopments.info/" />
+  <meta property="og:image" content="https://vcdevelopments.info/img/og.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="VCDevelopments: the neon VC logo in a snowy valley, with Lothar Van Cauwenbergh's name" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","name":"Lothar Van Cauwenbergh","jobTitle":"Developer & Designer","url":"https://vcdevelopments.info/","sameAs":["https://www.linkedin.com/in/lotharvancauwenbergh/","https://github.com/VCDevelopments"]},{"@type":"WebSite","name":"VCDevelopments","url":"https://vcdevelopments.info/"}]}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@200;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="brand/vcd-logo-28.svg" />
   <link rel="apple-touch-icon" href="brand/vcd-avatar-28-dark.png" />
-  <link rel="stylesheet" href="style.css?v=31" />
+  <link rel="stylesheet" href="style.css?v=35" />
   <!-- Bump v= on style.css and every ./js/ entry below with each deploy, so browsers fetch fresh files
        instead of a cached copy (GitHub Pages lets them keep files for 10 minutes). -->
   <script type="importmap">
@@ -18,21 +32,21 @@
       "imports": {
         "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
-        "./js/audio.js": "./js/audio.js?v=31",
-        "./js/blueprint.js": "./js/blueprint.js?v=31",
-        "./js/crystals.js": "./js/crystals.js?v=31",
-        "./js/hero.js": "./js/hero.js?v=32",
-        "./js/links.js": "./js/links.js?v=31",
-        "./js/neonLogo.js": "./js/neonLogo.js?v=33",
-        "./js/main.js": "./js/main.js?v=32",
-        "./js/noise.js": "./js/noise.js?v=31",
-        "./js/particles.js": "./js/particles.js?v=31",
-        "./js/post.js": "./js/post.js?v=31",
-        "./js/projects.js": "./js/projects.js?v=31",
-        "./js/rings.js": "./js/rings.js?v=31",
-        "./js/shatter.js": "./js/shatter.js?v=31",
-        "./js/textures.js": "./js/textures.js?v=31",
-        "./js/ui.js": "./js/ui.js?v=31"
+        "./js/audio.js": "./js/audio.js?v=34",
+        "./js/blueprint.js": "./js/blueprint.js?v=34",
+        "./js/crystals.js": "./js/crystals.js?v=34",
+        "./js/hero.js": "./js/hero.js?v=35",
+        "./js/links.js": "./js/links.js?v=34",
+        "./js/neonLogo.js": "./js/neonLogo.js?v=34",
+        "./js/main.js": "./js/main.js?v=34",
+        "./js/noise.js": "./js/noise.js?v=34",
+        "./js/particles.js": "./js/particles.js?v=34",
+        "./js/post.js": "./js/post.js?v=34",
+        "./js/projects.js": "./js/projects.js?v=34",
+        "./js/rings.js": "./js/rings.js?v=34",
+        "./js/shatter.js": "./js/shatter.js?v=34",
+        "./js/textures.js": "./js/textures.js?v=34",
+        "./js/ui.js": "./js/ui.js?v=34"
       }
     }
   </script>
@@ -89,6 +103,21 @@ discover.</p>
     <span>Sound: <b>Off</b></span>
   </button>
 
+  <button class="lights ch ch-0" type="button" aria-pressed="false">
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M10.5 2.5a5.5 5.5 0 1 0 3 9.8A6 6 0 0 1 10.5 2.5z" fill="currentColor" /></svg>
+    <span>Night: <b>Off</b></span>
+  </button>
+
+  <section class="contact ch ch-3" aria-labelledby="contact-title">
+    <p class="eyebrow" data-scramble>////// Contact</p>
+    <h2 id="contact-title">Let’s build<br />something.</h2>
+    <p class="pitch">Have an idea for a website, an iOS app or an AI tool? Send me a message and tell me about it.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a>
+      <a class="btn" href="https://github.com/VCDevelopments" target="_blank" rel="noopener">See my code on GitHub ↗</a>
+    </div>
+  </section>
+
   <div id="project-cards" class="ch ch-1" aria-hidden="true"></div>
 
   <dialog id="project-dialog" aria-labelledby="project-dialog-title">
@@ -106,7 +135,7 @@ discover.</p>
       </figure>
       <div class="thumbs" role="group" aria-label="Pictures"></div>
       <div class="sections"></div>
-      <div class="foot"><span class="stack"></span><a class="code" target="_blank" rel="noopener">View the code on GitHub ↗</a></div>
+      <div class="foot"><span class="stack"></span><span class="links"><a class="page" target="_blank" rel="noopener">Project page ↗</a><a class="code" target="_blank" rel="noopener">View the code on GitHub ↗</a></span></div>
     </div>
   </dialog>
 
@@ -123,6 +152,6 @@ discover.</p>
 
   <div class="scroll-space" aria-hidden="true"></div>
 
-  <script type="module" src="js/main.js?v=32"></script>
+  <script type="module" src="js/main.js?v=34"></script>
 </body>
 </html>

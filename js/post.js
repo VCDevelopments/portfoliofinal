@@ -2,8 +2,9 @@
 // chromatic aberration, grain and vignette.
 import * as THREE from 'three';
 
-export function createComposite(renderer) {
-  const opts = { type: THREE.HalfFloatType, samples: 4, depthBuffer: true };
+// `samples`: anti-aliasing per pixel (fewer on phones, to stay fast).
+export function createComposite(renderer, { samples = 4 } = {}) {
+  const opts = { type: THREE.HalfFloatType, samples, depthBuffer: true };
   const rtA = new THREE.WebGLRenderTarget(1, 1, opts);
   const rtB = new THREE.WebGLRenderTarget(1, 1, opts);
 
@@ -18,6 +19,7 @@ export function createComposite(renderer) {
       uMix: { value: 0 },
       uTime: { value: 0 },
       uShift: { value: 0 },
+      uCalm: { value: 0 },
       uRes: { value: new THREE.Vector2(1, 1) },
     },
     depthTest: false,
@@ -25,7 +27,7 @@ export function createComposite(renderer) {
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: /* glsl */ `
       uniform sampler2D tA, tB;
-      uniform float uMix, uTime, uShift;
+      uniform float uMix, uTime, uShift, uCalm;
       uniform vec2 uRes;
       varying vec2 vUv;
 
@@ -50,7 +52,7 @@ export function createComposite(renderer) {
 
       void main() {
         vec2 uv = vUv;
-        float k = sin(3.14159265 * clamp(uMix, 0.0, 1.0));   // transition peak at the midpoint
+        float k = sin(3.14159265 * clamp(uMix, 0.0, 1.0)) * (1.0 - uCalm); // transition peak at the midpoint; none in calm mode
         float band = noise(vec2(uv.y * 60.0, uTime * 3.0));
         float slice = step(0.55, noise(vec2(uv.y * 9.0, floor(uTime * 12.0))));
         vec2 d = vec2((band - 0.5) * 0.12 * k + slice * 0.04 * k * (hash(vec2(floor(uv.y * 30.0), uTime)) - 0.5), 0.0);
@@ -59,13 +61,13 @@ export function createComposite(renderer) {
         vec3 a = smear(tA, uv + d, k, ab);
         vec3 b = smear(tB, uv - d, k, ab);
         float n = noise(uv * vec2(4.0, 26.0) + uTime);
-        float w = smoothstep(0.35, 0.65, uMix + (n - 0.5) * 0.45);
+        float w = mix(smoothstep(0.35, 0.65, uMix + (n - 0.5) * 0.45), uMix, uCalm); // calm: a plain crossfade
         vec3 col = mix(a, b, w);
 
         col += k * 0.18;                                       // bloom-ish flash
         vec2 q = uv - 0.5;
         col *= 1.0 - dot(q, q) * 0.55;                          // vignette
-        col += (hash(uv * uRes + fract(uTime) * 100.0) - 0.5) * 0.035; // grain
+        col += (hash(uv * uRes + fract(uTime) * 100.0) - 0.5) * 0.035 * (1.0 - uCalm); // grain
 
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
@@ -86,6 +88,10 @@ export function createComposite(renderer) {
       rtA.setSize(w, h);
       rtB.setSize(w, h);
       mat.uniforms.uRes.value.set(w, h);
+    },
+    // calm (reduced motion): plain crossfades, no smear, flash or grain
+    setCalm(on) {
+      mat.uniforms.uCalm.value = on ? 1 : 0;
     },
     render(mix, time, shift) {
       mat.uniforms.uMix.value = mix;

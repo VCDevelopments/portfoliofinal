@@ -472,9 +472,10 @@ export function createCrystals(env) {
       c.group.visible = Math.abs(c.group.position.y - camY) < SPACING * 0.85;
       c.group.position.x = c.item.side * offset;
       // mostly facing the viewer, so the margin around the picture reads cleanly; a gentle sway
-      c.group.rotation.y = Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25;
-      c.group.rotation.x = Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1;
-      c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03;
+      const sway = ctx.reduced ? 0 : 1; // reduced motion: blocks hold still
+      c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25) * sway;
+      c.group.rotation.x = (Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1) * sway;
+      c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03 * sway;
       // the picture sits square inside the block, turning to face the viewer as it slides out on hover
       qFace.copy(c.group.quaternion).invert().multiply(camera.quaternion);
       c.inner.quaternion.identity().slerp(qFace, Math.min(1, Math.max(0, c.h)));

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://vcdevelopments.info/sitemap.xml
