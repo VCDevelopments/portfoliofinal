@@ -142,6 +142,8 @@ body[data-chapter="3"] .ch-3 { opacity: 1; visibility: visible; }
 .contact .eyebrow { font: 500 11px/1 var(--mono); letter-spacing: 0.14em; }
 .contact h2 { font: 800 clamp(40px, 4.6vw, 64px)/0.98 "Outfit", sans-serif; letter-spacing: -0.04em; }
 .contact .pitch { font: 300 18px/1.45 "Outfit", sans-serif; max-width: 34ch; }
+.contact .mail { font: 500 13px/1.4 var(--mono); }
+.contact .mail a { color: inherit; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .contact .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
 .btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid #fff; color: #fff; text-decoration: none; font: 500 12px/1 var(--mono); transition: background 0.3s, color 0.3s; }
 .btn:hover, .btn:focus-visible { background: #fff; color: #1e242e; }

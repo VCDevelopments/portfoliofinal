@@ -3,13 +3,13 @@
 Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL experience built with Three.js.
 
 1. The neon VCDevelopments logo in a snowy valley, with a periodic blueprint scan. Click it to shatter it; click anywhere else for a gust of snow (which also drifts away from the cursor). The Night switch darkens the valley.
-2. Projects frozen in ice blocks, each with an overview card. Hover a block to reveal its picture; click (or use Learn more) for a pop-up with the project's full story and pictures.
+2. Projects shown on 3D laptops and phones, each with an overview card. Hover a device to light up its screen; click (or use Learn more) for a pop-up with the project's full story and pictures.
 3. Segmented blueprint rings that assemble, then a fly-through.
 4. Snow that bursts into the spinning neon logo, with a contact section and GitHub / LinkedIn links.
 
 With reduced motion turned on in the device settings, the intro is skipped and scene changes are plain crossfades. Phones get a lighter render (lower pixel density, less anti-aliasing, fewer particles).
 
-Each project's ice block sits on its own background gradient, taken from its picture
+Each project's device sits on its own background gradient, taken from its picture
 (`colors` in `js/projects.js`).
 
 ## Run locally

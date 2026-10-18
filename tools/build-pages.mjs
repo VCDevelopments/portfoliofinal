@@ -71,7 +71,7 @@ function page(p) {
     </div>
     <div class="foot">
       <span>${esc(p.stack)}</span>
-      <span>${p.url ? `<a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener">View the code on GitHub ↗</a> ` : ''}<a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a></span>
+      <span>${p.url ? `<a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener">View the code on GitHub ↗</a> ` : ''}<a class="btn" href="mailto:info.vcdevelopments@gmail.com">Email me ↗</a> <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a></span>
     </div>
   </main>
 </body>

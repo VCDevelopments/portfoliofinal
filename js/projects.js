@@ -1,10 +1,11 @@
-// Portfolio content — one ice block per project. Edit here to add, remove or reorder projects.
+// Portfolio content — one 3D device per project. Edit here to add, remove or reorder projects.
 // Every project opens a pop-up with its full story (`details`) and pictures (`gallery`);
 // one with a `url` also links to its code there.
 export const PROJECTS = [
   {
     name: 'Pulse',
-    started: '2026-10-13', // first day of work; older projects melt and drip more
+    device: { laptop: 'img/screens/pulse-laptop.jpg' }, // shown on this device's screen in the 3D scene
+    started: '2026-10-13', // first day of work; the live timer counts from here
     blurb: 'Ads on autopilot: learns what\nsells and moves the budget there',
     stack: 'Python · SQLite · ML · Meta & TikTok APIs · Claude',
     image: 'img/projects/pulse.jpg',
@@ -28,6 +29,7 @@ export const PROJECTS = [
   },
   {
     name: 'Relay',
+    device: { laptop: 'img/screens/relay-laptop.jpg', phone: 'img/screens/relay-phone.jpg' },
     started: '2026-10-15',
     blurb: 'Share files between laptop\nand phone with a QR code',
     stack: 'Python · HTML · HTTPS · QR',
@@ -52,6 +54,7 @@ export const PROJECTS = [
   },
   {
     name: 'ShotGuide',
+    device: { phone: 'img/screens/shotguide-phone.jpg' },
     started: '2026-10-16',
     blurb: 'iOS camera that coaches you to\nrecreate any aesthetic photo',
     stack: 'Swift · SwiftUI · AVFoundation · Vision · Apple Intelligence · Claude',
@@ -77,6 +80,7 @@ export const PROJECTS = [
   },
   {
     name: 'VCDevelopments',
+    device: { laptop: 'img/screens/vcdevelopments-laptop.jpg' },
     started: '2026-10-15',
     blurb: 'This portfolio: a scroll-driven\n3D site built with Three.js',
     stack: 'JavaScript · Three.js · GLSL · WebGL',
@@ -87,16 +91,16 @@ export const PROJECTS = [
       status: 'Live',
       intro: 'The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step.',
       sections: [
-        { title: 'Four scenes, one scroll', text: 'A snowy valley with the neon logo, these projects frozen in ice, a wireframe blueprint gyroscope, and a cloud of snow that becomes the logo. Each scene is drawn off-screen, and a final shader blends them with a glitch transition as you scroll.' },
-        { title: 'Generated, not modelled', text: 'The terrain, the ice chunks, their textures and the logo are all built in code from noise, so every ice block has its own shape. The longer a project has been running, the more its block melts and drips, with a live timer underneath.' },
-        { title: 'Made to be played with', text: 'Click a logo and it bursts into particles that rebuild it from the bottom up. Hover a block and its preview slides out of the ice. The sound follows how fast you scroll.' },
+        { title: 'Four scenes, one scroll', text: 'A snowy valley with the neon logo, these projects running on 3D laptops and phones, a wireframe blueprint gyroscope, and a cloud of snow that becomes the logo. Each scene is drawn off-screen, and a final shader blends them with a glitch transition as you scroll.' },
+        { title: 'Generated, not modelled', text: 'The terrain, the devices and the logo are all built in code, no 3D models loaded. Every device shows the real project on its screen, with a live timer underneath counting the time put into it.' },
+        { title: 'Made to be played with', text: 'Click a logo and it bursts into particles that rebuild it from the bottom up. Hover a device and it turns to face you with its screen lighting up. The sound follows how fast you scroll.' },
         { title: 'Kept smooth', text: 'Scrolling follows a spring for smooth motion, pictures are loaded before they are needed, scenes out of view skip their work, and every file is versioned so visitors always get the latest one.' },
       ],
     },
     gallery: [
       { src: 'img/projects/portfolio.jpg', caption: 'The landing page: the neon logo in a snowy valley.' },
       { src: 'img/projects/portfolio-2.jpg', caption: 'How it is built: four scenes blended by one shader.' },
-      { src: 'img/projects/portfolio-3.jpg', caption: 'The details: shattering logos, melting ice, previews that slide out.' },
+      { src: 'img/projects/portfolio-3.jpg', caption: 'The details: shattering logos, devices that light up on hover.' },
     ],
   },
 ];

@@ -1,289 +1,124 @@
-// Chapter 1 — portfolio: each project is an object frozen inside a drifting ice block.
-// Callouts name it; clicking the block opens the project's pop-up.
+// Chapter 1 — portfolio: each project runs on a 3D laptop and/or phone showing its real screen.
+// Callouts name it; clicking the device opens the project's pop-up.
 import * as THREE from 'three';
-import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
-import { fbm3, rng } from './noise.js';
-import { getTextures, crackTexture } from './textures.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { rng } from './noise.js';
 import { PROJECTS } from './projects.js';
 
 const BG = 0xb6b9bf;
 const SPACING = 15;
-const BLOCK_SCALE = 1;
-// the project picture frozen in each block, and the clear ice around it on every side
-const PIC_W = 1.56, PIC_H = 1.04, MARGIN = 0.34;
 
-const ITEMS = PROJECTS.map((p, i) => ({ ...p, code: `PROJECT_${String(i + 1).padStart(2, '0')}`, side: i % 2 ? 1 : -1 })); // crystal sits on this side, the overview card on the other
+const ITEMS = PROJECTS.map((p, i) => ({ ...p, code: `PROJECT_${String(i + 1).padStart(2, '0')}`, side: i % 2 ? 1 : -1 })); // device sits on this side, the overview card on the other
 
-// A chunk of clear ice around the project picture, a different shape for every project: an irregular
-// 5–9 sided outline (like a broken-off piece) that always contains the picture with a margin, cut to
-// a slab with bevelled edges, then given uneven, melting surfaces. `melt` (0..1, older projects more)
-// rounds the corners and edges and slumps the top.
-function iceOutline(r, melt) {
-  const need = [];
-  const mx = PIC_W / 2 + MARGIN * 0.55, my = PIC_H / 2 + MARGIN * 0.55;
-  for (const sx of [-1, 0, 1]) for (const sy of [-1, 0, 1]) if (sx || sy) need.push(new THREE.Vector2(sx * mx, sy * my));
-  const sides = 5 + Math.floor(r() * 5);
-  const ax = (PIC_W / 2 + MARGIN) * (0.95 + r() * 0.3), ay = (PIC_H / 2 + MARGIN) * (0.95 + r() * 0.5);
-  const spin = r() * Math.PI * 2;
-  // irregular spacing and reach around an ellipse, so no two chunks share a silhouette
-  const pts = Array.from({ length: sides }, (_, k) => {
-    const a = spin + ((k + (r() - 0.5) * 0.7) / sides) * Math.PI * 2;
-    const reach = 0.88 + r() * 0.32;
-    return new THREE.Vector2(Math.cos(a) * ax * reach, Math.sin(a) * ay * reach);
-  }).sort((p, q) => Math.atan2(p.y, p.x) - Math.atan2(q.y, q.x));
-  // grow it until the picture (plus margin) fits inside
-  const inside = (q) => {
-    let hit = false;
-    for (let k = 0, l = pts.length - 1; k < pts.length; l = k++) {
-      const a = pts[k], b = pts[l];
-      if (a.y > q.y !== b.y > q.y && q.x < ((b.x - a.x) * (q.y - a.y)) / (b.y - a.y) + a.x) hit = !hit;
-    }
-    return hit;
-  };
-  for (let tries = 0; tries < 40 && !need.every(inside); tries++) pts.forEach((p) => p.multiplyScalar(1.03));
-  // soften each corner with a curve; more melted ice has rounder corners
-  const t = 0.14 + melt * 0.16;
-  const shape = new THREE.Shape();
-  const corner = (k) => {
-    const p = pts[k], prev = pts[(k + pts.length - 1) % pts.length], next = pts[(k + 1) % pts.length];
-    return { a: p.clone().lerp(prev, t), p, b: p.clone().lerp(next, t) };
-  };
-  const first = corner(0);
-  shape.moveTo(first.a.x, first.a.y);
-  for (let k = 0; k < pts.length; k++) {
-    const c = corner(k);
-    if (k) shape.lineTo(c.a.x, c.a.y);
-    shape.quadraticCurveTo(c.p.x, c.p.y, c.b.x, c.b.y);
-  }
-  shape.closePath();
-  return shape;
+// shared device parts
+const aluminium = new THREE.MeshStandardMaterial({ color: 0xc4c8ce, metalness: 0.9, roughness: 0.3, envMapIntensity: 1.2 });
+const graphite = new THREE.MeshStandardMaterial({ color: 0x2b2e34, metalness: 0.85, roughness: 0.28, envMapIntensity: 1.2 });
+const glassBlack = new THREE.MeshStandardMaterial({ color: 0x07080a, metalness: 0.3, roughness: 0.12 });
+const keysMat = new THREE.MeshStandardMaterial({ color: 0x1b1d22, metalness: 0.2, roughness: 0.7 });
+const padMat = new THREE.MeshStandardMaterial({ color: 0xb4b8be, metalness: 0.85, roughness: 0.42 });
+
+// a rounded rectangle with 0..1 UVs, for screens and glass with round corners
+function roundedRect(w, h, r) {
+  const s = new THREE.Shape();
+  const x = -w / 2, y = -h / 2;
+  s.moveTo(x + r, y);
+  s.lineTo(x + w - r, y);
+  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + h - r);
+  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  s.lineTo(x + r, y + h);
+  s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + r);
+  s.quadraticCurveTo(x, y, x + r, y);
+  const g = new THREE.ShapeGeometry(s, 10);
+  const p = g.attributes.position, uv = g.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) - x) / w, (p.getY(i) - y) / h);
+  return g;
 }
 
-function iceBlockGeometry(seed, melt) {
-  const r = rng(seed * 97 + 5);
-  const depth = 0.6 + r() * 0.35;
-  const bevel = 0.1 + melt * 0.1;
-  let g = new THREE.ExtrudeGeometry(iceOutline(r, melt), { depth, steps: 3, bevelEnabled: true, bevelThickness: bevel * 1.2, bevelSize: bevel, bevelSegments: 7, curveSegments: 14 });
-  g.translate(0, 0, -depth / 2);
-  g.computeBoundingBox();
-  const box = g.boundingBox;
+// the screen itself: unlit, so the project's picture shows in its true colours; brightens on hover
+const screenMat = (map) => new THREE.MeshBasicMaterial({ map, toneMapped: false, color: 0xd9d9d9 });
+
+// A 16:10 laptop, opened a little past upright and tipped toward the viewer so the keyboard shows
+function laptop(map) {
+  const W = 2.6, D = 1.75, T = 0.07;
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new RoundedBoxGeometry(W, T, D, 4, 0.03), aluminium);
+  const keys = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.84, D * 0.4), keysMat);
+  keys.rotation.x = -Math.PI / 2;
+  keys.position.set(0, T / 2 + 0.002, -D * 0.14);
+  const pad = new THREE.Mesh(roundedRect(W * 0.34, D * 0.26, 0.04), padMat);
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.set(0, T / 2 + 0.002, D * 0.27);
+  base.add(keys, pad);
+  // the lid swings on a hinge along the back edge of the base
+  const hinge = new THREE.Group();
+  hinge.position.set(0, T / 2, -D / 2 + 0.02);
+  hinge.rotation.x = -0.32;
+  const LH = D * 0.98;
+  const lid = new THREE.Mesh(new RoundedBoxGeometry(W, LH, 0.045, 4, 0.02), aluminium);
+  lid.position.set(0, LH / 2, 0);
+  const bezel = new THREE.Mesh(roundedRect(W - 0.06, LH - 0.06, 0.06), glassBlack);
+  bezel.position.z = 0.0235;
+  const sw = W - 0.2, sh = sw / 1.6;
+  const screen = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), screenMat(map));
+  screen.position.set(0, 0.02, 0.0245);
+  lid.add(bezel, screen);
+  hinge.add(lid);
+  g.add(base, hinge);
+  g.rotation.x = 0.38; // tipped toward the viewer
+  return { group: g, screens: [screen.material] };
+}
+
+// A phone: graphite frame, black glass, the screen with rounded corners and a small island at the top
+function phone(map) {
+  const W = 0.82, H = 1.74, T = 0.085;
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new RoundedBoxGeometry(W, H, T, 6, 0.12), graphite);
+  const glass = new THREE.Mesh(roundedRect(W - 0.03, H - 0.03, 0.105), glassBlack);
+  glass.position.z = T / 2 + 0.001;
+  const sh = H - 0.09, sw = sh * (552 / 1232);
+  const screen = new THREE.Mesh(roundedRect(sw, sh, 0.09), screenMat(map));
+  screen.position.z = T / 2 + 0.002;
+  body.add(glass, screen);
+  g.add(body);
+  return { group: g, screens: [screen.material] };
+}
+
+// what each project runs on: a laptop, a phone, or both side by side
+function device(item, load) {
+  const g = new THREE.Group();
+  const screens = [];
+  const add = ({ group, screens: s }, x, y, z, ry, scale = 1) => {
+    group.position.set(x, y, z);
+    group.rotation.y = ry;
+    group.scale.multiplyScalar(scale);
+    g.add(group);
+    screens.push(...s);
+  };
+  const { laptop: lap, phone: ph } = item.device;
+  if (lap && ph) {
+    add(laptop(load(lap)), -0.35, 0, 0, 0);
+    add(phone(load(ph)), 1.45, -0.32, 0.75, -0.32, 0.82);
+  } else if (lap) add(laptop(load(lap)), 0, 0, 0, 0);
+  else add(phone(load(ph)), 0, 0, 0, 0, 1.3);
+  // centre the whole thing on the group's origin
+  const box = new THREE.Box3().setFromObject(g);
+  const centre = box.getCenter(new THREE.Vector3());
+  g.children.forEach((c) => c.position.sub(centre));
   const size = box.getSize(new THREE.Vector3());
-  const half = size.clone().multiplyScalar(0.5);
-  const p = g.attributes.position;
-  const v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    // uneven, melting surfaces: broad waviness plus fine ripples, pushed out from the slab's core
-    const out = new THREE.Vector3(v.x, v.y, v.z * 2.5).normalize();
-    const wobble = fbm3(v.x * 0.5 + seed, v.y * 0.5, v.z * 0.5 - seed, 3) * (0.05 + melt * 0.06);
-    const ripple = fbm3(v.x * 1.8 - seed, v.y * 1.8, v.z * 1.8, 2) * 0.015;
-    v.addScaledVector(out, wobble + ripple);
-    if (v.y > 0) v.y -= melt * 0.22 * Math.pow(v.y / half.y, 2) * (0.7 + 0.3 * fbm3(v.x * 0.8, seed, v.z * 0.8, 2));
-    const taper = 1 - (v.y / half.y) * (0.02 + melt * 0.03);
-    v.x *= taper;
-    v.z *= taper;
-    p.setXYZ(i, v.x, v.y, v.z);
-  }
-  // smooth normals across the cap/bevel/side seams: compute them on a welded copy, then copy back
-  const welded = mergeVertices(new THREE.BufferGeometry().setAttribute('position', p.clone()), 1e-4);
-  welded.computeVertexNormals();
-  const key = (x, y, z) => `${Math.round(x * 1e4)},${Math.round(y * 1e4)},${Math.round(z * 1e4)}`;
-  const normalAt = new Map();
-  const wp = welded.attributes.position, wn = welded.attributes.normal;
-  for (let i = 0; i < wp.count; i++) normalAt.set(key(wp.getX(i), wp.getY(i), wp.getZ(i)), i);
-  const nrm = g.attributes.normal;
-  for (let i = 0; i < p.count; i++) {
-    const k = normalAt.get(key(p.getX(i), p.getY(i), p.getZ(i)));
-    nrm.setXYZ(i, wn.getX(k), wn.getY(k), wn.getZ(k));
-  }
-  // the extrusion's UVs are in world units; scale them down so the frost and ripple maps aren't tiny
-  const uv = g.attributes.uv;
-  for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * 0.35, uv.getY(i) * 0.35);
-  g.computeBoundingBox();
-  g.computeBoundingSphere();
-  g.boundingBox.getSize(size);
-  // surface lookups for the drips: the front surface's depth near a point, and the underside's height
-  const frontZ = (x, y) => {
-    let z = 0;
-    for (let i = 0; i < p.count; i++) if ((p.getX(i) - x) ** 2 + (p.getY(i) - y) ** 2 < 0.01) z = Math.max(z, p.getZ(i));
-    return z || depth / 2;
-  };
-  const bottomY = (x) => {
-    let y = Infinity;
-    for (let i = 0; i < p.count; i++) if (Math.abs(p.getX(i) - x) < 0.07 && Math.abs(p.getZ(i)) < depth * 0.4) y = Math.min(y, p.getY(i));
-    return y === Infinity ? -size.y / 2 : y;
-  };
-  return { geo: g, size, frontZ, bottomY };
+  // an invisible box over the device for pointer hits
+  const proxy = new THREE.Mesh(new THREE.BoxGeometry(size.x, size.y, Math.max(size.z, 0.6)), new THREE.MeshBasicMaterial({ visible: false }));
+  g.add(proxy);
+  return { group: g, screens, size, proxy };
 }
 
-// The cloudy white core of block ice (air frozen out as the water froze from the outside in).
-// Per-vertex density gives it feathery, uneven edges.
-function coreMesh(seed, size) {
-  const g = new THREE.IcosahedronGeometry(1, 24);
-  const p = g.attributes.position;
-  const dens = new Float32Array(p.count);
-  const v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    const f = fbm3(v.x * 2.2 + seed, v.y * 2.2, v.z * 2.2, 4);
-    v.multiplyScalar(1 + f * 0.35);
-    p.setXYZ(i, v.x, v.y, v.z);
-    dens[i] = THREE.MathUtils.clamp(0.55 + f * 1.6, 0, 1);
-  }
-  g.setAttribute('aDens', new THREE.BufferAttribute(dens, 1));
-  g.computeVertexNormals();
-  const mat = new THREE.ShaderMaterial({
-    transparent: true,
-    depthWrite: false,
-    vertexShader: `attribute float aDens; varying float vD; varying vec3 vN, vV;
-      void main(){ vD = aDens; vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `varying float vD; varying vec3 vN, vV;
-      void main(){ float facing = abs(dot(normalize(vN), normalize(vV))); gl_FragColor = vec4(vec3(0.94, 0.96, 1.0), pow(facing, 1.6) * vD * 0.07); }`,
-  });
-  const m = new THREE.Mesh(g, mat);
-  m.scale.set(PIC_W * 0.34, PIC_H * 0.42, size.z * 0.2); // tucked behind the picture, so only its fringe shows
-  return m;
-}
-
-// Trapped air: vertical streams of tiny bubbles (as they form in freezing water) plus loose ones.
-// Drawn as small refractive rings: a bright rim around a clear centre.
-const bubbleMat = new THREE.ShaderMaterial({
-  uniforms: { uPix: { value: 1 } },
-  transparent: true,
-  depthWrite: false,
-  vertexShader: `attribute float aSize; uniform float uPix;
-    void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = aSize * uPix * 90.0 / -mv.z; gl_Position = projectionMatrix * mv; }`,
-  fragmentShader: `void main(){
-      vec2 q = gl_PointCoord - 0.5; float d = length(q) * 2.0;
-      if (d > 1.0) discard;
-      float rim = smoothstep(0.55, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d));
-      float glint = smoothstep(0.25, 0.0, length(q - vec2(-0.16, -0.16)));
-      gl_FragColor = vec4(vec3(1.0), rim * 0.75 + glint * 0.9);
-    }`,
-});
-function bubbles(seed, size) {
-  const r = rng(seed);
-  const pos = [], sz = [];
-  for (let s = 0; s < 34; s++) {
-    const x = (r() - 0.5) * size.x * 0.7, z = (r() - 0.5) * size.z * 0.7;
-    const y0 = (r() - 0.5) * size.y * 0.5, len = 0.15 + r() * 0.45, n = 6 + Math.floor(r() * 14);
-    for (let k = 0; k < n; k++) {
-      const t = k / n;
-      pos.push(x + Math.sin(t * 6 + s) * 0.03, y0 + t * len, z + Math.cos(t * 5 + s) * 0.03);
-      sz.push(0.012 + r() * 0.02 + t * 0.012);
-    }
-  }
-  for (let k = 0; k < 260; k++) {
-    pos.push((r() - 0.5) * size.x * 0.8, (r() - 0.5) * size.y * 0.8, (r() - 0.5) * size.z * 0.8);
-    sz.push(0.008 + Math.pow(r(), 3) * 0.05);
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setAttribute('aSize', new THREE.Float32BufferAttribute(sz, 1));
-  const pts = new THREE.Points(g, bubbleMat);
-  pts.renderOrder = 0.5;
-  return pts;
-}
-
-// Frost settles on the base and along the edges; the flat faces stay clear.
-function frostMaterial(tex) {
-  const m = new THREE.MeshStandardMaterial({ color: 0xf6f9fc, roughness: 0.95, alphaMap: tex.frostAlpha, transparent: true, depthWrite: false });
-  m.userData.uniforms = { uHalfY: { value: 1.6 }, uAmount: { value: 1 } };
-  m.onBeforeCompile = (sh) => {
-    Object.assign(sh.uniforms, m.userData.uniforms);
-    sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vLP;\nvarying vec3 vLN;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLP = position; vLN = normal;');
-    sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vLP;\nvarying vec3 vLN;\nuniform float uHalfY, uAmount;')
-      .replace(
-        '#include <alphamap_fragment>',
-        `#include <alphamap_fragment>
-        vec3 an = abs(normalize(vLN));
-        float edge = smoothstep(0.08, 0.3, 1.0 - max(an.x, max(an.y, an.z)));
-        float base = smoothstep(0.2, -0.85, vLP.y / uHalfY);
-        diffuseColor.a *= clamp(edge * 0.8 + base, 0.0, 1.0) * uAmount;`,
-      );
-  };
-  return m;
-}
-
-// Melt water: drops run down the front face from just below the picture, gather on icicles hanging
-// from the underside and fall off. Older projects (higher `melt`) get more, longer icicles and drip faster.
-const dropGeo = new THREE.SphereGeometry(0.032, 16, 12);
-function icicleGeometry(len, r0) {
-  const pts = [];
-  for (let k = 0; k <= 24; k++) {
-    const t = k / 24;
-    // a cone tapering to a point, with a small bead of water forming at the tip
-    const bead = Math.sin(Math.PI * THREE.MathUtils.clamp((t - 0.82) / 0.18, 0, 1)) * r0 * 0.55;
-    pts.push(new THREE.Vector2(Math.max(r0 * Math.pow(1 - t, 1.5), bead, 0.0005), -t * len));
-  }
-  return new THREE.LatheGeometry(pts, 20);
-}
-function meltDrips(block, melt, seed, iceMat) {
-  const r = rng(seed * 31 + 7);
-  const group = new THREE.Group();
-  // irregularly spaced drip lines under the picture, at least a little apart
-  const xs = [];
-  for (let tries = 0; xs.length < 1 + Math.round(melt * 4) && tries < 60; tries++) {
-    const x = (r() - 0.5) * PIC_W * 0.95;
-    if (xs.every((o) => Math.abs(o - x) > 0.16)) xs.push(x);
-  }
-  const channels = xs.map((x) => {
-    const base = block.bottomY(x);
-    const len = (0.12 + melt * 0.55) * (0.3 + r() * 0.7);
-    const icicle = new THREE.Mesh(icicleGeometry(len, (0.05 + melt * 0.04) * (0.7 + r() * 0.6)), iceMat);
-    icicle.position.set(x, base + 0.05, 0);
-    const dropMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0, metalness: 0, clearcoat: 1, transparent: true, opacity: 0, envMapIntensity: 2.5 });
-    const run = new THREE.Mesh(dropGeo, dropMat);
-    run.scale.set(0.8, 1.5, 0.45);
-    const fall = new THREE.Mesh(dropGeo, dropMat.clone());
-    fall.scale.set(1, 1.25, 1);
-    group.add(icicle, run, fall);
-    // the running drop's path: from under the picture down the front face to the icicle
-    const y0 = -PIC_H / 2 - 0.05, y1 = base + 0.1;
-    const path = Array.from({ length: 12 }, (_, s) => {
-      const y = y0 + ((y1 - y0) * s) / 11;
-      return new THREE.Vector3(x, y, block.frontZ(x, y) + 0.012);
-    });
-    return { run, fall, path, tip: base + 0.05 - len, period: THREE.MathUtils.lerp(5, 1.8, melt) * (0.8 + r() * 0.4), offset: r() * 10 };
-  });
-  return {
-    group,
-    update(time) {
-      for (const ch of channels) {
-        const u = ((time + ch.offset) % ch.period) / ch.period;
-        // 0..0.6 runs down the face, speeding up; 0.72..1 falls from the icicle and fades
-        const run = u < 0.6 ? Math.pow(u / 0.6, 1.6) : -1;
-        ch.run.visible = run >= 0;
-        if (run >= 0) {
-          const f = run * (ch.path.length - 1), k = Math.min(ch.path.length - 2, Math.floor(f));
-          ch.run.position.lerpVectors(ch.path[k], ch.path[k + 1], f - k);
-          ch.run.material.opacity = 0.75 * Math.min(1, run * 6);
-        }
-        const fall = u > 0.72 ? (u - 0.72) / 0.28 : -1;
-        ch.fall.visible = fall >= 0;
-        if (fall >= 0) {
-          ch.fall.position.set(ch.path[0].x, ch.tip - 3 * fall * fall, 0);
-          ch.fall.material.opacity = 0.8 * (1 - fall);
-        }
-      }
-    },
-  };
-}
-
-// melt amount per project: how long it has been worked on, relative to the oldest (every block drips a little)
-const DAY = 86400000;
-const daysIn = (it) => Math.max(1, Math.round((Date.now() - new Date(`${it.started}T00:00:00`).getTime()) / DAY));
-const maxDays = Math.max(...ITEMS.map(daysIn));
-const meltOf = (it) => 0.15 + 0.85 * (daysIn(it) / maxDays);
+// time spent so far as hh:mm:ss, e.g. "432:15:07"
 const startOf = (it) => new Date(`${it.started}T00:00:00`).getTime();
-// time spent so far as "432h 15m 07s"
 const elapsed = (ms) => {
   const t = Math.max(0, Math.floor(ms / 1000));
   const pad = (n) => String(n).padStart(2, '0');
-  return `${Math.floor(t / 3600)}h ${pad(Math.floor(t / 60) % 60)}m ${pad(t % 60)}s`;
+  return `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
 };
 const startedLabel = (it) => new Date(`${it.started}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
 
@@ -303,73 +138,24 @@ export function createCrystals(env) {
   rim.position.set(-6, -3, -5);
   scene.add(rim);
 
-  const tex = getTextures();
   const rand = rng(11);
   const loader = new THREE.TextureLoader();
-  const picGeo = new THREE.PlaneGeometry(PIC_W, PIC_H);
-  // clear, wet block ice: low roughness with a few duller patches, a glossy melt-water coat,
-  // faint blue only through thick sections
-  const iceMat = new THREE.MeshPhysicalMaterial({
-    color: 0xf7fbff,
-    roughness: 0.06,
-    roughnessMap: tex.iceRough,
-    normalMap: tex.iceNormal,
-    normalScale: new THREE.Vector2(0.12, 0.12),
-    transmission: 1,
-    thickness: 2.2,
-    ior: 1.31,
-    dispersion: 0.25,
-    attenuationColor: new THREE.Color(0xc8e4f7),
-    attenuationDistance: 7,
-    clearcoat: 1,
-    clearcoatRoughness: 0.04,
-    specularIntensity: 1,
-    envMapIntensity: 1.35,
-  });
-  const crackGeo = new THREE.PlaneGeometry(1.1, 1.1);
-  const crackMats = [3, 8, 21].map((seed) => new THREE.MeshBasicMaterial({ map: crackTexture(seed), transparent: true, opacity: 0.32, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
-  const pictures = []; // resolve once each project picture has loaded
-  const crystals = ITEMS.map((item, i) => {
-    const group = new THREE.Group();
-    group.position.set(0, -i * SPACING, 0);
-    const melt = meltOf(item);
-    const block = iceBlockGeometry(i * 3.7 + 1, melt);
-    const { geo, size } = block;
-    const drips = meltDrips(block, melt, i, iceMat);
-    const ice = new THREE.Mesh(geo, iceMat);
-    // frost on the base and edges
-    const frostMat = frostMaterial(tex);
-    frostMat.userData.uniforms.uHalfY.value = size.y / 2;
-    const frost = new THREE.Mesh(geo, frostMat);
-    frost.scale.setScalar(1.004);
-    frost.renderOrder = 2;
-    // inside: cloudy core, a few fracture planes, trapped bubbles
-    const core = coreMesh(i * 5 + 2, size);
-    const cracks = new THREE.Group();
-    for (let k = 0; k < 3; k++) {
-      const c = new THREE.Mesh(crackGeo, crackMats[(i + k) % crackMats.length].clone());
-      c.rotation.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
-      c.position.set((rand() - 0.5) * 1.2, (rand() - 0.5) * 0.7, (rand() - 0.5) * 0.3);
-      c.scale.setScalar(0.8 + rand() * 0.6);
-      cracks.add(c);
-    }
-    // the project's picture frozen in the ice, always turned toward the viewer
+  const pictures = []; // resolve once each screen picture has loaded
+  const maps = [];
+  const load = (src) => {
     let loaded;
     pictures.push(new Promise((res) => { loaded = res; }));
-    const map = loader.load(item.image, loaded, undefined, loaded);
+    const map = loader.load(src, loaded, undefined, loaded);
     map.colorSpace = THREE.SRGBColorSpace;
-    map.anisotropy = 4;
-    // drawn after the refraction pass so it stays sharp; the frost layer still renders over it
-    const inner = new THREE.Group();
-    const frame = new THREE.Mesh(picGeo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthTest: false }));
-    frame.scale.set(1.035, 1.05, 1);
-    frame.renderOrder = 1;
-    const pic = new THREE.Mesh(picGeo, new THREE.MeshBasicMaterial({ map, toneMapped: false, side: THREE.DoubleSide, transparent: true, opacity: 0.94, depthTest: false }));
-    pic.renderOrder = 1.1;
-    inner.add(frame, pic);
-    group.add(ice, core, inner, frost, cracks, bubbles(40 + i, size), drips.group);
+    map.anisotropy = 8;
+    maps.push(map);
+    return map;
+  };
+  const crystals = ITEMS.map((item, i) => {
+    const { group, screens, size, proxy } = device(item, load);
+    group.position.set(0, -i * SPACING, 0);
     scene.add(group);
-    return { item, group, ice, inner, frame, pic, frost, cracks, map, drips, size, h: 0, hv: 0 };
+    return { item, group, screens, size, proxy, h: 0, hv: 0 };
   });
 
   // drifting ice dust along the whole column
@@ -512,30 +298,28 @@ export function createCrystals(env) {
     orbMat.uniforms.uColor.value.lerpColors(palettes[i0][2], palettes[i1][2], t);
   }
 
-  // three callouts per crystal; anchors are local points on the crystal
+  // three callouts per device; anchors are local points around it
   const callouts = [];
   crystals.forEach((c, i) => {
     c.callouts = [
       { text: `${c.item.code}\n${c.item.name}`, local: new THREE.Vector3(-0.6, c.size.y * 0.5, 0.3), offset: [-90, -70] },
       { text: `STARTED\n${startedLabel(c.item)}`, local: new THREE.Vector3(c.size.x * 0.4, -c.size.y * 0.5, 0.3), offset: [70, 30] },
-      // live timer under the block (below its icicles): time spent on the project so far
-      // (above the block on narrow screens, where the project card covers the bottom)
-      { text: '', cls: 'timer', center: true, live: true, since: startOf(c.item), local: new THREE.Vector3(0, -c.size.y * 0.5 * BLOCK_SCALE - 0.95, 0), above: c.size.y * 0.5 * BLOCK_SCALE + 0.35, offset: [0, 0] },
+      // live timer under the device: time spent on the project so far
+      // (above it on narrow screens, where the project card covers the bottom)
+      { text: '', cls: 'timer', center: true, live: true, since: startOf(c.item), local: new THREE.Vector3(0, -c.size.y * 0.5 - 0.7, 0), above: c.size.y * 0.5 + 0.35, offset: [0, 0] },
     ].map((o) => ({ ...o, anchor: new THREE.Vector3(), visible: false }));
     callouts.push(...c.callouts);
   });
 
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  const qFace = new THREE.Quaternion();
-  const toCam = new THREE.Vector3();
   const state = { active: -1 };
 
   function update(local, ctx) {
     const { time, mouse } = ctx;
     // crystal i sits centred in the frame at local = (i + 0.5) / ITEMS.length
     const camY = SPACING * 0.5 - local * SPACING * ITEMS.length;
-    bubbleMat.uniforms.uPix.value = orbMat.uniforms.uPix.value = ctx.pixelRatio * (ctx.height / 900);
+    orbMat.uniforms.uPix.value = ctx.pixelRatio * (ctx.height / 900);
     orbMat.uniforms.uTime.value = time;
     // camera path: between blocks it swings round in an arc (alternating sides) and pulls back; as a
     // block reaches the centre it settles in front of it and pushes in a little
@@ -553,12 +337,12 @@ export function createCrystals(env) {
     camera.updateMatrixWorld();
     blendBackground(camY, offset, time);
 
-    // pointer: hovering a block brightens it, clicking opens the project's pop-up
+    // pointer: hovering a device lights it up, clicking opens the project's pop-up
     let hovered = null;
     if (ctx.pointer.inside) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
-      const hit = raycaster.intersectObjects(crystals.flatMap((c) => [c.ice, c.pic]), false)[0];
-      hovered = hit && crystals.find((c) => c.ice === hit.object || c.pic === hit.object);
+      const hit = raycaster.intersectObjects(crystals.map((c) => c.proxy), false)[0];
+      hovered = hit && crystals.find((c) => c.proxy === hit.object);
       if (hovered && Math.abs(hovered.group.position.y - camY) > 4.2) hovered = null;
     }
     if (hovered) {
@@ -568,33 +352,21 @@ export function createCrystals(env) {
 
     state.active = -1;
     crystals.forEach((c, i) => {
-      // blocks well out of frame skip rendering entirely (their refraction pass is the costly part)
+      // devices well out of frame skip rendering entirely
       c.group.visible = Math.abs(c.group.position.y - camY) < SPACING * 0.85;
       c.group.position.x = c.item.side * offset;
-      // mostly facing the viewer, so the margin around the picture reads cleanly; a gentle sway
-      const sway = ctx.reduced ? 0 : 1; // reduced motion: blocks hold still
-      const pass = THREE.MathUtils.clamp((c.group.position.y - camY) / SPACING, -1, 1); // -1 above … 1 below
-      c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25 + pass * 0.7) * sway; // turns as it passes
-      c.group.rotation.x = (Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1) * sway;
-      c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03 * sway;
-      // the picture sits square inside the block, turning to face the viewer as it slides out on hover
-      qFace.copy(c.group.quaternion).invert().multiply(camera.quaternion);
-      c.inner.quaternion.identity().slerp(qFace, Math.min(1, Math.max(0, c.h)));
-      // hover: the block swells slightly on a spring
+      // hover springs in: the device turns to face the viewer, grows a little and its screen lights up
       c.hv += ((hovered === c ? 1 : 0) - c.h) * 90 * ctx.dt - c.hv * 10 * ctx.dt;
       c.h += c.hv * ctx.dt;
-      // hover: the block swells, frost and cracks clear, and the picture slides out toward the viewer
-      const h = Math.max(0, c.h);
-      c.group.scale.setScalar(BLOCK_SCALE * (1 + h * 0.16));
-      if (c.group.visible) c.drips.update(time);
-      c.group.updateMatrixWorld();
-      c.frost.material.userData.uniforms.uAmount.value = 1 - Math.min(1, h);
-      c.cracks.children.forEach((m) => { m.material.opacity = 0.32 * (1 - Math.min(1, h)); });
-      toCam.copy(camera.position).sub(c.group.position).normalize().multiplyScalar(h * 2.4).add(c.group.position);
-      c.inner.position.copy(c.group.worldToLocal(toCam));
-      c.inner.scale.setScalar(1 + h * 0.55);
-      c.pic.material.opacity = 0.94 + Math.min(1, h) * 0.06;
-      c.frame.material.opacity = Math.min(1, h) * 0.9;
+      const h = THREE.MathUtils.clamp(c.h, 0, 1.2);
+      const loose = (ctx.reduced ? 0 : 1) * (1 - Math.min(1, h) * 0.85); // reduced motion: devices hold still
+      const pass = THREE.MathUtils.clamp((c.group.position.y - camY) / SPACING, -1, 1); // -1 above … 1 below
+      c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25 + pass * 0.7) * loose; // turns as it passes
+      c.group.rotation.x = (Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1) * loose;
+      c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03 * loose;
+      c.group.position.y = -i * SPACING + (ctx.reduced ? 0 : Math.sin(time * 0.5 + i) * 0.08); // floats gently
+      c.group.scale.setScalar(1 + h * 0.08);
+      for (const m of c.screens) m.color.setScalar(0.85 + Math.min(1, h) * 0.15);
 
       const active = Math.abs(c.group.position.y - camY) < 4.2;
       if (Math.abs(c.group.position.y - camY) < SPACING * 0.3) state.active = i;
@@ -602,13 +374,13 @@ export function createCrystals(env) {
         // anchors follow the crystal's position, not its spin, so labels stay readable
         o.anchor.copy(o.local).add(c.group.position);
         if (o.above && camera.aspect < 0.8) o.anchor.y = c.group.position.y + o.above;
-        if (o.since) o.text = `TIME INVESTED\n${elapsed(Date.now() - o.since)}`;
+        if (o.since) o.text = `TIME INVESTED · HH:MM:SS\n${elapsed(Date.now() - o.since)}`;
         o.visible = active;
       }
     });
   }
 
   // `pictures`: loaded textures, so they can be uploaded to the GPU before the first scroll reaches them
-  const ready = Promise.all(pictures).then(() => crystals.map((c) => c.map));
+  const ready = Promise.all(pictures).then(() => maps);
   return { scene, camera, update, callouts, state, ready };
 }

@@ -77,7 +77,7 @@ async function boot() {
     ui.setProgress((i + 1) / (builders.length + 1));
   }
   resize();
-  // upload the project pictures now, so scrolling into the ice blocks doesn't hitch on them
+  // upload the project pictures now, so scrolling into the devices doesn't hitch on them
   for (const t of await chapters[1].ready) renderer.initTexture(t);
   // pre-compile shaders so the first transition doesn't hitch
   for (const c of chapters) {
@@ -186,7 +186,7 @@ addEventListener('pointerdown', (e) => {
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 boot();
 
-// overview card beside each ice block; the crystal scene reports which block is in view
+// overview card beside each device; the projects scene reports which one is in view
 const cards = PROJECTS.map((p, i) => {
   const el = document.createElement('article');
   el.className = `project-card ${i % 2 ? 'left' : 'right'}`;
@@ -209,7 +209,7 @@ function updateCards(active) {
   cards.forEach((c, i) => c.classList.toggle('active', i === active));
 }
 
-// screen-reader / keyboard access to the projects shown in the 3D ice blocks
+// screen-reader / keyboard access to the projects shown on the 3D devices
 document.getElementById('project-list').append(
   ...PROJECTS.map((p, i) => {
     const li = document.createElement('li');
