@@ -117,7 +117,8 @@ export class UI {
       const left = dx < 0;
       const width = c.el.offsetWidth;
       // keep the label on screen (narrow phones): pull its elbow in from the edge if needed
-      const lx = left ? Math.max(ax + dx, width + 8) : Math.min(ax + dx, this.w - width - 8), ly = ay + dy;
+      const lx = left ? Math.max(ax + dx, width + 8) : Math.min(ax + dx, this.w - width - 8);
+      const ly = Math.max(ay + dy, c.el.offsetHeight + 84); // and below the header with the logo
       c.el.style.transform = `translate(${left ? lx - width : lx}px, ${ly - c.el.offsetHeight}px)`;
       c.path.setAttribute('d', `M${ax.toFixed(1)},${ay.toFixed(1)}L${lx.toFixed(1)},${ly.toFixed(1)}L${(left ? lx - width : lx + width).toFixed(1)},${ly.toFixed(1)}`);
     }

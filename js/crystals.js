@@ -385,19 +385,100 @@ export function createCrystals(env) {
   const dustPts = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.045, transparent: true, opacity: 0.7, depthWrite: false }));
   scene.add(dustPts);
 
-  // full-screen gradient behind the blocks in each project's own colours, blending as you scroll;
-  // it is opaque, so the ice refracts it too
+  // soft out-of-focus orbs of light between the camera and the blocks, in the current project's glow
+  // colour: they slide past faster than the blocks, which gives the column depth
+  const ON = 70;
+  const orbPos = new Float32Array(ON * 3), orbSize = new Float32Array(ON), orbSeed = new Float32Array(ON);
+  for (let i = 0; i < ON; i++) {
+    orbPos.set([(rand() - 0.5) * 16, 6 - rand() * (SPACING * ITEMS.length + 8), 3 + rand() * 4.5], i * 3);
+    orbSize[i] = 0.4 + rand() * 1.1;
+    orbSeed[i] = rand() * 100;
+  }
+  const orbGeo = new THREE.BufferGeometry();
+  orbGeo.setAttribute('position', new THREE.BufferAttribute(orbPos, 3));
+  orbGeo.setAttribute('aSize', new THREE.BufferAttribute(orbSize, 1));
+  orbGeo.setAttribute('aSeed', new THREE.BufferAttribute(orbSeed, 1));
+  const orbMat = new THREE.ShaderMaterial({
+    uniforms: { uColor: { value: new THREE.Color() }, uTime: { value: 0 }, uPix: { value: 1 } },
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float aSize, aSeed; uniform float uTime, uPix; varying float vA;
+      void main(){
+        vec3 p = position + vec3(sin(uTime * 0.2 + aSeed) * 0.4, cos(uTime * 0.17 + aSeed) * 0.3, 0.0);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_PointSize = aSize * uPix * 260.0 / -mv.z;
+        vA = 0.5 + 0.5 * sin(uTime * 0.6 + aSeed * 3.0);
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `uniform vec3 uColor; varying float vA;
+      void main(){
+        float d = length(gl_PointCoord - 0.5) * 2.0;
+        if (d > 1.0) discard;
+        float a = exp(-d * d * 3.5) * (0.06 + 0.08 * vA);
+        float ring = smoothstep(0.75, 0.9, d) * (1.0 - smoothstep(0.9, 1.0, d)) * 0.05; // bokeh rim
+        gl_FragColor = vec4(uColor * 1.4, a + ring);
+      }`,
+  });
+  const orbs = new THREE.Points(orbGeo, orbMat);
+  orbs.frustumCulled = false;
+  scene.add(orbs);
+
+  // full-screen backdrop in each project's own colours: slowly flowing, domain-warped "silk" with a glow
+  // behind the block. Moving to the next project, its colours bloom out from that block with a soft,
+  // noisy edge. It is opaque, so the ice refracts it too.
   const palettes = ITEMS.map((it) => it.colors.map((c) => new THREE.Color(c)));
+  const pal = () => [new THREE.Color(), new THREE.Color(), new THREE.Color()];
   const bgMat = new THREE.ShaderMaterial({
-    uniforms: { uTop: { value: new THREE.Color() }, uBot: { value: new THREE.Color() }, uGlow: { value: new THREE.Color() } },
+    uniforms: {
+      uA: { value: pal() }, uB: { value: pal() }, // [top, bottom, glow] of the project being left / arrived at
+      uMix: { value: 0 }, uTime: { value: 0 }, uAspect: { value: 1 },
+      uFocusA: { value: new THREE.Vector2(0.5, 0.5) }, uFocusB: { value: new THREE.Vector2(0.5, 0.5) },
+    },
     depthTest: false,
     depthWrite: false,
     vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }',
-    fragmentShader: `uniform vec3 uTop, uBot, uGlow; varying vec2 vUv;
-      void main(){
-        vec3 col = mix(uBot, uTop, smoothstep(0.0, 1.0, vUv.y));
-        float glow = exp(-dot(vUv - vec2(0.5, 0.45), vUv - vec2(0.5, 0.45)) * 7.0);
-        col = mix(col, uGlow, glow * 0.28);
+    fragmentShader: /* glsl */ `
+      uniform vec3 uA[3], uB[3];
+      uniform float uMix, uTime, uAspect;
+      uniform vec2 uFocusA, uFocusB;
+      varying vec2 vUv;
+      float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float noise(vec2 p) {
+        vec2 i = floor(p), f = fract(p);
+        f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+      }
+      float fbm(vec2 p) {
+        float s = 0.0, a = 0.5;
+        for (int i = 0; i < 5; i++) { s += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
+        return s;
+      }
+      // silk: two rounds of domain warping give long, folding ribbons of light
+      vec3 silk(vec3 top, vec3 bot, vec3 glow, vec2 focus) {
+        vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0) * 1.7;
+        float t = uTime * 0.05;
+        vec2 q = vec2(fbm(p + vec2(0.0, t)), fbm(p + vec2(5.2, 1.3) - t));
+        vec2 r = vec2(fbm(p + 3.2 * q + vec2(1.7, 9.2) + t * 1.4), fbm(p + 3.2 * q + vec2(8.3, 2.8) - t * 1.2));
+        float f = fbm(p + 2.6 * r);
+        vec3 col = mix(bot, top, smoothstep(0.05, 0.95, vUv.y * 0.75 + f * 0.55));
+        col = mix(col, glow, smoothstep(0.58, 0.92, f) * 0.42 * (0.6 + 0.4 * r.x)); // the ribbons catch the light
+        float d = length((vUv - focus) * vec2(uAspect, 1.0));
+        col += glow * exp(-d * d * 5.0) * 0.32; // light from behind the block
+        return col;
+      }
+      void main() {
+        vec3 col = silk(uA[0], uA[1], uA[2], uFocusA);
+        if (uMix > 0.001) {
+          // the next project's colours bloom outward from its block, with an inky, noisy edge
+          vec3 next = silk(uB[0], uB[1], uB[2], uFocusB);
+          float d = length((vUv - uFocusB) * vec2(uAspect, 1.0));
+          float edge = (fbm(vUv * 4.0 + uTime * 0.08) - 0.5) * 0.35;
+          float radius = uMix * (1.4 + uAspect * 0.6);
+          col = mix(col, next, 1.0 - smoothstep(radius - 0.22, radius + 0.04, d + edge));
+        }
+        vec2 v = vUv - 0.5;
+        col *= 1.0 - dot(v, v) * 0.5; // soft vignette
         gl_FragColor = vec4(col, 1.0);
       }`,
   });
@@ -405,19 +486,30 @@ export function createCrystals(env) {
   bg.frustumCulled = false;
   bg.renderOrder = -1000;
   scene.add(bg);
-  const fogCol = new THREE.Color();
-  function blendBackground(camY) {
+  const fogCol = new THREE.Color(), fogTop = new THREE.Color(), fogBot = new THREE.Color();
+  const toScreen = (v) => new THREE.Vector2(v.x * 0.5 + 0.5, v.y * 0.5 + 0.5);
+  const blockAt = new THREE.Vector3();
+  function blendBackground(camY, offset, time) {
     const f = THREE.MathUtils.clamp((SPACING * 0.5 - camY) / SPACING - 0.5, 0, ITEMS.length - 1);
     const i0 = Math.floor(f), i1 = Math.min(i0 + 1, ITEMS.length - 1);
-    const t = THREE.MathUtils.smoothstep(f - i0, 0.25, 0.75);
-    const [a, b] = [palettes[i0], palettes[i1]];
-    bgMat.uniforms.uTop.value.lerpColors(a[0], b[0], t);
-    bgMat.uniforms.uBot.value.lerpColors(a[1], b[1], t);
-    bgMat.uniforms.uGlow.value.lerpColors(a[2], b[2], t);
+    const t = THREE.MathUtils.smoothstep(f - i0, 0.15, 0.85);
+    const u = bgMat.uniforms;
+    for (let k = 0; k < 3; k++) {
+      u.uA.value[k].copy(palettes[i0][k]);
+      u.uB.value[k].copy(palettes[i1][k]);
+    }
+    u.uMix.value = i1 === i0 ? 0 : t;
+    u.uTime.value = time;
+    u.uAspect.value = camera.aspect;
+    u.uFocusA.value.copy(toScreen(blockAt.set(ITEMS[i0].side * offset, -i0 * SPACING, 0).project(camera)));
+    u.uFocusB.value.copy(toScreen(blockAt.set(ITEMS[i1].side * offset, -i1 * SPACING, 0).project(camera)));
     // fog fades distant blocks into the same colours instead of grey
-    fogCol.lerpColors(bgMat.uniforms.uTop.value, bgMat.uniforms.uBot.value, 0.55);
+    fogTop.lerpColors(palettes[i0][0], palettes[i1][0], t);
+    fogBot.lerpColors(palettes[i0][1], palettes[i1][1], t);
+    fogCol.lerpColors(fogTop, fogBot, 0.55);
     scene.fog.color.copy(fogCol);
     scene.background.copy(fogCol);
+    orbMat.uniforms.uColor.value.lerpColors(palettes[i0][2], palettes[i1][2], t);
   }
 
   // three callouts per crystal; anchors are local points on the crystal
@@ -443,15 +535,23 @@ export function createCrystals(env) {
     const { time, mouse } = ctx;
     // crystal i sits centred in the frame at local = (i + 0.5) / ITEMS.length
     const camY = SPACING * 0.5 - local * SPACING * ITEMS.length;
-    blendBackground(camY);
-    bubbleMat.uniforms.uPix.value = ctx.pixelRatio * (ctx.height / 900);
-    const sway = Math.sin(local * Math.PI * ITEMS.length) * 0.7;
-    camera.position.set(sway + mouse.x * 0.8, camY + mouse.y * 0.5, 10.5);
+    bubbleMat.uniforms.uPix.value = orbMat.uniforms.uPix.value = ctx.pixelRatio * (ctx.height / 900);
+    orbMat.uniforms.uTime.value = time;
+    // camera path: between blocks it swings round in an arc (alternating sides) and pulls back; as a
+    // block reaches the centre it settles in front of it and pushes in a little
+    const s = local * ITEMS.length - 0.5; // block index under the camera, fractional
+    const near = Math.round(THREE.MathUtils.clamp(s, 0, ITEMS.length - 1));
+    const phase = THREE.MathUtils.clamp(s - near, -0.5, 0.5); // 0 = centred on a block
+    const calm = ctx.reduced ? 0.3 : 1;
+    const swing = Math.sin(phase * Math.PI) * 0.42 * (near % 2 ? -1 : 1) * calm;
+    const dist = 10.5 + Math.pow(Math.abs(phase) * 2, 2) * 1.6 * calm - 0.6;
+    camera.position.set(Math.sin(swing) * dist + mouse.x * 0.8, camY + mouse.y * 0.5, Math.cos(swing) * dist);
     // on wide screens the crystal moves aside to make room for the overview card
     const offset = camera.aspect > 1.1 ? 2.3 : 0;
-    camera.lookAt(sway * 0.3, camY, 0);
+    camera.lookAt(Math.sin(swing) * dist * 0.25, camY, 0);
 
     camera.updateMatrixWorld();
+    blendBackground(camY, offset, time);
 
     // pointer: hovering a block brightens it, clicking opens the project's pop-up
     let hovered = null;
@@ -473,7 +573,8 @@ export function createCrystals(env) {
       c.group.position.x = c.item.side * offset;
       // mostly facing the viewer, so the margin around the picture reads cleanly; a gentle sway
       const sway = ctx.reduced ? 0 : 1; // reduced motion: blocks hold still
-      c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25) * sway;
+      const pass = THREE.MathUtils.clamp((c.group.position.y - camY) / SPACING, -1, 1); // -1 above … 1 below
+      c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25 + pass * 0.7) * sway; // turns as it passes
       c.group.rotation.x = (Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1) * sway;
       c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03 * sway;
       // the picture sits square inside the block, turning to face the viewer as it slides out on hover
