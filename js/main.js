@@ -114,12 +114,16 @@ async function boot() {
 }
 
 let introStart = 0;
-let progress = 0, progressVel = 0, last = performance.now();
-const SCROLL_RESPONSE = 6.5; // spring stiffness (1/s): higher follows the scrollbar more tightly
+let progress = 0, last = performance.now();
+// how fast the scene catches up with the scrollbar (1/s, real time): just enough to round off a mouse
+// wheel's steps. Touch scrolling already glides, so on phones the scene follows it exactly.
+const SCROLL_CATCHUP = 24;
+const followExactly = matchMedia('(pointer: coarse)').matches;
 
 function loop(now) {
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const realDt = Math.min(0.25, (now - last) / 1000);
+  const dt = Math.min(0.05, realDt);
   last = now;
   ctx.dt = dt;
   ctx.time += dt;
@@ -133,11 +137,11 @@ function loop(now) {
 
   const max = document.documentElement.scrollHeight - innerHeight;
   const target = max > 0 ? scrollY / max : 0;
-  // critically damped spring: each wheel tick eases in and out instead of jumping to full speed
-  const w = SCROLL_RESPONSE;
-  progressVel += (w * w * (target - progress) - 2 * w * progressVel) * dt;
-  progress += progressVel * dt;
-  const velocity = progressVel;
+  // timed on the real clock, so a slow frame never leaves the scene behind the scrollbar
+  const before = progress;
+  progress = followExactly ? target : progress + (target - progress) * (1 - Math.exp(-realDt * SCROLL_CATCHUP));
+  if (Math.abs(target - progress) < 1e-5) progress = target;
+  const velocity = (progress - before) / Math.max(realDt, 1e-3);
   sound.setVelocity(velocity);
 
   const k = 1 - Math.exp(-dt * 3);

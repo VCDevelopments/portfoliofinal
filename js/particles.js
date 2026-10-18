@@ -200,9 +200,15 @@ export function createParticles(env) {
     logo.rotation.y = time * (ctx.reduced ? 0.12 : 0.5);
 
     const a = mouse.x * 0.35;
-    const dist = 18 - local * 2.5;
-    camera.position.set(Math.sin(a) * dist, 1.1 + mouse.y * 0.8, Math.cos(a) * dist);
-    camera.lookAt(0, 0.55, 0);
+    let dist = 18 - local * 2.5;
+    // phones (portrait): aim above the logo so it sits low in the frame, in the open space between
+    // the contact text at the top and the link carousel at the bottom
+    const portrait = camera.aspect < 0.8;
+    const lift = portrait ? 3.4 : 0;
+    if (portrait) dist *= 1.3; // a little further back, so it fits that space
+    halo.visible = !portrait; // its ring would run through the contact text
+    camera.position.set(Math.sin(a) * dist, 1.1 + lift + mouse.y * 0.8, Math.cos(a) * dist);
+    camera.lookAt(0, 0.55 + lift, 0);
   }
 
   return { scene, camera, update, setShape, callouts: [] };
