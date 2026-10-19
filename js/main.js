@@ -35,6 +35,7 @@ const frame = () => new Promise((r) => setTimeout(r, 16));
 // pointer: raw NDC for raycasting; click: true for one frame; cursor: set by chapters that want a pointer cursor
 const ctx = { time: 0, dt: 0, mouse: { x: 0, y: 0 }, pointer: { x: 0, y: 0, inside: false }, click: false, cursor: false, intro: 0, introT: 0, pixelRatio: 1, height: 1, reduced: reducedMotion.matches };
 composite.setCalm(ctx.reduced);
+ctx.live = !lightweight; // live, usable demos on the 3D devices (phones and tablets use the pop-up instead)
 reducedMotion.addEventListener('change', (e) => { ctx.reduced = e.matches; composite.setCalm(e.matches); });
 const mouseTarget = { x: 0, y: 0 };
 let chapters = [];
@@ -163,7 +164,7 @@ function loop(now) {
 
   const current = b >= 0 && mix >= 0.5 ? b : a;
   updateCards(current === 1 ? chapters[1].state.active : -1);
-  chapters[1].live.render(!lightweight && current === 1 && b < 0);
+  chapters[1].live.render(ctx.live && current === 1 && b < 0);
   ui.setChapter(current);
   const calloutAlpha = b >= 0 ? Math.abs(mix - 0.5) * 2 : 1;
   chapters.forEach((c, i) => ui.drawCallouts(c.callouts, c.camera, i === current ? calloutAlpha : 0));
@@ -269,7 +270,7 @@ function openProject(i) {
   dialog.querySelector('.sheet').scrollTop = 0;
 }
 // a full-size iPhone (and, for Relay, a laptop) running the project's demo, scaled to fit the pop-up
-const FRAME = { phone: [427, 886], laptop: [1340, 876] };
+const FRAME = { phone: [427, 886], laptop: [1420, 900] };
 function deviceFrame(kind, def, name) {
   const slot = el('div', { className: `slot ${kind}` });
   const body = el('div', { className: kind === 'phone' ? 'iphone' : 'macbook' });
@@ -278,6 +279,7 @@ function deviceFrame(kind, def, name) {
   frame.setAttribute('aria-label', `${name}: try the app`); // a label, not a title: no tooltip over the app
   frame.allow = 'camera';
   screen.append(frame);
+  if (kind === 'laptop') screen.append(el('div', { className: 'notch' }));
   if (kind === 'phone') body.append(el('div', { className: 'bezel' }), ...['action', 'vol-up', 'vol-down', 'side', 'camera'].map((b) => el('i', { className: b })));
   body.append(screen);
   if (kind === 'laptop') body.append(el('div', { className: 'base' }));

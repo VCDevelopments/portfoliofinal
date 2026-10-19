@@ -355,6 +355,8 @@ body.is-grab { cursor: pointer; }
 .live-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #000; pointer-events: auto; }
 .live-screen iframe { width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity 0.4s; }
 .live-screen.loaded iframe { opacity: 1; }
+/* a MacBook display's camera notch, on the live screen and in the pop-up */
+.notch { position: absolute; left: 50%; top: 0; width: 178px; height: 32px; margin-left: -89px; border-radius: 0 0 13px 13px; background: #000; pointer-events: none; }
 /* in the pop-up: a full-size iPhone 16 Pro (393 × 852 screen), and a laptop for Relay; no logos */
 #project-dialog .try { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 0 8px; border-top: 1px solid rgba(255, 255, 255, 0.15); border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
 #project-dialog .try-label { align-self: flex-start; font: 500 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--glow, #fff); }
@@ -372,9 +374,9 @@ body.is-grab { cursor: pointer; }
 .iphone .vol-down { left: -4px; top: 280px; height: 62px; }
 .iphone .side { right: -4px; top: 240px; height: 100px; }
 .iphone .camera { right: -3px; top: 520px; height: 70px; width: 4px; opacity: 0.8; }
-.macbook { width: 1340px; height: 876px; }
-.macbook .glass { position: absolute; left: 30px; top: 22px; width: 1280px; height: 800px; overflow: hidden; border-radius: 6px; background: #fff; }
-.macbook::before { content: ""; position: absolute; left: 0; top: 0; width: 1340px; height: 852px; border-radius: 30px 30px 8px 8px; background: #0b0c0e; box-shadow: inset 0 0 0 3px #b9bcc1; }
-.macbook .base { position: absolute; left: -80px; top: 850px; width: 1500px; height: 26px; border-radius: 2px 2px 26px 26px; background: linear-gradient(#dfe2e6, #9ea2a7); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); }
-.macbook .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 220px; height: 10px; margin-left: -110px; border-radius: 0 0 10px 10px; background: #b3b7bc; }
+.macbook { width: 1420px; height: 900px; }
+.macbook::before { content: ""; position: absolute; left: 52px; top: 0; width: 1316px; height: 880px; border-radius: 34px 34px 6px 6px; background: #050607; box-shadow: inset 0 0 0 3px #bfc3c8, inset 0 0 0 4px #8d9196; }
+.macbook .glass { position: absolute; left: 70px; top: 18px; width: 1280px; height: 832px; overflow: hidden; border-radius: 30px 30px 0 0; background: #fff; }
+.macbook .base { position: absolute; left: 0; top: 878px; width: 1420px; height: 22px; border-radius: 3px 3px 22px 22px; background: linear-gradient(#e4e7ea, #a9adb2 70%, #8b8f94); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); }
+.macbook .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 200px; height: 8px; margin-left: -100px; border-radius: 0 0 8px 8px; background: #9a9ea3; }
 #project-dialog iframe { width: 100%; height: 100%; border: 0; display: block; }

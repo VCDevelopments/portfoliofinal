@@ -10,7 +10,7 @@ const BG = 0xb6b9bf;
 const SPACING = 15;
 // iPhone 16 Pro: a 393 × 852 point screen with 55 point corners, inside a 427 × 886 body
 const IOS = { w: 393, h: 852, r: 55, bodyW: 427, bodyH: 886 };
-const LAPTOP_PX = { w: 1280, h: 800 };
+const LAPTOP_PX = { w: 1280, h: 832 }; // a MacBook's 1.54 : 1 display
 
 const ITEMS = PROJECTS.map((p, i) => ({ ...p, code: `PROJECT_${String(i + 1).padStart(2, '0')}`, side: i % 2 ? 1 : -1 })); // device sits on this side, the overview card on the other
 
@@ -21,23 +21,23 @@ const glassBlack = new THREE.MeshStandardMaterial({ color: 0x050607, metalness: 
 const keysMat = new THREE.MeshStandardMaterial({ color: 0x1b1d22, metalness: 0.2, roughness: 0.7 });
 const padMat = new THREE.MeshStandardMaterial({ color: 0xb4b8be, metalness: 0.85, roughness: 0.42 });
 
-function roundedShape(w, h, r) {
+function roundedShape(w, h, r, rb = r) {
   const s = new THREE.Shape();
   const x = -w / 2, y = -h / 2;
-  s.moveTo(x + r, y);
-  s.lineTo(x + w - r, y);
-  s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.moveTo(x + rb, y);
+  s.lineTo(x + w - rb, y);
+  if (rb) s.quadraticCurveTo(x + w, y, x + w, y + rb);
   s.lineTo(x + w, y + h - r);
-  s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  if (r) s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
   s.lineTo(x + r, y + h);
-  s.quadraticCurveTo(x, y + h, x, y + h - r);
-  s.lineTo(x, y + r);
-  s.quadraticCurveTo(x, y, x + r, y);
+  if (r) s.quadraticCurveTo(x, y + h, x, y + h - r);
+  s.lineTo(x, y + rb);
+  if (rb) s.quadraticCurveTo(x, y, x + rb, y);
   return s;
 }
-// a rounded rectangle with 0..1 UVs, for screens and glass with round corners
-function roundedRect(w, h, r) {
-  const g = new THREE.ShapeGeometry(roundedShape(w, h, r), 12);
+// a rounded rectangle with 0..1 UVs, for screens and glass with round corners (`rb`: bottom corners)
+function roundedRect(w, h, r, rb = r) {
+  const g = new THREE.ShapeGeometry(roundedShape(w, h, r, rb), 12);
   const p = g.attributes.position, uv = g.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + w / 2) / w, (p.getY(i) + h / 2) / h);
   return g;
@@ -46,35 +46,103 @@ function roundedRect(w, h, r) {
 // the screen itself: unlit, so the app shows in its true colours; brightens on hover
 const screenMat = (map) => new THREE.MeshBasicMaterial({ map, toneMapped: false, color: 0xd9d9d9 });
 
-// A 16:10 laptop, opened a little past upright and tipped toward the viewer so the keyboard shows
+// A current-generation 14" MacBook (no logo), to scale (1 unit = 10 cm): flat aluminium slab with
+// rounded corners, black keys in a darker well, speaker grilles either side, a large trackpad, and a
+// thin-bezel display with rounded top corners and a camera notch. Opened a little past upright and
+// tipped toward the viewer so the keyboard shows.
+const slab = (w, d, t, r, bevel) => {
+  const geo = new THREE.ExtrudeGeometry(roundedShape(w - bevel * 2, d - bevel * 2, r - bevel), { depth: t - bevel * 2, bevelEnabled: true, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 3, curveSegments: 16 });
+  geo.translate(0, 0, -(t - bevel * 2) / 2);
+  return geo;
+};
+const wellMat = new THREE.MeshStandardMaterial({ color: 0x8e9297, metalness: 0.85, roughness: 0.45, envMapIntensity: 1.1 });
+const hingeMat = new THREE.MeshStandardMaterial({ color: 0x2a2c30, metalness: 0.7, roughness: 0.4 });
+const notchMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+// speaker grille: rows of fine holes
+let grilleMat;
+function grille() {
+  if (grilleMat) return grilleMat;
+  const c = document.createElement('canvas');
+  c.width = 64; c.height = 384;
+  const g = c.getContext('2d');
+  g.fillStyle = '#c4c8ce';
+  g.fillRect(0, 0, 64, 384);
+  g.fillStyle = '#2b2d31';
+  for (let y = 4; y < 384; y += 7) for (let x = 4 + ((y / 7) % 2) * 3.5; x < 62; x += 7) { g.beginPath(); g.arc(x, y, 1.6, 0, 7); g.fill(); }
+  const map = new THREE.CanvasTexture(c);
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.anisotropy = 8;
+  return (grilleMat = new THREE.MeshStandardMaterial({ map, metalness: 0.85, roughness: 0.4, envMapIntensity: 1.1 }));
+}
+// keyboard rows: [row height, key widths], in key units; every row is 14.5 keys wide
+const KEY_ROWS = [
+  [0.55, [1.5, ...Array(12).fill(1), 1]],
+  [1, [...Array(13).fill(1), 1.5]],
+  [1, [1.5, ...Array(13).fill(1)]],
+  [1, [1.8, ...Array(11).fill(1), 1.7]],
+  [1, [2.3, ...Array(10).fill(1), 2.2]],
+  [1, [1, 1, 1, 1.25, 5, 1.25, 1, 'left', 'updown', 'right']],
+];
 function laptop(map) {
-  const W = 2.6, D = 1.75, T = 0.07;
+  const W = 3.126, D = 2.212, T = 0.1, LT = 0.05, R = 0.11;
   const g = new THREE.Group();
-  const base = new THREE.Mesh(new RoundedBoxGeometry(W, T, D, 4, 0.03), aluminium);
-  const keys = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.84, D * 0.4), keysMat);
-  keys.rotation.x = -Math.PI / 2;
-  keys.position.set(0, T / 2 + 0.002, -D * 0.14);
-  const pad = new THREE.Mesh(roundedRect(W * 0.34, D * 0.26, 0.04), padMat);
-  pad.rotation.x = -Math.PI / 2;
-  pad.position.set(0, T / 2 + 0.002, D * 0.27);
-  base.add(keys, pad);
-  // the lid swings on a hinge along the back edge of the base
-  const hinge = new THREE.Group();
-  hinge.position.set(0, T / 2, -D / 2 + 0.02);
-  hinge.rotation.x = -0.32;
-  const LH = D * 0.98;
-  const lid = new THREE.Mesh(new RoundedBoxGeometry(W, LH, 0.045, 4, 0.02), aluminium);
-  lid.position.set(0, LH / 2, 0);
-  const bezel = new THREE.Mesh(roundedRect(W - 0.06, LH - 0.06, 0.06), glassBlack);
-  bezel.position.z = 0.0235;
-  const sw = W - 0.2, sh = sw / 1.6;
-  const screen = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), screenMat(map));
-  screen.position.set(0, 0.02, 0.0245);
-  lid.add(bezel, screen);
-  hinge.add(lid);
-  g.add(base, hinge);
+  const flat = (mesh, y, z) => { mesh.rotation.x = -Math.PI / 2; mesh.position.set(0, y, z); return mesh; };
+  const top = T / 2;
+  g.add(flat(new THREE.Mesh(slab(W, D, T, R, 0.02), aluminium), 0, 0));
+  // keyboard
+  const U = 0.18, GAP = 0.03, kbW = 14.5 * U, z0 = -D / 2 + 0.25;
+  const kbD = KEY_ROWS.reduce((s, [h]) => s + h * U, 0);
+  g.add(flat(new THREE.Mesh(roundedRect(kbW + 0.05, kbD + 0.05, 0.03), wellMat), top + 0.001, z0 + kbD / 2));
+  const keys = [];
+  let z = z0;
+  for (const [rh, widths] of KEY_ROWS) {
+    const d = rh * U;
+    let x = -kbW / 2;
+    for (const w of widths) {
+      const kw = typeof w === 'number' ? w : 1;
+      const cx = x + (kw * U) / 2;
+      if (w === 'updown') keys.push([cx, z + d * 0.25, kw * U, d / 2], [cx, z + d * 0.75, kw * U, d / 2]);
+      else if (w === 'left' || w === 'right') keys.push([cx, z + d * 0.75, kw * U, d / 2]);
+      else keys.push([cx, z + d / 2, kw * U, d]);
+      x += kw * U;
+    }
+    z += d;
+  }
+  const keyMesh = new THREE.InstancedMesh(new RoundedBoxGeometry(1, 1, 1, 2, 0.2), keysMat, keys.length);
+  const m = new THREE.Matrix4();
+  keys.forEach(([x, kz, w, d], i) => keyMesh.setMatrixAt(i, m.makeScale(w - GAP, 0.014, d - GAP).setPosition(x, top + 0.006, kz)));
+  g.add(keyMesh);
+  // speakers either side of the keyboard, the trackpad below it, the hinge along the back
+  for (const side of [-1, 1]) {
+    const speaker = flat(new THREE.Mesh(new THREE.PlaneGeometry(0.15, kbD), grille()), top + 0.001, z0 + kbD / 2);
+    speaker.position.x = side * (kbW / 2 + 0.17);
+    g.add(speaker);
+  }
+  g.add(flat(new THREE.Mesh(roundedRect(1.62, 0.76, 0.05), padMat), top + 0.001, z0 + kbD + 0.12 + 0.38));
+  const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, W * 0.8, 20), hingeMat);
+  hinge.rotation.z = Math.PI / 2;
+  hinge.position.set(0, top, -D / 2 + 0.035);
+  g.add(hinge);
+  // the lid swings on the hinge
+  const sw = 3.02, sh = (sw * LAPTOP_PX.h) / LAPTOP_PX.w, LH = 0.07 + sh + 0.12;
+  const pivot = new THREE.Group();
+  pivot.position.set(0, top, -D / 2 + 0.035);
+  pivot.rotation.x = -0.3;
+  const lid = new THREE.Mesh(slab(W, LH, LT, R, 0.012), aluminium);
+  lid.position.set(0, LH / 2 + 0.02, 0);
+  const glass = new THREE.Mesh(roundedRect(W - 0.03, LH - 0.03, R - 0.015), glassBlack);
+  glass.position.z = LT / 2 + 0.001;
+  const screen = new THREE.Mesh(roundedRect(sw, sh, 0.08, 0), screenMat(map));
+  const sy = LH / 2 - 0.07 - sh / 2;
+  screen.position.set(0, sy, LT / 2 + 0.002);
+  const notch = new THREE.Mesh(roundedRect(0.42, 0.075, 0, 0.03), notchMat);
+  notch.position.set(0, sy + sh / 2 - 0.0375, LT / 2 + 0.003);
+  lid.add(glass, screen, notch);
+  pivot.add(lid);
+  g.add(pivot);
   g.rotation.x = 0.38; // tipped toward the viewer
-  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: LAPTOP_PX, radius: 0 }] };
+  // the live screen: rounded top corners and the notch, in screen pixels (0.08 → 34 px, notch 178 × 32)
+  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: LAPTOP_PX, radius: '34px 34px 0 0', notch: true }] };
 }
 
 // An iPhone, 1:1 in proportion: titanium frame with rounded corners, black glass, the screen, and the
@@ -103,7 +171,7 @@ function phone(map) {
   button(1, 240, 100); // side button
   button(1, 520, 70); // camera control
   g.add(body);
-  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: { w: IOS.w, h: IOS.h }, radius: IOS.r }] };
+  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: { w: IOS.w, h: IOS.h }, radius: `${IOS.r}px` }] };
 }
 
 // what each project runs on: an iPhone, or (Relay) a laptop with the phone beside it
@@ -119,9 +187,9 @@ function device(item, load) {
   };
   const { laptop: lap, phone: ph } = item.device;
   if (lap) {
-    add(laptop(load(lap.poster)), lap, -0.45, 0, 0, 0);
-    add(phone(load(ph.poster)), ph, 1.3, -0.3, 0.8, -0.3, 0.95);
-  } else add(phone(load(ph.poster)), ph, 0, 0, 0, 0, 1.7);
+    add(laptop(load(lap.poster)), lap, -0.55, 0, 0, 0, 1.05);
+    add(phone(load(ph.poster)), ph, 1.6, -0.4, 1.1, -0.25, 1);
+  } else add(phone(load(ph.poster)), ph, 0, 0, 0, 0, 2.3);
   // centre the whole thing on the group's origin
   const box = new THREE.Box3().setFromObject(g);
   const centre = box.getCenter(new THREE.Vector3());
@@ -181,17 +249,21 @@ export function createCrystals(env) {
   // live demos on the screens: an iframe per screen, warped so its four corners land exactly on the
   // 3D screen's corners (a projective CSS matrix3d). Each loads the first time its project comes
   // into view, and is hidden (and paused) when it leaves.
+  let overScreen = null;
   const layer = document.createElement('div');
   layer.className = 'live-screens';
   for (const c of crystals) for (const sc of c.screens) {
     const el = document.createElement('div');
     el.className = 'live-screen';
-    el.style.cssText = `width:${sc.px.w}px;height:${sc.px.h}px;border-radius:${sc.radius}px;visibility:hidden`;
+    el.style.cssText = `width:${sc.px.w}px;height:${sc.px.h}px;border-radius:${sc.radius};visibility:hidden`;
     const frame = document.createElement('iframe');
     frame.setAttribute('aria-label', `${c.item.name}: try the app`); // a label, not a title: no tooltip over the app
     frame.allow = 'camera';
     frame.addEventListener('load', () => el.classList.toggle('loaded', frame.src !== ''));
     el.append(frame);
+    el.addEventListener('pointerenter', () => { overScreen = c; });
+    el.addEventListener('pointerleave', () => { if (overScreen === c) overScreen = null; });
+    if (sc.notch) el.append(Object.assign(document.createElement('div'), { className: 'notch' }));
     layer.append(el);
     const w = sc.width / 2, h = sc.height / 2;
     // top-left, top-right, bottom-right, bottom-left of the screen, in the screen mesh's own space
@@ -385,10 +457,10 @@ export function createCrystals(env) {
   crystals.forEach((c, i) => {
     c.callouts = [
       { text: `${c.item.code}\n${c.item.name}`, local: new THREE.Vector3(-0.6, c.size.y * 0.5, 0.3), offset: [-90, -70] },
-      { text: `STARTED\n${startedLabel(c.item)}`, local: new THREE.Vector3(c.size.x * 0.4, -c.size.y * 0.5, 0.3), offset: [70, 30] },
+      { text: `STARTED\n${startedLabel(c.item)}`, local: new THREE.Vector3(c.size.x * 0.5, -c.size.y * 0.5, 0.3), offset: [70, 30] },
       // live timer under the device: time spent on the project so far
       // (above it on narrow screens, where the project card covers the bottom)
-      { text: '', cls: 'timer', center: true, live: true, since: startOf(c.item), local: new THREE.Vector3(0, -c.size.y * 0.5 - 0.7, 0), above: c.size.y * 0.5 + 0.35, offset: [0, 0] },
+      { text: '', cls: 'timer', center: true, live: true, since: startOf(c.item), local: new THREE.Vector3(0, -c.size.y * 0.5 - 0.45, 0), above: c.size.y * 0.5 + 0.35, offset: [0, 0] },
     ].map((o) => ({ ...o, anchor: new THREE.Vector3(), visible: false }));
     callouts.push(...c.callouts);
   });
@@ -396,6 +468,8 @@ export function createCrystals(env) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const state = { active: -1 };
+  const focus = { c: null, last: null, hover: null, on: 0, off: 0, k: 0 };
+  const look = new THREE.Vector3(), toFocus = new THREE.Vector3();
 
   function update(local, ctx) {
     const { time, mouse } = ctx;
@@ -414,14 +488,24 @@ export function createCrystals(env) {
     camera.position.set(Math.sin(swing) * dist + mouse.x * 0.8, camY + mouse.y * 0.5, Math.cos(swing) * dist);
     // on wide screens the crystal moves aside to make room for the overview card
     const offset = camera.aspect > 1.1 ? 2.3 : 0;
-    camera.lookAt(Math.sin(swing) * dist * 0.25, camY, 0);
+    look.set(Math.sin(swing) * dist * 0.25, camY, 0);
+    // focus: the camera comes right up to a device the visitor is using, so its app fills the screen
+    const f = THREE.MathUtils.smootherstep(focus.k, 0, 1);
+    if (focus.last && f > 0) {
+      const c = focus.last, tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const d = Math.max((c.size.y * 1.08) / 0.9 / (2 * tanH), (c.size.x * 1.08) / 0.94 / (2 * tanH * camera.aspect)) + c.size.z * 0.6;
+      camera.position.lerp(toFocus.set(c.group.position.x, c.group.position.y, d), f);
+      look.lerp(c.group.position, f);
+    }
+    camera.lookAt(look);
 
     camera.updateMatrixWorld();
     blendBackground(camY, offset, time);
 
     // pointer: hovering a device lights it up, clicking opens the project's pop-up
-    let hovered = null;
-    if (ctx.pointer.inside) {
+    // a pointer on a live screen is inside the app's own page, so the screen reports it itself
+    let hovered = overScreen;
+    if (!hovered && ctx.pointer.inside) {
       raycaster.setFromCamera(ndc.set(ctx.pointer.x, ctx.pointer.y), camera);
       const hit = raycaster.intersectObjects(crystals.map((c) => c.proxy), false)[0];
       hovered = hit && crystals.find((c) => c.proxy === hit.object);
@@ -431,6 +515,14 @@ export function createCrystals(env) {
       ctx.cursor = true;
       if (ctx.click) ctx.openProject(crystals.indexOf(hovered));
     }
+    // resting on a device for a moment focuses it; moving off it (or scrolling on) lets go
+    const usable = ctx.live && hovered && Math.abs(hovered.group.position.y - camY) < 1.2 ? hovered : null;
+    focus.on = usable && usable === focus.hover ? focus.on + ctx.dt : 0;
+    focus.off = usable ? 0 : focus.off + ctx.dt;
+    focus.hover = usable;
+    if (focus.on > 0.3) focus.c = focus.last = usable;
+    if (focus.off > 0.35 || (focus.c && Math.abs(focus.c.group.position.y - camY) > 1.2)) focus.c = null;
+    focus.k += ((focus.c ? 1 : 0) - focus.k) * (1 - Math.exp(-ctx.dt * (ctx.reduced ? 12 : 4.5)));
 
     state.active = -1;
     crystals.forEach((c, i) => {
@@ -454,13 +546,13 @@ export function createCrystals(env) {
       c.near = THREE.MathUtils.clamp((2.6 - Math.abs(c.group.position.y - camY)) / 1, 0, 1);
 
       const active = Math.abs(c.group.position.y - camY) < 4.2;
-      if (Math.abs(c.group.position.y - camY) < SPACING * 0.3) state.active = i;
+      if (Math.abs(c.group.position.y - camY) < SPACING * 0.3 && focus.k < 0.3) state.active = i; // the card steps aside while focused
       for (const o of c.callouts) {
         // anchors follow the crystal's position, not its spin, so labels stay readable
         o.anchor.copy(o.local).add(c.group.position);
         if (o.above && camera.aspect < 0.8) o.anchor.y = c.group.position.y + o.above;
         if (o.since) o.text = `TIME INVESTED · HH:MM:SS\n${elapsed(Date.now() - o.since)}`;
-        o.visible = active;
+        o.visible = active && focus.k < 0.3;
       }
     });
   }
