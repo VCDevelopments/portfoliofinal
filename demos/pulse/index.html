@@ -142,7 +142,7 @@
 </div>
 
 <script type="module">
-  import { $, $$, ICON, chrome, tabs, push, bindSwitch, bindSegmented, countTo, wait, banner } from '../ios.js';
+  import { $, $$, ICON, chrome, tabs, push, bindSwitch, bindSegmented, countTo, wait, banner, onTour } from '../ios.js';
   chrome();
   tabs();
   $$('[data-back]').forEach((b) => { b.innerHTML = `${ICON.back}<span>Campaigns</span>`; });
@@ -200,7 +200,7 @@
     const p = current.data[i];
     tip.textContent = `Day ${i + 1} · ${eur(p.rev)} revenue · ${eur(p.spend)} spend`;
   };
-  card.addEventListener('pointerdown', (e) => { card.classList.add('scrubbing'); card.setPointerCapture(e.pointerId); scrub(e); });
+  card.addEventListener('pointerdown', (e) => { card.classList.add('scrubbing'); try { card.setPointerCapture(e.pointerId); } catch {} scrub(e); });
   card.addEventListener('pointermove', (e) => { if (card.classList.contains('scrubbing') || e.pointerType === 'mouse') { card.classList.add('scrubbing'); scrub(e); } });
   card.addEventListener('pointerup', () => card.classList.remove('scrubbing'));
   card.addEventListener('pointerleave', () => card.classList.remove('scrubbing'));
@@ -303,6 +303,22 @@
     $('#run').disabled = !on;
     $('#ap-status').textContent = on ? 'Next run in 3 h 12 min · €50 a day' : 'Off · budgets stay as they are';
   });
+
+  // guided tour
+  onTour([
+    { say: 'Spend, sales and return at a glance', wait: 1300 },
+    { tap: '#range [data-value="7"]', say: 'Switch the range' },
+    { tap: '#range [data-value="90"]', after: 900 },
+    { drag: '#chart-card .chart', by: [-130, 0], say: 'Drag across the chart to read any day', after: 1000 },
+    { tap: '.tabbar [data-tab="campaigns"]', say: 'Every campaign and how it is doing', after: 900 },
+    { tap: '#camp-list [data-i="0"]', after: 900 },
+    { tap: '#c-plus', say: 'Raise the daily budget' },
+    { tap: '#c-plus', after: 900 },
+    { tap: '#campaign [data-back]', after: 700 },
+    { tap: '.tabbar [data-tab="autopilot"]', say: 'The autopilot moves budget to what sells' },
+    { tap: '#run', after: 4600 },
+    { tap: '.tabbar [data-tab="overview"]', say: 'Your turn: tap anything', after: 1600 },
+  ]);
 </script>
 </body>
 </html>

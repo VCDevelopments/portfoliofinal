@@ -80,7 +80,7 @@
 </div>
 
 <script type="module">
-  import { $, $$, chrome, root, push, openSheet, closeSheets, actionSheet, hud, banner, wait } from '../ios.js';
+  import { $, $$, chrome, root, push, openSheet, closeSheets, actionSheet, hud, banner, wait, onTour } from '../ios.js';
   import { files, state, onChange, addFile, deleteFile, pair, newId, size, thumb, qr } from './shared.js';
   chrome();
   root('pair');
@@ -181,6 +181,19 @@
     }
     if (chosen.length) hud(chosen.length > 1 ? `Sent ${chosen.length} photos` : 'Sent to laptop');
   });
+
+  // guided tour
+  onTour(() => [
+    ...($('#pair').hidden ? [] : [{ tap: '#scan', say: 'Scan the code on the laptop, once', after: 2600 }]),
+    { tap: '#send button', say: 'Send photos to the laptop', after: 900 },
+    { tap: '#grid [data-p="0"]', after: 250 },
+    { tap: '#grid [data-p="4"]', after: 250 },
+    { tap: '#grid [data-p="9"]', after: 400 },
+    { tap: '#p-add', say: 'They arrive on the laptop straight away', after: 3400 },
+    { tap: () => $('#list [data-id="b"]') || $('#list .cell:last-child'), say: 'Tap a file to save it', after: 900 },
+    { tap: () => $$('.actions button').find((b) => b.textContent.startsWith('Save')), after: 1700 },
+    { say: 'Your turn: send something', wait: 1600 },
+  ]);
 </script>
 </body>
 </html>

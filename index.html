@@ -21,10 +21,10 @@
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Person","name":"Lothar Van Cauwenbergh","jobTitle":"Developer & Designer","url":"https://vcdevelopments.info/","email":"mailto:info.vcdevelopments@gmail.com","sameAs":["https://www.linkedin.com/in/lotharvancauwenbergh/","https://github.com/VCDevelopments"]},{"@type":"WebSite","name":"VCDevelopments","url":"https://vcdevelopments.info/"}]}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@200;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@200;300;700;800&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="brand/vcd-logo-28.svg" />
   <link rel="apple-touch-icon" href="brand/vcd-avatar-28-dark.png" />
-  <link rel="stylesheet" href="style.css?v=44" />
+  <link rel="stylesheet" href="style.css?v=46" />
   <!-- Bump v= on style.css and every ./js/ entry below with each deploy, so browsers fetch fresh files
        instead of a cached copy (GitHub Pages lets them keep files for 10 minutes). -->
   <script type="importmap">
@@ -34,19 +34,23 @@
         "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
         "./js/audio.js": "./js/audio.js?v=36",
         "./js/blueprint.js": "./js/blueprint.js?v=36",
-        "./js/crystals.js": "./js/crystals.js?v=44",
+        "./js/crystals.js": "./js/crystals.js?v=47",
         "./js/hero.js": "./js/hero.js?v=36",
         "./js/links.js": "./js/links.js?v=36",
         "./js/neonLogo.js": "./js/neonLogo.js?v=36",
-        "./js/main.js": "./js/main.js?v=44",
+        "./js/main.js": "./js/main.js?v=46",
         "./js/noise.js": "./js/noise.js?v=36",
         "./js/particles.js": "./js/particles.js?v=38",
         "./js/post.js": "./js/post.js?v=36",
-        "./js/projects.js": "./js/projects.js?v=42",
+        "./js/projects.js": "./js/projects.js?v=46",
         "./js/rings.js": "./js/rings.js?v=36",
         "./js/shatter.js": "./js/shatter.js?v=36",
         "./js/textures.js": "./js/textures.js?v=36",
-        "./js/ui.js": "./js/ui.js?v=39"
+        "./js/ui.js": "./js/ui.js?v=46",
+        "./js/i18n.js": "./js/i18n.js?v=46",
+        "./js/activity.js": "./js/activity.js?v=46",
+        "./js/track.js": "./js/track.js?v=46",
+        "./js/inquiry.js": "./js/inquiry.js?v=46"
       }
     }
   </script>
@@ -73,12 +77,12 @@
     </a>
     <div class="meta ch ch-0">
       <p data-scramble>// Portfolio © 2026</p>
-      <p data-scramble>Lothar Van Cauwenbergh
+      <p data-scramble data-i18n="role">Lothar Van Cauwenbergh
 Developer &amp; Designer</p>
     </div>
     <section class="manifesto ch ch-0" aria-labelledby="manifesto-title">
-      <h2 id="manifesto-title" data-scramble>////// About</h2>
-      <p data-scramble>I design and build
+      <h2 id="manifesto-title" data-scramble data-i18n="aboutTitle">////// About</h2>
+      <p data-scramble data-i18n="about">I design and build
 websites, iOS apps and
 AI tools — from 3D web
 experiences to Claude-
@@ -92,7 +96,7 @@ servers.</p>
     </section>
   </header>
 
-  <p class="scroll-hint ch ch-0" data-scramble>Scroll down to
+  <p class="scroll-hint ch ch-0" data-scramble data-i18n="scrollHint">Scroll down to
 discover.</p>
 
   <button class="sound" type="button" aria-pressed="false">
@@ -101,23 +105,47 @@ discover.</p>
       <path class="wave" d="M11 5.5c1 1.4 1 3.6 0 5M12.8 3.8c1.9 2.4 1.9 6 0 8.4" stroke="currentColor" fill="none" stroke-width="1.1" />
       <path class="mute" d="M11 6l4 4M15 6l-4 4" stroke="currentColor" stroke-width="1.1" />
     </svg>
-    <span>Sound: <b>Off</b></span>
+    <span><span data-i18n="sound">Sound</span>: <b>Off</b></span>
   </button>
 
   <button class="lights ch ch-0" type="button" aria-pressed="false">
     <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M10.5 2.5a5.5 5.5 0 1 0 3 9.8A6 6 0 0 1 10.5 2.5z" fill="currentColor" /></svg>
-    <span>Night: <b>Off</b></span>
+    <span><span data-i18n="night">Night</span>: <b>Off</b></span>
   </button>
 
+  <button class="lang" type="button" aria-label="Nederlands / English">
+    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.1" /><path d="M1.8 8h12.4M8 1.8c-3.6 3.4-3.6 9 0 12.4M8 1.8c3.6 3.4 3.6 9 0 12.4" fill="none" stroke="currentColor" stroke-width="1.1" /></svg>
+    <span><b class="en">EN</b> / <b class="nl">NL</b></span>
+  </button>
+
+  <!-- the guided tour of the device in focus -->
+  <button class="tour-btn" type="button" hidden>
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor" /></svg>
+    <span data-i18n="showMe">Show me how it works</span>
+  </button>
+
+  <!-- chapter 3, over the blueprint gyroscope: what I build and how a project runs -->
+  <section class="services ch ch-2" aria-labelledby="services-title">
+    <div class="build">
+      <h2 id="services-title" data-i18n="servicesTitle">What I build</h2>
+      <dl class="offer"></dl>
+    </div>
+    <div class="process">
+      <h2 data-i18n="processTitle">How a project runs</h2>
+      <ol class="steps"></ol>
+      <button class="btn primary start-project" type="button" data-i18n="startProject">Start a project</button>
+    </div>
+  </section>
+
   <section class="contact ch ch-3" aria-labelledby="contact-title">
-    <p class="eyebrow" data-scramble>////// Contact</p>
-    <h2 id="contact-title">Let’s build<br />something.</h2>
-    <p class="pitch">Have an idea for a website, an iOS app or an AI tool? Send me a message and tell me about it.</p>
-    <p class="mail">Email: <a href="mailto:info.vcdevelopments@gmail.com">info.vcdevelopments@gmail.com</a></p>
+    <p class="eyebrow" data-scramble data-i18n="contactEyebrow">////// Contact</p>
+    <h2 id="contact-title" data-i18n-html="contactTitle">Let’s build<br />something.</h2>
+    <p class="pitch" data-i18n="pitch">Have an idea for a website, an iOS app or an AI tool? Tell me about it and I’ll get back to you.</p>
+    <p class="mail"><span data-i18n="emailLabel">Email</span>: <a href="mailto:info.vcdevelopments@gmail.com">info.vcdevelopments@gmail.com</a></p>
     <div class="actions">
-      <a class="btn primary" href="mailto:info.vcdevelopments@gmail.com">Email me ↗</a>
-      <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a>
-      <a class="btn" href="https://github.com/VCDevelopments" target="_blank" rel="noopener">See my code on GitHub ↗</a>
+      <button class="btn primary start-project" type="button" data-i18n="startProject">Start a project</button>
+      <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener" data-i18n="linkedin">Message me on LinkedIn ↗</a>
+      <a class="btn" href="https://github.com/VCDevelopments" target="_blank" rel="noopener" data-i18n="github">See my code on GitHub ↗</a>
     </div>
   </section>
 
@@ -125,10 +153,15 @@ discover.</p>
 
   <dialog id="project-dialog" aria-labelledby="project-dialog-title">
     <div class="sheet">
-      <div class="top"><span class="status"></span><button class="close" type="button" aria-label="Close">Close ✕</button></div>
+      <div class="top"><span class="status"></span><button class="close" type="button"><span data-i18n="close">Close</span> ✕</button></div>
       <h2 id="project-dialog-title"></h2>
       <p class="intro"></p>
-      <div class="try"><span class="try-label">Try it</span><div class="devices"></div><p class="try-note"></p></div>
+      <div class="try">
+        <div class="try-head"><span class="try-label" data-i18n="tryIt">Try it</span><button class="show-me" type="button"><svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor" /></svg><span data-i18n="showMe">Show me how it works</span></button></div>
+        <div class="devices"></div>
+        <p class="try-note"></p>
+      </div>
+      <section class="changelog" hidden><h3 data-i18n="whatsNew">What’s new</h3><ol></ol></section>
       <figure class="gallery">
         <div class="frame">
           <img class="main" alt="" />
@@ -139,8 +172,23 @@ discover.</p>
       </figure>
       <div class="thumbs" role="group" aria-label="Pictures"></div>
       <div class="sections"></div>
-      <div class="foot"><span class="stack"></span><span class="links"><a class="page" target="_blank" rel="noopener">Project page ↗</a><a class="code" target="_blank" rel="noopener">View the code on GitHub ↗</a></span></div>
+      <div class="foot"><span class="stack"></span><span class="links"><a class="page" target="_blank" rel="noopener" data-i18n="projectPage">Project page ↗</a><a class="code" target="_blank" rel="noopener" data-i18n="viewCode">View the code on GitHub ↗</a></span></div>
     </div>
+  </dialog>
+
+  <dialog id="inquiry" aria-labelledby="inquiry-title">
+    <form class="sheet" novalidate>
+      <div class="top"><h2 id="inquiry-title" data-i18n="formTitle">Start a project</h2><button class="close" type="button"><span data-i18n="close">Close</span> ✕</button></div>
+      <p class="lead" data-i18n="formIntro"></p>
+      <fieldset data-group="type"><legend data-i18n="fType"></legend><div class="chips"></div><p class="err" id="err-type" aria-live="polite"></p></fieldset>
+      <fieldset data-group="budget"><legend data-i18n="fBudget"></legend><div class="chips"></div></fieldset>
+      <fieldset data-group="timeline"><legend data-i18n="fTimeline"></legend><div class="chips"></div></fieldset>
+      <label class="field"><span data-i18n="fName"></span><input name="name" autocomplete="name" /></label>
+      <label class="field"><span data-i18n="fMessage"></span><textarea name="message" rows="4" aria-describedby="err-message"></textarea></label>
+      <p class="err" id="err-message" aria-live="polite"></p>
+      <div class="actions"><button type="submit" class="btn primary" data-i18n="send"></button><button type="button" class="btn copy" data-i18n="copy"></button></div>
+      <p class="note" aria-live="polite"></p>
+    </form>
   </dialog>
 
   <nav class="sr-only" aria-label="Projects">
@@ -156,6 +204,6 @@ discover.</p>
 
   <div class="scroll-space" aria-hidden="true"></div>
 
-  <script type="module" src="js/main.js?v=44"></script>
+  <script type="module" src="js/main.js?v=46"></script>
 </body>
 </html>

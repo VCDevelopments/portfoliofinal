@@ -174,3 +174,103 @@ export function onPause(fn) {
   addEventListener('message', (e) => { if (e.origin === location.origin && e.data === 'vcd:pause') fn(); });
   addEventListener('pagehide', fn);
 }
+
+// ---- guided tour: a fingertip plays a scripted walkthrough of the app ----
+// Each step is { tap: selector | () => element } or { drag: selector, by: [dx, dy] | () => [dx, dy] },
+// or { scroll: selector, to: y, left: x } (numbers or functions), or { wait: ms }; `say` shows a caption while it runs.
+// The portfolio starts a tour with the message 'vcd:tour'; 'vcd:pause' or touching the screen stops it.
+let touring = null;
+const finger = () => {
+  let f = $('.tour-finger');
+  if (!f) {
+    f = Object.assign(document.createElement('div'), { className: 'tour-finger' });
+    $('.screen').append(f, Object.assign(document.createElement('div'), { className: 'tour-caption' }));
+  }
+  return f;
+};
+const find = (s) => (typeof s === 'function' ? s() : $(s));
+const centre = (el) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+async function glide(f, x, y, ms = 650) {
+  f.style.transition = `transform ${ms}ms cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s`;
+  f.style.transform = `translate(${x}px, ${y}px)`;
+  await wait(ms);
+}
+const ptr = (el, type, x, y) => el.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, pointerId: 7, pointerType: 'touch', isPrimary: true, bubbles: true }));
+
+export async function tour(steps) {
+  if (touring) return;
+  const run = (touring = { stopped: false });
+  const f = finger(), cap = $('.tour-caption');
+  document.body.classList.add('touring');
+  const stop = () => { run.stopped = true; };
+  // a real touch from the visitor ends the tour so they can take over
+  const takeover = (e) => { if (e.isTrusted) stop(); };
+  addEventListener('pointerdown', takeover, true);
+  const [sx, sy] = [innerWidth * 0.75, innerHeight * 0.9];
+  f.style.transition = 'none';
+  f.style.transform = `translate(${sx}px, ${sy}px)`;
+  f.offsetWidth;
+  f.classList.add('on');
+  try {
+    for (const s of steps) {
+      if (run.stopped) break;
+      cap.textContent = s.say || cap.textContent;
+      cap.classList.toggle('on', !!s.say || cap.classList.contains('on'));
+      if (s.wait) { await wait(s.wait); continue; }
+      const el = find(s.tap || s.drag || s.scroll);
+      if (!el) continue;
+      if (s.scroll) {
+        const [x, y] = centre(el);
+        await glide(f, x, y);
+        const v = (k) => (typeof s[k] === 'function' ? s[k]() : s[k]);
+        el.scrollTo({ top: v('to') ?? el.scrollTop, left: v('left') ?? el.scrollLeft, behavior: 'smooth' });
+        await wait(900);
+        continue;
+      }
+      el.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+      const [x, y] = centre(el);
+      await glide(f, x, y);
+      if (run.stopped) break;
+      f.classList.add('press');
+      if (s.tap) {
+        await wait(140);
+        el.click();
+        await wait(160);
+        f.classList.remove('press');
+      } else {
+        const [dx, dy] = typeof s.by === 'function' ? s.by() : s.by;
+        ptr(el, 'pointerdown', x, y);
+        const n = 24;
+        for (let k = 1; k <= n && !run.stopped; k++) {
+          const e = k / n, q = 1 - Math.pow(1 - e, 3);
+          const px = x + dx * q, py = y + dy * q;
+          f.style.transition = 'none';
+          f.style.transform = `translate(${px}px, ${py}px)`;
+          ptr(el, 'pointermove', px, py);
+          await wait(28);
+        }
+        ptr(el, 'pointerup', x + dx, y + dy);
+        f.classList.remove('press');
+      }
+      await wait(s.after ?? 650);
+    }
+  } finally {
+    removeEventListener('pointerdown', takeover, true);
+    f.classList.remove('on', 'press');
+    cap.classList.remove('on');
+    document.body.classList.remove('touring');
+    touring = null;
+    parent?.postMessage('vcd:tour-done', location.origin);
+  }
+}
+export const stopTour = () => { if (touring) touring.stopped = true; };
+
+// the portfolio asks a demo to play its tour; `?tour` in the address plays it on load (for recordings)
+export function onTour(steps) {
+  addEventListener('message', (e) => {
+    if (e.origin !== location.origin) return;
+    if (e.data === 'vcd:tour') tour(typeof steps === 'function' ? steps() : steps);
+    if (e.data === 'vcd:pause') stopTour();
+  });
+  if (new URLSearchParams(location.search).has('tour')) setTimeout(() => tour(typeof steps === 'function' ? steps() : steps), 1200);
+}

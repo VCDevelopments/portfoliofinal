@@ -136,7 +136,7 @@
 </div>
 
 <script type="module">
-  import { $, $$, ICON, chrome, tabs, push, pop, bindSegmented, hud, wait, onPause } from '../ios.js';
+  import { $, $$, ICON, chrome, tabs, push, pop, bindSegmented, hud, wait, onPause, onTour } from '../ios.js';
   chrome();
   const showTab = tabs();
   $$('[data-back]').forEach((b) => { b.innerHTML = `${ICON.back}<span>Discover</span>`; });
@@ -237,7 +237,7 @@
     $$('#lenses button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
   });
   let drag = null;
-  view.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; drag = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; view.setPointerCapture(e.pointerId); });
+  view.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; drag = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; try { view.setPointerCapture(e.pointerId); } catch {} });
   view.addEventListener('pointermove', (e) => { if (!drag) return; pan.x = drag.px + (e.clientX - drag.x); pan.y = drag.py + (e.clientY - drag.y); });
   view.addEventListener('pointerup', () => { drag = null; });
 
@@ -352,6 +352,18 @@
     setTimeout(() => { $('#tabbar').hidden = false; showTab('library'); }, 900);
   });
   $('#lib').innerHTML = `<div style="grid-column:1/-1;aspect-ratio:auto" class="empty">Photos you take with ShotGuide show up here.</div>`;
+
+  // guided tour
+  onTour(() => [
+    ...($('#discover').hidden ? [{ tap: '.tabbar [data-tab="discover"]', after: 600 }] : []),
+    { tap: '#grid [data-s="0"]', say: 'Pick a photo you love', after: 2000 },
+    { say: 'It works out how the photo was taken', wait: 1400 },
+    { tap: '#go', say: 'Now line up your own shot', after: 1000 },
+    { tap: '#lenses [data-z="0.5"]', say: 'Switch to the lens it needs', after: 700 },
+    { drag: '#view', by: () => { const v = $('#view').getBoundingClientRect(), a = $('#aim').getBoundingClientRect(); return [v.left + v.width / 2 - (a.left + a.width / 2), v.top + v.height / 2 - (a.top + a.height / 2)]; }, say: 'Turn until the circle sits on the green dot', after: 1900 },
+    { tap: '#shutter', say: 'Everything is green: shoot', after: 1500 },
+    { tap: '#save', say: 'Saved, with the same colour look', after: 2000 },
+  ]);
 </script>
 </body>
 </html>

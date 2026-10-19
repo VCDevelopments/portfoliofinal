@@ -16,6 +16,11 @@
   <meta property="og:image:height" content="1600" />
   <meta property="og:image:alt" content="The live dashboard: spend, results and the rules that act on them." />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:video" content="https://vcdevelopments.info/videos/pulse.mp4" />
+  <meta property="og:video:secure_url" content="https://vcdevelopments.info/videos/pulse.mp4" />
+  <meta property="og:video:type" content="video/mp4" />
+  <meta property="og:video:width" content="1080" />
+  <meta property="og:video:height" content="1350" />
   <meta name="theme-color" content="#1e242e" />
   <link rel="icon" type="image/svg+xml" href="../../brand/vcd-logo-28.svg" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Outfit:wght@300;700;800&display=swap" rel="stylesheet" />
@@ -31,6 +36,8 @@
     .intro { font-size: 21px; max-width: 62ch; color: #e8edf3; }
     figure { margin: 32px 0 0; }
     figure img { width: 100%; height: auto; display: block; }
+    .reel video { display: block; width: min(100%, 432px); height: auto; margin: 0 auto; }
+    .reel figcaption { text-align: center; }
     figcaption { margin-top: 8px; font: 500 13px/1.4 "IBM Plex Mono", monospace; color: rgba(255, 255, 255, 0.75); }
     .sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px 36px; margin-top: 40px; }
     h2 { font: 700 22px/1.2 "Outfit", sans-serif; margin: 0 0 8px; }
@@ -47,6 +54,7 @@
     <h1>Pulse</h1>
     <p class="intro">Pulse runs the advertising for an online store on autopilot. It pulls in sales and ad results, learns which ads actually sell, moves the budget toward them and plans new campaigns, so a small daily budget keeps working without someone watching it all day.</p>
     <div class="gallery">
+      <figure class="reel"><video src="../../videos/pulse.mp4" poster="../../img/screens/pulse-phone.jpg" autoplay muted loop playsinline width="1080" height="1350"></video><figcaption>Pulse, playing its guided tour. <a href="../../#project-pulse">Try it yourself ↗</a></figcaption></figure>
       <figure><img src="../../img/projects/pulse.jpg" alt="The live dashboard: spend, results and the rules that act on them." width="1200" height="800" loading="lazy" /><figcaption>The live dashboard: spend, results and the rules that act on them.</figcaption></figure>
       <figure><img src="../../img/projects/pulse-1.jpg" alt="How it works: sync, learn, act, and feed the results back in." width="1200" height="800" loading="lazy" /><figcaption>How it works: sync, learn, act, and feed the results back in.</figcaption></figure>
       <figure><img src="../../img/projects/pulse-2.jpg" alt="An autopilot run: the daily budget moves to what works, within guardrails." width="1200" height="800" loading="lazy" /><figcaption>An autopilot run: the daily budget moves to what works, within guardrails.</figcaption></figure>

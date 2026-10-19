@@ -4,7 +4,9 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { rng } from './noise.js';
-import { PROJECTS } from './projects.js';
+import { PROJECTS, slugOf } from './projects.js';
+import { t, dateLabel, agoLabel } from './i18n.js';
+import { activityOf } from './activity.js';
 
 const BG = 0xb6b9bf;
 const SPACING = 15;
@@ -208,7 +210,13 @@ const elapsed = (ms) => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${pad(Math.floor(t / 3600))}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`;
 };
-const startedLabel = (it) => new Date(`${it.started}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+// "STARTED / 13 OCT 2026", plus the latest commit when the project's repo activity is known
+function startedText(it) {
+  let s = `${t('started')}\n${dateLabel(it.started).toUpperCase()}`;
+  const a = activityOf(slugOf(it));
+  if (a) s += `\n${t('lastCommit')}\n${agoLabel(Date.now() - a.last)}\n${a.commits30} ${t('commits30')}`;
+  return s;
+}
 
 export function createCrystals(env) {
   const scene = new THREE.Scene();
@@ -249,7 +257,11 @@ export function createCrystals(env) {
   // live demos on the screens: an iframe per screen, warped so its four corners land exactly on the
   // 3D screen's corners (a projective CSS matrix3d). Each loads the first time its project comes
   // into view, and is hidden (and paused) when it leaves.
+  // The pointer over a live screen is inside the demo's own page, so the scene can't see it move. The
+  // screen says when it is entered; only a move over the site itself (outside every screen) counts as
+  // leaving, since boundary events also fire while a screen slides or grows under a resting pointer.
   let overScreen = null;
+  addEventListener('pointermove', (e) => { if (!e.target.closest?.('.live-screen')) overScreen = null; }, true);
   const layer = document.createElement('div');
   layer.className = 'live-screens';
   for (const c of crystals) for (const sc of c.screens) {
@@ -262,7 +274,6 @@ export function createCrystals(env) {
     frame.addEventListener('load', () => el.classList.toggle('loaded', frame.src !== ''));
     el.append(frame);
     el.addEventListener('pointerenter', () => { overScreen = c; });
-    el.addEventListener('pointerleave', () => { if (overScreen === c) overScreen = null; });
     if (sc.notch) el.append(Object.assign(document.createElement('div'), { className: 'notch' }));
     layer.append(el);
     const w = sc.width / 2, h = sc.height / 2;
@@ -457,7 +468,7 @@ export function createCrystals(env) {
   crystals.forEach((c, i) => {
     c.callouts = [
       { text: `${c.item.code}\n${c.item.name}`, local: new THREE.Vector3(-0.6, c.size.y * 0.5, 0.3), offset: [-90, -70] },
-      { text: `STARTED\n${startedLabel(c.item)}`, local: new THREE.Vector3(c.size.x * 0.5, -c.size.y * 0.5, 0.3), offset: [70, 30] },
+      { text: '', live: true, started: c.item, local: new THREE.Vector3(c.size.x * 0.5, -c.size.y * 0.5, 0.3), offset: [70, 30] },
       // live timer under the device: time spent on the project so far
       // (above it on narrow screens, where the project card covers the bottom)
       { text: '', cls: 'timer', center: true, live: true, since: startOf(c.item), local: new THREE.Vector3(0, -c.size.y * 0.5 - 0.45, 0), above: c.size.y * 0.5 + 0.35, offset: [0, 0] },
@@ -468,7 +479,8 @@ export function createCrystals(env) {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
   const state = { active: -1 };
-  const focus = { c: null, last: null, hover: null, on: 0, off: 0, k: 0 };
+  const focus = { c: null, last: null, hover: null, on: 0, off: 0, k: 0, held: false };
+  state.focused = -1;
   const look = new THREE.Vector3(), toFocus = new THREE.Vector3();
 
   function update(local, ctx) {
@@ -521,7 +533,11 @@ export function createCrystals(env) {
     focus.off = usable ? 0 : focus.off + ctx.dt;
     focus.hover = usable;
     if (focus.on > 0.3) focus.c = focus.last = usable;
-    if (focus.off > 0.35 || (focus.c && Math.abs(focus.c.group.position.y - camY) > 1.2)) focus.c = null;
+    // a running tour keeps its device focused until the visitor scrolls on
+    const drifted = focus.c && Math.abs(focus.c.group.position.y - camY) > 1.2;
+    if (drifted) focus.held = false;
+    if ((focus.off > 0.35 && !focus.held) || drifted) focus.c = null;
+    state.focused = focus.c && focus.k > 0.6 ? crystals.indexOf(focus.c) : -1;
     focus.k += ((focus.c ? 1 : 0) - focus.k) * (1 - Math.exp(-ctx.dt * (ctx.reduced ? 12 : 4.5)));
 
     state.active = -1;
@@ -551,7 +567,8 @@ export function createCrystals(env) {
         // anchors follow the crystal's position, not its spin, so labels stay readable
         o.anchor.copy(o.local).add(c.group.position);
         if (o.above && camera.aspect < 0.8) o.anchor.y = c.group.position.y + o.above;
-        if (o.since) o.text = `TIME INVESTED · HH:MM:SS\n${elapsed(Date.now() - o.since)}`;
+        if (o.since) o.text = `${t('timeInvested')}\n${elapsed(Date.now() - o.since)}`;
+        if (o.started) o.text = startedText(o.started);
         o.visible = active && focus.k < 0.3;
       }
     });
@@ -559,5 +576,19 @@ export function createCrystals(env) {
 
   // `pictures`: loaded textures, so they can be uploaded to the GPU before the first scroll reaches them
   const ready = Promise.all(pictures).then(() => maps);
-  return { scene, camera, update, callouts, state, ready, live: { el: layer, render: renderLive } };
+  return { scene, camera, update, callouts, state, ready, live: {
+    el: layer,
+    render: renderLive,
+    // play the focused device's guided tour on its phone screen, and keep it focused meanwhile
+    tour() {
+      const c = focus.c;
+      const sc = c && (c.screens.find((s) => s.px.w === IOS.w) || c.screens[0]);
+      if (!sc?.frame.contentWindow) return false;
+      focus.held = true;
+      sc.frame.contentWindow.postMessage('vcd:tour', location.origin);
+      return true;
+    },
+    hold() { if (focus.c) focus.held = true; },
+    release() { focus.held = false; },
+  } };
 }

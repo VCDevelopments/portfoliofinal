@@ -5,7 +5,11 @@ import { createHero } from './hero.js';
 import { createCrystals } from './crystals.js';
 import { createRings } from './rings.js';
 import { createParticles } from './particles.js';
-import { LINKS, PROJECTS, slugOf } from './projects.js';
+import { LINKS, PROJECTS, slugOf, localize } from './projects.js';
+import { t, getLang, setLang, onLang, dateLabel } from './i18n.js';
+import { loadActivity } from './activity.js';
+import { initAnalytics, track } from './track.js';
+import './inquiry.js';
 import { createComposite } from './post.js';
 import { UI } from './ui.js';
 import { Sound } from './audio.js';
@@ -21,6 +25,11 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.localClippingEnabled = true; // the logos rebuild behind a rising clip plane after a click (shatter.js)
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 0.82;
+
+setLang(getLang());
+initAnalytics();
+loadActivity(PROJECTS, slugOf);
+const L = (p) => localize(p, getLang()); // a project's text in the current language
 
 const ui = new UI();
 const sound = new Sound();
@@ -101,6 +110,7 @@ async function boot() {
   chapters[0].setNight(night, true);
   ui.bindNight(night, (on) => {
     chapters[0].setNight(on);
+    track('night', { on });
     try { localStorage.setItem('vcd-night', on ? '1' : '0'); } catch {}
   });
   installExternalLinks(); // after the carousel and cards exist, so their links are covered too
@@ -164,6 +174,7 @@ function loop(now) {
 
   const current = b >= 0 && mix >= 0.5 ? b : a;
   updateCards(current === 1 ? chapters[1].state.active : -1);
+  sceneTour(current === 1 && b < 0 ? chapters[1].state.focused : -1);
   chapters[1].live.render(ctx.live && current === 1 && b < 0);
   ui.setChapter(current);
   const calloutAlpha = b >= 0 ? Math.abs(mix - 0.5) * 2 : 1;
@@ -194,17 +205,25 @@ boot();
 const cards = PROJECTS.map((p, i) => {
   const el = document.createElement('article');
   el.className = `project-card ${i % 2 ? 'left' : 'right'}`;
-  el.innerHTML = `<span class="num">PROJECT ${String(i + 1).padStart(2, '0')} / ${String(PROJECTS.length).padStart(2, '0')}</span>
+  el.innerHTML = `<span class="num"></span>
     <img alt="" loading="lazy" />
     <h3></h3><p></p><span class="stack"></span>
-    <button type="button" tabindex="-1">Learn more +</button>`;
+    <button type="button" tabindex="-1"></button>`;
   el.querySelector('img').src = p.image;
   el.querySelector('h3').textContent = p.name;
-  el.querySelector('p').textContent = p.blurb.replace('\n', ' ');
   el.querySelector('.stack').textContent = p.stack;
   el.querySelector('button').addEventListener('click', () => openProject(i));
   return el;
 });
+function cardText() {
+  cards.forEach((el, i) => {
+    el.querySelector('.num').textContent = `${t('project')} ${String(i + 1).padStart(2, '0')} / ${String(PROJECTS.length).padStart(2, '0')}`;
+    el.querySelector('p').textContent = L(PROJECTS[i]).blurb.replace('\n', ' ');
+    el.querySelector('button').textContent = t('learnMore');
+  });
+}
+cardText();
+onLang(cardText);
 document.getElementById('project-cards').append(...cards);
 let shownCard = -2;
 function updateCards(active) {
@@ -214,16 +233,18 @@ function updateCards(active) {
 }
 
 // screen-reader / keyboard access to the projects shown on the 3D devices
-document.getElementById('project-list').append(
+const projectList = () => document.getElementById('project-list').replaceChildren(
   ...PROJECTS.map((p, i) => {
     const li = document.createElement('li');
-    const label = `${p.name} — ${p.blurb.replace('\n', ' ')} (${p.stack})`;
+    const label = `${p.name} — ${L(p).blurb.replace('\n', ' ')} (${p.stack})`;
     const el = Object.assign(document.createElement('button'), { type: 'button', textContent: label, onclick: () => openProject(i) });
     // the project's own page, so it can be found and shared
     li.append(el, ' ', Object.assign(document.createElement('a'), { href: `projects/${slugOf(p)}/`, textContent: `${p.name} project page` }));
     return li;
   }),
 );
+projectList();
+onLang(projectList);
 
 // pop-up with a project's full story and pictures (like igloo.inc's project overlay);
 // <dialog> handles focus, Esc and the inert page behind it
@@ -239,14 +260,40 @@ function showPicture(k) {
   dialog.querySelector('figcaption').textContent = `${shown + 1} / ${gallery.length} · ${g.caption}`;
   dialog.querySelectorAll('.thumbs button').forEach((b, n) => b.setAttribute('aria-pressed', String(n === shown)));
 }
+let openIndex = -1;
 function openProject(i) {
+  openIndex = i;
   const p = PROJECTS[i];
+  dialog.querySelector('h2').textContent = p.name;
+  dialog.querySelector('.devices').replaceChildren(...['laptop', 'phone'].filter((k) => p.device[k]).map((k) => deviceFrame(k, p.device[k], p.name)));
+  tourButton(false);
+  projectText();
+  dialog.querySelector('.stack').textContent = p.stack;
+  dialog.querySelector('.page').href = `projects/${slugOf(p)}/`;
+  const code = dialog.querySelector('.code');
+  code.hidden = !p.url;
+  if (p.url) code.href = p.url;
+  dialog.style.setProperty('--glow', p.colors[2]);
+  showPicture(0);
+  dialog.showModal();
+  fitDevices();
+  dialog.querySelector('.sheet').scrollTop = 0;
+  track('project-open', { project: slugOf(p) });
+}
+// the pop-up's text, in the current language (redrawn when it changes, without reloading the demos)
+function projectText() {
+  const p = L(PROJECTS[openIndex]);
   gallery = p.gallery;
   dialog.querySelector('.status').textContent = p.details.status;
-  dialog.querySelector('h2').textContent = p.name;
   dialog.querySelector('.intro').textContent = p.details.intro;
-  dialog.querySelector('.devices').replaceChildren(...['laptop', 'phone'].filter((k) => p.device[k]).map((k) => deviceFrame(k, p.device[k], p.name)));
   dialog.querySelector('.try-note').textContent = p.demoNote;
+  const log = dialog.querySelector('.changelog');
+  log.hidden = !p.changelog?.length;
+  log.querySelector('ol').replaceChildren(...(p.changelog ?? []).map((c) => {
+    const li = el('li');
+    li.append(el('time', { dateTime: c.date, textContent: dateLabel(c.date, { day: 'numeric', month: 'short' }) }), el('span', { textContent: c.text }));
+    return li;
+  }));
   dialog.querySelector('.thumbs').replaceChildren(...gallery.map((g, n) => {
     const b = el('button', { type: 'button', onclick: () => showPicture(n) });
     b.setAttribute('aria-label', `Picture ${n + 1}: ${g.caption}`);
@@ -258,17 +305,29 @@ function openProject(i) {
     s.append(el('h3', { textContent: sec.title }), el('p', { textContent: sec.text }));
     return s;
   }));
-  dialog.querySelector('.stack').textContent = p.stack;
-  dialog.querySelector('.page').href = `projects/${slugOf(p)}/`;
-  const code = dialog.querySelector('.code');
-  code.hidden = !p.url;
-  if (p.url) code.href = p.url;
-  dialog.style.setProperty('--glow', p.colors[2]);
-  showPicture(0);
-  dialog.showModal();
-  fitDevices();
-  dialog.querySelector('.sheet').scrollTop = 0;
+  showPicture(shown);
 }
+onLang(() => { if (dialog.open) projectText(); });
+// "Show me how it works" plays the demo's guided tour on the phone (Relay's laptop follows along)
+let touring = false;
+function tourButton(on) {
+  touring = on;
+  const b = dialog.querySelector('.show-me');
+  b.querySelector('span').dataset.i18n = on ? 'stop' : 'showMe';
+  b.querySelector('span').textContent = t(on ? 'stop' : 'showMe');
+  b.setAttribute('aria-pressed', String(on));
+}
+dialog.querySelector('.show-me').addEventListener('click', () => {
+  const phone = dialog.querySelector('.slot.phone iframe');
+  phone?.contentWindow?.postMessage(touring ? 'vcd:pause' : 'vcd:tour', location.origin);
+  if (!touring) track('tour', { project: slugOf(PROJECTS[openIndex]), where: 'popup' });
+  tourButton(!touring);
+});
+addEventListener('message', (e) => {
+  if (e.origin !== location.origin || e.data !== 'vcd:tour-done') return;
+  if (dialog.open) tourButton(false);
+  chapters[1]?.live.release();
+});
 // a full-size iPhone (and, for Relay, a laptop) running the project's demo, scaled to fit the pop-up
 const FRAME = { phone: [427, 886], laptop: [1420, 900] };
 function deviceFrame(kind, def, name) {
@@ -313,4 +372,53 @@ dialog.addEventListener('click', (e) => {
 dialog.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') showPicture(shown - 1);
   if (e.key === 'ArrowRight') showPicture(shown + 1);
+});
+
+// on the 3D scene: while a device is in focus, offer its guided tour beside it
+const tourBtn = document.querySelector('.tour-btn');
+let focusedShown = -1, sceneTouring = false;
+function sceneTour(i) {
+  if (i !== focusedShown) {
+    focusedShown = i;
+    tourBtn.hidden = i < 0;
+    if (i >= 0) track('demo-focus', { project: slugOf(PROJECTS[i]) });
+    else sceneTouring = false;
+  }
+  if (i < 0) return;
+  // to the right of the device's screens when there is room, else centred under them
+  let r = null;
+  for (const s of chapters[1].live.el.children) {
+    if (s.style.visibility !== 'visible') continue;
+    const b = s.getBoundingClientRect();
+    r = r ? { left: Math.min(r.left, b.left), right: Math.max(r.right, b.right), top: Math.min(r.top, b.top), bottom: Math.max(r.bottom, b.bottom) } : { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
+  }
+  if (!r) return;
+  const w = tourBtn.offsetWidth, h = tourBtn.offsetHeight;
+  const beside = innerWidth - r.right > w + 72;
+  const x = beside ? r.right + 48 : Math.min(innerWidth - w - 12, Math.max(12, (r.left + r.right) / 2 - w / 2));
+  const y = beside ? (r.top + r.bottom) / 2 - h / 2 : Math.min(innerHeight - h - 12, r.bottom + 14);
+  tourBtn.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+}
+tourBtn.addEventListener('pointerenter', () => chapters[1].live.hold());
+tourBtn.addEventListener('pointerleave', () => { if (!sceneTouring) chapters[1].live.release(); });
+tourBtn.addEventListener('click', () => {
+  if (focusedShown < 0) return;
+  sceneTouring = chapters[1].live.tour();
+  if (sceneTouring) track('tour', { project: slugOf(PROJECTS[focusedShown]), where: 'scene' });
+});
+
+// English / Nederlands
+const langBtn = document.querySelector('.lang');
+const showLang = (lang) => langBtn.querySelectorAll('b').forEach((b) => b.classList.toggle('on', b.classList.contains(lang)));
+showLang(getLang());
+onLang(showLang);
+langBtn.addEventListener('click', () => {
+  setLang(getLang() === 'nl' ? 'en' : 'nl');
+  track('language', { lang: getLang() });
+});
+
+// which ways of getting in touch get used (counted without cookies, see track.js)
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="mailto:"], a[href*="linkedin.com"], a[href*="github.com"]');
+  if (a) track('contact-link', { to: a.href.startsWith('mailto:') ? 'email' : a.href.includes('linkedin') ? 'linkedin' : 'github' });
 });

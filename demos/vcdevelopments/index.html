@@ -113,7 +113,7 @@
   </div>
 </div>
 <script type="module">
-  import { $, $$, chrome, actionSheet, hud } from '../ios.js';
+  import { $, $$, chrome, actionSheet, hud, onTour } from '../ios.js';
   chrome();
   const PROJECTS = [
     ['Pulse', 'Ads on autopilot: learns what sells and moves the budget there.', 'pulse', '#8B6CF6', 'Syncs sales and ad results every 15 minutes, retrains three models and moves the daily budget, within guardrails.'],
@@ -174,6 +174,17 @@
     if (e.target.closest('#logo')) { const l = $('#logo'); l.classList.remove('burst'); l.offsetWidth; l.classList.add('burst'); }
     gust = 8;
   });
+
+  // guided tour
+  onTour([
+    { tap: '#logo', say: 'Tap the neon logo', after: 1000 },
+    { tap: '#night', say: 'Night mode, like the real site', after: 1200 },
+    { scroll: '#web', to: () => $('.block').offsetTop - 70, say: 'Swipe through the projects', after: 500 },
+    { scroll: '#cards', left: 312, after: 300 },
+    { scroll: '#cards', left: 624, after: 300 },
+    { tap: () => $$('.card')[2], say: 'Tap a card to read more', after: 1200 },
+    { scroll: '#web', to: 99999, say: 'And get in touch', after: 1600 },
+  ]);
 </script>
 </body>
 </html>

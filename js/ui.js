@@ -1,5 +1,6 @@
 // DOM layer: loader, scrambled text, 3D-anchored callouts, sound button and link carousel.
 import * as THREE from 'three';
+import { t, onLang } from './i18n.js';
 
 const GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*+=<>/\\[]{}_';
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -127,10 +128,14 @@ export class UI {
   bindSound(onToggle) {
     const btn = document.querySelector('.sound');
     const label = btn.querySelector('b');
+    let on = false;
+    const show = () => { label.textContent = on ? t('on') : t('off'); };
+    show();
+    onLang(show);
     btn.addEventListener('click', () => {
-      const on = onToggle();
+      on = onToggle();
       btn.setAttribute('aria-pressed', on);
-      scramble(label, on ? 'On' : 'Off', 300);
+      scramble(label, on ? t('on') : t('off'), 300);
     });
   }
 
@@ -141,10 +146,11 @@ export class UI {
     let on = initial;
     const show = (animate) => {
       btn.setAttribute('aria-pressed', String(on));
-      if (animate) scramble(label, on ? 'On' : 'Off', 300);
-      else label.textContent = on ? 'On' : 'Off';
+      if (animate) scramble(label, on ? t('on') : t('off'), 300);
+      else label.textContent = on ? t('on') : t('off');
     };
     show(false);
+    onLang(() => show(false));
     btn.addEventListener('click', () => {
       on = !on;
       onToggle(on);

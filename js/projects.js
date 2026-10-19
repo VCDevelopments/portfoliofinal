@@ -4,6 +4,26 @@
 export const PROJECTS = [
   {
     name: 'Pulse',
+    changelog: [
+      { date: '2026-10-14', text: 'Two-step email sign-in, password resets and an admin page.', nl: 'Inloggen in twee stappen via e-mail, wachtwoord herstellen en een beheerpagina.' },
+      { date: '2026-10-14', text: 'Logins and a light, dark and system theme.', nl: 'Accounts en een licht, donker en systeemthema.' },
+      { date: '2026-10-13', text: 'Starter models trained on published benchmarks, until a store has its own data.', nl: 'Startmodellen getraind op gepubliceerde benchmarks, tot een winkel eigen data heeft.' },
+      { date: '2026-10-13', text: 'Setup wizard and a live dashboard that runs on your own computer.', nl: 'Installatiewizard en een live dashboard dat op je eigen computer draait.' },
+      { date: '2026-10-13', text: 'First version: syncs Shopify, Meta and TikTok, with a daily-budget autopilot.', nl: 'Eerste versie: synchroniseert Shopify, Meta en TikTok, met een autopilot op het dagbudget.' },
+    ],
+    nl: {
+      blurb: 'Advertenties op autopilot: leert wat\nverkoopt en zet daar het budget op',
+      status: 'In ontwikkeling',
+      intro: 'Pulse draait de advertenties van een webshop op autopilot. Het haalt verkoop- en advertentieresultaten binnen, leert welke advertenties echt verkopen, verschuift het budget daarheen en plant nieuwe campagnes, zodat een klein dagbudget blijft werken zonder dat iemand er de hele dag naar moet kijken.',
+      sections: [
+        { title: 'Alles op één plek', text: 'Elke 15 minuten synchroniseert Pulse producten en bestellingen uit Shopify, campagnes en resultaten uit Meta en TikTok, en contacten uit het CRM in één database. Elke bestelling wordt gekoppeld aan de advertentie die ze binnenbracht, zodat elke advertentie toont wat ze echt opbracht en niet alleen hoeveel klikken ze kreeg.' },
+        { title: 'Het leert wat verkoopt', text: 'Drie modellen trainen opnieuw zodra er nieuwe resultaten zijn: één voorspelt klikken, één verkopen en één hoe groot de kans is dat een video aanslaat. Ze leren van hoe elke advertentie gemaakt is (user-generated of niet, de hook, de lengte, ondertitels), zodat een nieuw idee een score krijgt nog voor iemand het filmt.' },
+        { title: 'Autopilot, met vangrails', text: 'Elke vier uur verdeelt het het dagbudget over de advertentiesets volgens hoe waarschijnlijk elke set winstgevend is, pauzeert het advertenties die geld uitgeven zonder te verkopen en logt het elke wijziging. Elke set houdt genoeg over om te blijven leren, budgetten veranderen hooguit 30% per dag en het totaal gaat nooit over de limiet.' },
+        { title: 'Nieuwe campagnes, van begin tot eind', text: 'Pulse plant nieuwe campagnes rond de bestverkopende producten, schrijft voor elke advertentie een creatieve briefing, laat AI-videomodellen er korte verticale advertenties van maken en zet de campagnes gepauzeerd klaar voor een laatste controle. Hun resultaten stromen terug en leren de volgende ronde bij.' },
+      ],
+      captions: ['Het live dashboard: uitgaven, resultaten en de regels die erop reageren.', 'Hoe het werkt: synchroniseren, leren, handelen en de resultaten terugkoppelen.', 'Een autopilot-ronde: het dagbudget gaat naar wat werkt, binnen de vangrails.', 'Nieuwe campagnes: van bestverkopend product tot afgewerkte videoadvertentie.'],
+      demoNote: 'Een werkende demo met voorbeelddata: wissel de periode, sleep over de grafiek, open een campagne of laat de autopilot lopen.',
+    },
     // the working demo on the 3D phone and in the pop-up; `poster` shows until it has loaded
     device: { phone: { demo: 'demos/pulse/', poster: 'img/screens/pulse-phone.jpg' } },
     demoNote: 'A working demo with sample data: switch the range, drag across the chart, open a campaign or run the autopilot.',
@@ -31,6 +51,19 @@ export const PROJECTS = [
   },
   {
     name: 'Relay',
+    nl: {
+      blurb: 'Deel bestanden tussen laptop\nen telefoon met een QR-code',
+      status: 'Eigen tool',
+      intro: 'Relay verplaatst bestanden tussen een laptop en een telefoon via het wifi-netwerk thuis: geen kabels, geen cloud, geen accounts. Open het, scan een code en zet bestanden aan eender welke kant neer.',
+      sections: [
+        { title: 'Eén keer scannen en je bent verbonden', text: 'De laptop draait een kleine Python-server en toont een pagina met een QR-code. Die code bevat het adres van de laptop en een privé toegangssleutel, dus scannen opent dezelfde pagina op de telefoon, meteen aangemeld. De sleutel wordt bewaard, zodat de telefoon de volgende keer gekoppeld blijft.' },
+        { title: 'Zet bestanden aan eender welke kant neer', text: 'Sleep bestanden op de pagina op de laptop, of kies ze op de telefoon. Ze komen meteen in een gedeelde map op de laptop terecht, de lijst werkt bij op beide toestellen en alles kan vanaf elk toestel gedownload of verwijderd worden.' },
+        { title: 'Niets verlaat het huis', text: 'Bestanden gaan rechtstreeks tussen de twee toestellen binnen je eigen netwerk. Er zit geen clouddienst tussen, je hoeft geen account te maken, er is geen uploadlimiet en zonder de toegangssleutel werkt niets.' },
+        { title: 'Rechtstreeks naar Foto’s', text: 'De telefoon verbindt via HTTPS, waardoor het deelmenu van de iPhone foto’s en video’s rechtstreeks in de filmrol kan bewaren in plaats van enkel in Bestanden.' },
+      ],
+      captions: ['De pagina op de laptop met de QR-code, en dezelfde bestanden op de telefoon.', 'Stap 1: één keer scannen en de telefoon is gekoppeld.', 'Hoe bestanden reizen: rechtstreeks over je eigen wifi.', 'Op de telefoon: rechtstreeks bewaren in Foto’s, met live uploadvoortgang.'],
+      demoNote: 'Scan de code met de telefoon en stuur er foto’s mee, of zet echte bestanden op de laptop: ze verschijnen aan de andere kant. Je bestanden verlaten je browser nooit.',
+    },
     device: { phone: { demo: 'demos/relay/', poster: 'img/screens/relay-phone.jpg' }, laptop: { demo: 'demos/relay/desktop.html', poster: 'img/screens/relay-laptop.jpg' } },
     demoNote: 'Scan the code with the phone, then send photos from it or drop real files on the laptop: they appear on the other side. Your files never leave your browser.',
     started: '2026-10-15',
@@ -57,6 +90,20 @@ export const PROJECTS = [
   },
   {
     name: 'ShotGuide',
+    nl: {
+      blurb: 'iOS-camera die je coacht om eender\nwelke esthetische foto na te maken',
+      status: 'In ontwikkeling · iOS-app',
+      intro: 'ShotGuide helpt je de foto te nemen die je online zag. Kies een inspiratie, en de camera zoekt uit hoe ze genomen is en coacht je live, beeld per beeld, tot jouw foto overeenkomt.',
+      sections: [
+        { title: 'Vind de foto', text: 'Zoek op Pinterest in de app (je logt zelf in; ShotGuide ziet je wachtwoord nooit), zoek vrij gelicentieerde foto’s, plak een link of kies een afbeelding uit Foto’s.' },
+        { title: 'Hoe ze genomen is, stap voor stap', text: 'De foto wordt geanalyseerd op lens (0,5× tot 8×), camerahoogte, kanteling, afstand en licht, met instructies stap voor stap. De kleurlook wordt uit de pixels gemeten en omgezet in een passend filter. Dat gebeurt op de telefoon met Apple Intelligence, of met Claude voor het meeste detail, en elke analyse wordt bewaard in je Bibliotheek.' },
+        { title: 'Live gecoacht, op elk beeld', text: 'Een oplichtende richtstip hangt vast aan de echte wereld en toont waar je moet richten; je draait de telefoon gewoon tot de cirkel erop staat. Tips over kanteling, horizon, afstand, licht en een drukke achtergrond passen zich aan het soort foto aan: portret, object, gebouw of landschap. Belichting, scherpstelling en de passende look stellen zichzelf in.' },
+        { title: 'Druk af als alles groen is', text: 'Een checklist (hoek, kader, licht, scherpte, stabiel, achtergrond) wordt pas groen als de camera elk punt echt bevestigd heeft, en een ring rond de ontspanknop toont hoe dichtbij je bent. In de automatische stand neemt hij de foto zelf. Het resultaat wordt bijgesneden naar Instagrams 4:5 met de look toegepast, klaar om te vergelijken, te bewaren of te delen.' },
+        { title: 'Het leert je smaak', text: 'ShotGuide kan de pins op een Pinterest-bord en de foto’s die je bewaart bestuderen, en dan nieuwe vrij gelicentieerde foto’s vinden die bij je stijl passen.' },
+      ],
+      captions: ['Van inspiratie tot live coaching in de camera.', 'Stap 1: vind een foto op Pinterest, Openverse, via een link of in je Foto’s.', 'Stap 2: lens, hoogte, kanteling, afstand, stappen en de kleurlook.', 'Stap 3: alles bevestigd. Afdrukken.'],
+      demoNote: 'Kies een foto, begin te fotograferen en zet het beeld goed tot alles groen is. Tik op “Use my camera” om het met je eigen camera te proberen; die wordt enkel op je toestel gebruikt.',
+    },
     device: { phone: { demo: 'demos/shotguide/', poster: 'img/screens/shotguide-phone.jpg' } },
     demoNote: 'Pick a photo, start shooting and line up the shot until everything is green. Tap “Use my camera” to try it with your own camera; it is only used on your device.',
     started: '2026-10-16',
@@ -84,6 +131,28 @@ export const PROJECTS = [
   },
   {
     name: 'VCDevelopments',
+    repo: { github: 'VCDevelopments/portfoliofinal' }, // public: commit activity is read live (private repos: see tools/build-pages.mjs)
+    changelog: [
+      { date: '2026-10-19', text: 'Guided tours of every app, services and an inquiry form, and a Dutch version.', nl: 'Rondleidingen door elke app, diensten en een aanvraagformulier, en een Nederlandse versie.' },
+      { date: '2026-10-18', text: 'Every project runs as a working app on a 3D iPhone or MacBook.', nl: 'Elk project draait als werkende app op een 3D-iPhone of -MacBook.' },
+      { date: '2026-10-18', text: 'Scrolling follows instantly; flowing silk backdrops behind the projects.', nl: 'Scrollen volgt meteen; vloeiende zijden achtergronden achter de projecten.' },
+      { date: '2026-10-17', text: 'Contact section, night mode, interactive snow and link previews.', nl: 'Contactsectie, nachtmodus, interactieve sneeuw en linkvoorbeelden.' },
+      { date: '2026-10-16', text: 'Logos burst into particles on click and rebuild from the bottom up.', nl: 'Logo’s spatten bij een klik uiteen in deeltjes en bouwen zich van onder naar boven weer op.' },
+      { date: '2026-10-15', text: 'First version: the snowy valley, the projects and the blueprint rings.', nl: 'Eerste versie: de besneeuwde vallei, de projecten en de blauwdrukringen.' },
+    ],
+    nl: {
+      blurb: 'Dit portfolio: een 3D-site\ngestuurd door scrollen, gebouwd met Three.js',
+      status: 'Live',
+      intro: 'De site waar je nu op bent: een 3D-ervaring gestuurd door scrollen, van nul geschreven met Three.js, zonder framework of build-stap.',
+      sections: [
+        { title: 'Vier scènes, één scroll', text: 'Een besneeuwde vallei met het neonlogo, deze projecten die live draaien op 3D-toestellen die je kan gebruiken, een blauwdrukgyroscoop in draadmodel en een sneeuwwolk die het logo wordt. Elke scène wordt buiten beeld getekend en een laatste shader mengt ze met een glitch-overgang terwijl je scrolt.' },
+        { title: 'Gegenereerd, niet gemodelleerd', text: 'Het terrein, de toestellen en het logo zijn allemaal in code gebouwd, zonder ingeladen 3D-modellen. Elke telefoon draait een werkende demo van zijn project die je kan uitproberen, met een live timer eronder die de tijd telt die erin gestoken is.' },
+        { title: 'Gemaakt om mee te spelen', text: 'Klik op een logo en het spat uiteen in deeltjes die het van onder naar boven weer opbouwen. Beweeg over een telefoon en hij draait naar je toe zodat je de app erop kan uitproberen. Het geluid volgt hoe snel je scrolt.' },
+        { title: 'Vlot gehouden', text: 'Scrollen volgt een veer voor vloeiende beweging, afbeeldingen worden geladen voor ze nodig zijn, scènes buiten beeld slaan hun werk over en elk bestand heeft een versie zodat bezoekers altijd de nieuwste krijgen.' },
+      ],
+      captions: ['De startpagina: het neonlogo in een besneeuwde vallei.', 'Hoe het gebouwd is: vier scènes, gemengd door één shader.', 'De details: logo’s die uiteenspatten, toestellen die oplichten bij hover.'],
+      demoNote: 'De telefoonversie van deze site in Safari: tik op het logo, zet Nacht aan en swipe door de projecten.',
+    },
     device: { phone: { demo: 'demos/vcdevelopments/', poster: 'img/screens/vcdevelopments-phone.jpg' } },
     demoNote: 'The phone version of this site in Safari: tap the logo, turn on Night and swipe through the projects.',
     started: '2026-10-15',
@@ -112,6 +181,20 @@ export const PROJECTS = [
 
 // URL-safe name, used for each project's page (projects/<slug>/) and deep link (#project-<slug>)
 export const slugOf = (p) => p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+// the project's text in a language: Dutch fields override the English ones where they exist
+export function localize(p, lang) {
+  const nl = lang === 'nl' && p.nl;
+  if (!nl) return p;
+  return {
+    ...p,
+    blurb: nl.blurb,
+    demoNote: nl.demoNote,
+    details: { ...p.details, status: nl.status, intro: nl.intro, sections: nl.sections },
+    gallery: p.gallery.map((g, i) => ({ ...g, caption: nl.captions[i] ?? g.caption })),
+    changelog: p.changelog?.map((c) => ({ ...c, text: c.nl ?? c.text })),
+  };
+}
 
 export const LINKS = [
   { label: 'GitHub', href: 'https://github.com/VCDevelopments' },

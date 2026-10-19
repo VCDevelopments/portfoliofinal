@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1080" />
+  <title>Case-study reel</title>
+  <!-- A 1080 × 1350 (4:5) frame for LinkedIn and link previews: the project's working demo playing its
+       guided tour on a device, in the project's own colours. Recorded by tools/record-reels.mjs. -->
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Outfit:wght@200;300;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 1080px; height: 1350px; overflow: hidden; }
+    body { position: relative; color: #fff; font-family: "Outfit", sans-serif; background: var(--c1); -webkit-font-smoothing: antialiased; }
+    /* the project's colours: a deep field, its glow rising behind the device */
+    .field { position: absolute; inset: 0; background:
+      radial-gradient(60% 46% at 50% 64%, color-mix(in srgb, var(--glow) 55%, transparent), transparent 70%),
+      linear-gradient(170deg, var(--c0) 0%, var(--c1) 100%); }
+    .grain { position: absolute; inset: 0; opacity: 0.12; mix-blend-mode: overlay; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+    header { position: absolute; left: 72px; right: 72px; top: 64px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { display: flex; align-items: center; gap: 12px; font: 200 34px/1 "Outfit"; letter-spacing: -0.03em; }
+    .brand b { font-weight: 800; }
+    .brand svg { width: 46px; height: 46px; }
+    .status { font: 500 17px/1 "IBM Plex Mono", monospace; letter-spacing: 0.14em; text-transform: uppercase; color: var(--glow); }
+    .title { position: absolute; left: 72px; right: 72px; top: 150px; }
+    h1 { font: 800 112px/0.92 "Outfit"; letter-spacing: -0.045em; }
+    .blurb { margin-top: 18px; font: 300 36px/1.25 "Outfit"; max-width: 22ch; color: rgba(255, 255, 255, 0.88); text-wrap: balance; }
+    footer { position: absolute; left: 72px; right: 72px; bottom: 52px; display: flex; justify-content: space-between; font: 500 19px/1 "IBM Plex Mono", monospace; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.82); }
+    /* devices: the same iPhone 16 Pro and MacBook frames as the site's pop-up */
+    .stage { position: absolute; left: 0; right: 0; bottom: 0; height: 1350px; }
+    .device { position: absolute; transform-origin: 0 0; filter: drop-shadow(0 50px 70px rgba(0, 0, 0, 0.5)); }
+    .iphone { width: 427px; height: 886px; border-radius: 72px; background: linear-gradient(135deg, #a7aaae, #55575b 28%, #9a9da1 52%, #47494d 78%, #aeb1b5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+    .iphone .bezel { position: absolute; inset: 4px; border-radius: 68px; background: #000; }
+    .iphone .glass { position: absolute; left: 17px; top: 17px; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; background: #000; }
+    .iphone i { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #6e7175, #b3b6ba 60%, #7c7f83); }
+    .iphone .a { left: -4px; top: 150px; height: 32px; } .iphone .b { left: -4px; top: 205px; height: 62px; } .iphone .c { left: -4px; top: 280px; height: 62px; } .iphone .d { right: -4px; top: 240px; height: 100px; }
+    .macbook { width: 1420px; height: 900px; }
+    .macbook::before { content: ""; position: absolute; left: 52px; top: 0; width: 1316px; height: 880px; border-radius: 34px 34px 6px 6px; background: #050607; box-shadow: inset 0 0 0 3px #bfc3c8, inset 0 0 0 4px #8d9196; }
+    .macbook .glass { position: absolute; left: 70px; top: 18px; width: 1280px; height: 832px; overflow: hidden; border-radius: 30px 30px 0 0; background: #fff; }
+    .macbook .notch { position: absolute; left: 50%; top: 0; width: 178px; height: 32px; margin-left: -89px; border-radius: 0 0 13px 13px; background: #000; }
+    .macbook .base { position: absolute; left: 0; top: 878px; width: 1420px; height: 22px; border-radius: 3px 3px 22px 22px; background: linear-gradient(#e4e7ea, #a9adb2 70%, #8b8f94); }
+    iframe { width: 100%; height: 100%; border: 0; display: block; }
+  </style>
+</head>
+<body>
+  <div class="field"></div>
+  <div class="grain"></div>
+  <header>
+    <span class="brand"><svg viewBox="0 0 200 200"><g fill="none" stroke="#fff" stroke-linecap="round"><line x1="36" y1="52" x2="80" y2="150" stroke-width="30" /><path d="M170.3 71.7 A40 40 0 1 0 170.3 128.3" stroke-width="26" opacity="0.75" /></g></svg><span><b>vc</b>developments</span></span>
+    <span class="status"></span>
+  </header>
+  <div class="title"><h1></h1><p class="blurb"></p></div>
+  <div class="stage"></div>
+  <footer><span>vcdevelopments.info</span><span>Try it live ↗</span></footer>
+<script type="module">
+  import { PROJECTS, slugOf } from '../js/projects.js';
+  const slug = new URLSearchParams(location.search).get('p');
+  const p = PROJECTS.find((x) => slugOf(x) === slug);
+  const root = document.documentElement.style;
+  root.setProperty('--c0', p.colors[0]);
+  root.setProperty('--c1', p.colors[1]);
+  root.setProperty('--glow', p.colors[2]);
+  document.querySelector('h1').textContent = p.name;
+  document.querySelector('.blurb').textContent = p.blurb.replace('\n', ' ');
+  document.querySelector('.status').textContent = p.details.status;
+
+  const stage = document.querySelector('.stage');
+  const device = (kind, src, x, y, scale) => {
+    const d = document.createElement('div');
+    d.className = `device ${kind === 'phone' ? 'iphone' : 'macbook'}`;
+    d.style.left = `${x}px`;
+    d.style.top = `${y}px`;
+    d.style.transform = `scale(${scale})`;
+    const glass = document.createElement('div');
+    glass.className = 'glass';
+    const f = document.createElement('iframe');
+    f.src = `../${src}`;
+    glass.append(f);
+    if (kind === 'phone') d.append(Object.assign(document.createElement('div'), { className: 'bezel' }), ...['a', 'b', 'c', 'd'].map((c) => Object.assign(document.createElement('i'), { className: c })));
+    else glass.append(Object.assign(document.createElement('div'), { className: 'notch' }));
+    d.append(glass);
+    if (kind === 'laptop') d.append(Object.assign(document.createElement('div'), { className: 'base' }));
+    stage.append(d);
+  };
+  // the phone plays the tour (?tour); for Relay the laptop sits behind it and receives the photos
+  if (p.device.laptop) {
+    device('laptop', p.device.laptop.demo, 40, 560, 0.66);
+    device('phone', p.device.phone.demo, 700, 560, 0.74);
+  } else {
+    device('phone', p.device.phone.demo, (1080 - 427 * 0.86) / 2, 476, 0.86);
+  }
+  // ready once the fonts and every demo have loaded; the recorder then calls play() to start the tour
+  const frames = [...document.querySelectorAll('iframe')];
+  Promise.all([document.fonts.ready, ...frames.map((f) => new Promise((r) => f.addEventListener('load', r, { once: true })))])
+    .then(() => setTimeout(() => { document.body.dataset.ready = '1'; }, 800));
+  window.play = () => document.querySelector('.iphone iframe').contentWindow.postMessage('vcd:tour', location.origin);
+  // the recorder waits for this
+  addEventListener('message', (e) => { if (e.data === 'vcd:tour-done') document.body.dataset.done = '1'; });
+</script>
+</body>
+</html>
