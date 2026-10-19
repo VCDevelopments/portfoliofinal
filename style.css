@@ -350,12 +350,7 @@ body.is-grab { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { #project-dialog[open] { animation: none; } }
 
 /* ---------- live demos ---------- */
-/* on the 3D phones: a layer over the canvas; each screen is warped onto its 3D screen, and only the screens take the pointer */
-.live-screens { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
-.live-screen { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #000; pointer-events: auto; }
-.live-screen iframe { width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity 0.4s; }
-.live-screen.loaded iframe { opacity: 1; }
-/* a MacBook display's camera notch, on the live screen and in the pop-up */
+/* a MacBook display's camera notch, in the pop-up */
 .notch { position: absolute; left: 50%; top: 0; width: 178px; height: 32px; margin-left: -89px; border-radius: 0 0 13px 13px; background: #000; pointer-events: none; }
 /* in the pop-up: a full-size iPhone 16 Pro (393 × 852 screen), and a laptop for Relay; no logos */
 #project-dialog .try { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 0 8px; border-top: 1px solid rgba(255, 255, 255, 0.15); border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
@@ -385,15 +380,10 @@ body.is-grab { cursor: pointer; }
 .lang { position: fixed; z-index: 10; right: var(--gutter); bottom: var(--gutter); display: flex; gap: 8px; align-items: center; padding: 4px 0; }
 .lang b { font-weight: 400; opacity: 0.55; transition: opacity 0.3s; }
 .lang b.on { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }
-.lang:focus-visible, .tour-btn:focus-visible, .show-me:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
+.lang:focus-visible, .show-me:focus-visible { outline: 1px dashed #fff; outline-offset: 4px; }
 body.is-intro .lang { opacity: 0; }
 .lang { transition: opacity 0.8s var(--ease); }
 body[data-chapter="3"] .lang { bottom: calc(var(--gutter) + 2px); }
-
-.tour-btn { position: fixed; z-index: 12; left: 0; top: 0; display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 18px; background: #fff; color: #1e242e; font: 500 12px/1 var(--mono); text-shadow: none; box-shadow: 0 12px 32px -10px rgba(14, 17, 23, 0.55); animation: tour-in 0.5s var(--ease); }
-.tour-btn[hidden] { display: none; }
-.tour-btn:hover { background: #1e242e; color: #fff; }
-@keyframes tour-in { from { opacity: 0; filter: blur(6px); } }
 
 /* ---------- services & process (chapter 3, over the blueprint gyroscope) ---------- */
 /* one panel to the right of the gyroscope, in the same material as the project cards */
@@ -470,4 +460,4 @@ body:not([data-chapter="2"]) .services { pointer-events: none; }
 #inquiry .note { font: 400 13px/1.5 var(--mono); color: #dbe2ea; }
 #inquiry .note:empty { display: none; }
 ::selection { background: #7dc8ff; color: #10141b; text-shadow: none; }
-@media (prefers-reduced-motion: reduce) { #inquiry[open], .tour-btn { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #inquiry[open] { animation: none; } }

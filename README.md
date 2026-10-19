@@ -3,18 +3,19 @@
 Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL experience built with Three.js.
 
 1. The neon VCDevelopments logo in a snowy valley, with a periodic blueprint scan. Click it to shatter it; click anywhere else for a gust of snow (which also drifts away from the cursor). The Night switch darkens the valley.
-2. Each project runs on a 3D iPhone (Relay also on a laptop) with an overview card. The screens are working demos you can use right there; the pop-up (click a device or Learn more) has a full-size iPhone with the same demo, plus the project's story and pictures.
+2. Each project's case-study video plays on a floating panel as you arrive at it, with an overview card. Click it (or Learn more) for the pop-up: a full-size iPhone (and, for Relay, a MacBook) running the working demo, plus the project's story and pictures.
 
-The demos live in `demos/`: small iOS-style apps with sample data (`demos/ios.css` and `demos/ios.js` hold the shared iPhone screen and controls). ShotGuide can use the visitor's own camera if they allow it; Relay's phone and laptop sync inside the browser, and dropped files never leave it. Phones and tablets show a picture on the 3D phones and run the demo in the pop-up.
+The demos live in `demos/`: small iOS-style apps with sample data (`demos/ios.css` and `demos/ios.js` hold the shared iPhone screen and controls). ShotGuide can use the visitor's own camera if they allow it; Relay's phone and laptop sync inside the browser, and dropped files never leave it. The device models (`js/devices.js`) appear in the case-study videos.
+
 3. Segmented blueprint rings that assemble, then a fly-through, with what I build (and typical timelines) and how a project runs.
 
-Every demo has a guided tour ("Show me how it works", on the focused device and in the pop-up): a fingertip taps through the app with captions, and any real tap takes over. The pop-up also lists each project's changelog, and the devices show recent GitHub activity (live for public repos; `data/activity.json` holds a snapshot for private ones, written by `npm run pages`).
+Every demo has a guided tour ("Show me how it works" in the pop-up): a fingertip taps through the app with captions, and any real tap takes over. The pop-up also lists each project's changelog, and the devices show recent GitHub activity (live for public repos; `data/activity.json` holds a snapshot for private ones, written by `npm run pages`).
 
 "Start a project" opens a short inquiry form (type, budget, timeline, message) that hands a ready email to the visitor's email app, or copies it. The site switches between English and Dutch (bottom right); Dutch project text lives in each project's `nl` block in `js/projects.js`.
 
 Visits and events (project opened, tour played, inquiry, language) can be counted without cookies through Umami: set `UMAMI_ID` in `js/track.js`.
 
-Case-study videos (4:5, for LinkedIn and link previews) are recorded from the demos' tours with `node tools/record-reels.mjs` (site served locally, Chrome installed) into `videos/`; the project pages embed them.
+Case-study videos (4:5) are recorded from the demos' tours with `node tools/record-reels.mjs` (site served locally, Chrome installed) into `videos/`: `<slug>.mp4` at 1080 × 1350 for LinkedIn, `<slug>-web.mp4` and `<slug>-poster.jpg` for the site and the project pages.
 4. Snow that bursts into the spinning neon logo, with a contact section and GitHub / LinkedIn links.
 
 With reduced motion turned on in the device settings, the intro is skipped and scene changes are plain crossfades. Phones get a lighter render (lower pixel density, less anti-aliasing, fewer particles).

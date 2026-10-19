@@ -180,6 +180,10 @@ export function onPause(fn) {
 // or { scroll: selector, to: y, left: x } (numbers or functions), or { wait: ms }; `say` shows a caption while it runs.
 // The portfolio starts a tour with the message 'vcd:tour'; 'vcd:pause' or touching the screen stops it.
 let touring = null;
+// recording a case-study reel (?reel): the reel draws its own captions, so the demo reports its steps instead
+const REEL = new URLSearchParams(location.search).has('reel');
+if (REEL) document.documentElement.classList.add('reel');
+const report = (msg) => { if (REEL) parent.postMessage(msg, location.origin); };
 const finger = () => {
   let f = $('.tour-finger');
   if (!f) {
@@ -214,6 +218,7 @@ export async function tour(steps) {
   try {
     for (const s of steps) {
       if (run.stopped) break;
+      if (s.say) report({ vcd: 'say', text: s.say });
       cap.textContent = s.say || cap.textContent;
       cap.classList.toggle('on', !!s.say || cap.classList.contains('on'));
       if (s.wait) { await wait(s.wait); continue; }
@@ -221,6 +226,7 @@ export async function tour(steps) {
       if (!el) continue;
       if (s.scroll) {
         const [x, y] = centre(el);
+        report({ vcd: 'point', x, y });
         await glide(f, x, y);
         const v = (k) => (typeof s[k] === 'function' ? s[k]() : s[k]);
         el.scrollTo({ top: v('to') ?? el.scrollTop, left: v('left') ?? el.scrollLeft, behavior: 'smooth' });
@@ -229,6 +235,7 @@ export async function tour(steps) {
       }
       el.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
       const [x, y] = centre(el);
+      report({ vcd: 'point', x, y });
       await glide(f, x, y);
       if (run.stopped) break;
       f.classList.add('press');

@@ -134,4 +134,5 @@ button.cell:active { background: var(--fill); }
 @keyframes tap-ring { from { transform: scale(0.6); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
 .tour-caption { position: absolute; z-index: 299; left: 50%; bottom: 96px; width: max-content; max-width: calc(100% - 48px); transform: translate(-50%, 12px); padding: 9px 16px; border-radius: 20px; background: rgba(20, 20, 22, 0.82); color: #fff; font-size: 15px; line-height: 20px; font-weight: 600; text-align: center; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); opacity: 0; transition: opacity 0.3s, transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); pointer-events: none; }
 .tour-caption.on { opacity: 1; transform: translate(-50%, 0); }
+.reel .tour-caption { display: none; }
 @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01s !important; animation-duration: 0.01s !important; } }

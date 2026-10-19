@@ -1,4 +1,6 @@
-// Records a short 4:5 case-study video per project (videos/<slug>.mp4, H.264): tools/reel.html with the project's demo playing its guided tour.
+// Records a short 4:5 case-study video per project: videos/<slug>.mp4 (1080 × 1350, H.264, for
+// LinkedIn), a lighter <slug>-web.mp4 (720 × 900) that plays on the site, and <slug>-poster.jpg;
+// each is tools/reel.html with the project's demo playing its guided tour.
 // Needs the site served locally and Google Chrome:
 //   python3 -m http.server 5173 &   node tools/record-reels.mjs [slug …]
 // Chrome renders the reel headless; the frames it paints are collected over the DevTools protocol and
@@ -11,13 +13,13 @@ import { PROJECTS, slugOf } from '../js/projects.js';
 
 const SITE = 'http://localhost:5173';
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const W = 1080, H = 1350, MAX_SECONDS = 45, TAIL = 1.5;
+const W = 1080, H = 1350, MAX_SECONDS = 60, TAIL = 0.4;
 const out = new URL('../videos/', import.meta.url);
 mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const port = 9700 + Math.floor(Math.random() * 200);
-const chrome = spawn(CHROME, ['--headless=new', `--remote-debugging-port=${port}`, `--window-size=${W},${H}`, '--hide-scrollbars', `--user-data-dir=${mkdtempSync(join(tmpdir(), 'reel-'))}`, 'about:blank'], { stdio: 'ignore' });
+const chrome = spawn(CHROME, ['--headless=new', '--use-angle=metal', '--enable-gpu', `--remote-debugging-port=${port}`, `--window-size=${W},${H}`, '--hide-scrollbars', `--user-data-dir=${mkdtempSync(join(tmpdir(), 'reel-'))}`, 'about:blank'], { stdio: 'ignore' });
 let pageWs;
 for (let k = 0; k < 40 && !pageWs; k++) {
   await sleep(500);
@@ -73,36 +75,46 @@ for (const p of PROJECTS.filter((x) => !wanted.length || wanted.includes(slugOf(
     const batch = frames.slice(i, i + 20).map((f) => [f.data, f.t]);
     await evaluate(`frames_.push(...${JSON.stringify(batch)}); true`);
   }
-  const video = await evaluate(`(async () => {
-    // a steady 30 fps: each output frame shows the latest painted frame at that moment
+  // full size for LinkedIn, a lighter 720 × 900 copy for the site, and a poster frame from the tour
+  await evaluate(`(async () => {
     const { Muxer, ArrayBufferTarget } = await import('https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/+esm');
-    const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: ${W}, height: ${H} }, fastStart: 'in-memory' });
-    let failed = null;
-    const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { failed = e; } });
-    enc.configure({ codec: 'avc1.640028', width: ${W}, height: ${H}, bitrate: 6e6, framerate: 30 });
     const decode = async (b64) => createImageBitmap(await (await fetch('data:image/jpeg;base64,' + b64)).blob());
-    const base = frames_[0][1], N = Math.round((frames_.at(-1)[1] - base) * 30);
-    let src = -1, bitmap = null;
-    for (let k = 0; k <= N; k++) {
-      let i = Math.max(src, 0);
-      while (i + 1 < frames_.length && frames_[i + 1][1] - base <= k / 30) i++;
-      if (i !== src) { bitmap?.close(); bitmap = await decode(frames_[i][0]); src = i; }
-      const vf = new VideoFrame(bitmap, { timestamp: Math.round((k * 1e6) / 30), duration: Math.round(1e6 / 30) });
-      enc.encode(vf, { keyFrame: k % 60 === 0 });
-      vf.close();
-      while (enc.encodeQueueSize > 8 && !failed) await new Promise((r) => setTimeout(r, 5));
-      if (failed) throw failed;
-    }
-    await enc.flush();
-    muxer.finalize();
-    const buf = new Uint8Array(muxer.target.buffer);
-    let s = '';
-    for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000));
-    return { type: 'video/mp4', data: btoa(s) };
+    const b64 = (buf) => { let s = ''; for (let i = 0; i < buf.length; i += 0x8000) s += String.fromCharCode(...buf.subarray(i, i + 0x8000)); return btoa(s); };
+    // a steady 30 fps: each output frame shows the latest painted frame at that moment
+    window.encode = async (w, h, bitrate) => {
+      const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: w, height: h }, fastStart: 'in-memory' });
+      let failed = null;
+      const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: (e) => { failed = e; } });
+      enc.configure({ codec: 'avc1.640028', width: w, height: h, bitrate, framerate: 30 });
+      const canvas = new OffscreenCanvas(w, h), g = canvas.getContext('2d');
+      const base = frames_[0][1], N = Math.round((frames_.at(-1)[1] - base) * 30);
+      let src = -1;
+      for (let k = 0; k <= N; k++) {
+        let i = Math.max(src, 0);
+        while (i + 1 < frames_.length && frames_[i + 1][1] - base <= k / 30) i++;
+        if (i !== src) { const bm = await decode(frames_[i][0]); g.drawImage(bm, 0, 0, w, h); bm.close(); src = i; }
+        const vf = new VideoFrame(canvas, { timestamp: Math.round((k * 1e6) / 30), duration: Math.round(1e6 / 30) });
+        enc.encode(vf, { keyFrame: k % 60 === 0 });
+        vf.close();
+        while (enc.encodeQueueSize > 8 && !failed) await new Promise((r) => setTimeout(r, 5));
+        if (failed) throw failed;
+      }
+      await enc.flush();
+      muxer.finalize();
+      return b64(new Uint8Array(muxer.target.buffer));
+    };
+    window.poster = async (w, h, at) => {
+      const c = new OffscreenCanvas(w, h);
+      const bm = await decode(frames_[Math.floor(frames_.length * at)][0]);
+      c.getContext('2d').drawImage(bm, 0, 0, w, h);
+      return b64(new Uint8Array(await (await c.convertToBlob({ type: 'image/jpeg', quality: 0.82 })).arrayBuffer()));
+    };
+    return true;
   })()`);
-  const ext = video.type.startsWith('video/mp4') ? 'mp4' : 'webm';
-  writeFileSync(new URL(`${slug}.${ext}`, out), Buffer.from(video.data, 'base64'));
-  console.log(`${slug}.${ext}: ${frames.length} frames over ${(frames.at(-1).t - frames[0].t).toFixed(1)} s`);
+  writeFileSync(new URL(`${slug}.mp4`, out), Buffer.from(await evaluate(`encode(${W}, ${H}, 6e6)`), 'base64'));
+  writeFileSync(new URL(`${slug}-web.mp4`, out), Buffer.from(await evaluate('encode(720, 900, 2.2e6)'), 'base64'));
+  writeFileSync(new URL(`${slug}-poster.jpg`, out), Buffer.from(await evaluate('poster(720, 900, 0.45)'), 'base64'));
+  console.log(`${slug}: ${frames.length} frames over ${(frames.at(-1).t - frames[0].t).toFixed(1)} s → ${slug}.mp4, ${slug}-web.mp4, ${slug}-poster.jpg`);
 }
 ws.close();
 chrome.kill();

@@ -74,7 +74,7 @@ function page(p) {
     <h1>${esc(p.name)}</h1>
     <p class="intro">${esc(desc)}</p>
     <div class="gallery">
-      ${video ? `<figure class="reel"><video src="../../${video}" poster="../../${esc(p.device.phone.poster)}" autoplay muted loop playsinline width="1080" height="1350"></video><figcaption>${esc(p.name)}, playing its guided tour. <a href="../../#project-${slug}">Try it yourself ↗</a></figcaption></figure>
+      ${video ? `<figure class="reel"><video src="../../videos/${slug}-web.mp4" poster="../../videos/${slug}-poster.jpg" controls muted playsinline preload="none" width="720" height="900"></video><figcaption>${esc(p.name)}, playing its guided tour. <a href="../../#project-${slug}">Try it yourself ↗</a></figcaption></figure>
       ` : ''}${pics}
     </div>
     <div class="sections">

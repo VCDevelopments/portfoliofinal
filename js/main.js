@@ -44,7 +44,6 @@ const frame = () => new Promise((r) => setTimeout(r, 16));
 // pointer: raw NDC for raycasting; click: true for one frame; cursor: set by chapters that want a pointer cursor
 const ctx = { time: 0, dt: 0, mouse: { x: 0, y: 0 }, pointer: { x: 0, y: 0, inside: false }, click: false, cursor: false, intro: 0, introT: 0, pixelRatio: 1, height: 1, reduced: reducedMotion.matches };
 composite.setCalm(ctx.reduced);
-ctx.live = !lightweight; // live, usable demos on the 3D devices (phones and tablets use the pop-up instead)
 reducedMotion.addEventListener('change', (e) => { ctx.reduced = e.matches; composite.setCalm(e.matches); });
 const mouseTarget = { x: 0, y: 0 };
 let chapters = [];
@@ -86,8 +85,6 @@ async function boot() {
     chapters.push(builders[i](env));
     ui.setProgress((i + 1) / (builders.length + 1));
   }
-  // the live demos on the 3D phones sit just above the canvas (phones and tablets keep the pictures)
-  canvas.after(chapters[1].live.el);
   resize();
   // upload the project pictures now, so scrolling into the devices doesn't hitch on them
   for (const t of await chapters[1].ready) renderer.initTexture(t);
@@ -174,8 +171,7 @@ function loop(now) {
 
   const current = b >= 0 && mix >= 0.5 ? b : a;
   updateCards(current === 1 ? chapters[1].state.active : -1);
-  sceneTour(current === 1 && b < 0 ? chapters[1].state.focused : -1);
-  chapters[1].live.render(ctx.live && current === 1 && b < 0);
+  chapters[1].setActive(a === 1 || b === 1); // the project videos play only while their chapter shows
   ui.setChapter(current);
   const calloutAlpha = b >= 0 ? Math.abs(mix - 0.5) * 2 : 1;
   chapters.forEach((c, i) => ui.drawCallouts(c.callouts, c.camera, i === current ? calloutAlpha : 0));
@@ -326,7 +322,6 @@ dialog.querySelector('.show-me').addEventListener('click', () => {
 addEventListener('message', (e) => {
   if (e.origin !== location.origin || e.data !== 'vcd:tour-done') return;
   if (dialog.open) tourButton(false);
-  chapters[1]?.live.release();
 });
 // a full-size iPhone (and, for Relay, a laptop) running the project's demo, scaled to fit the pop-up
 const FRAME = { phone: [427, 886], laptop: [1420, 900] };
@@ -372,39 +367,6 @@ dialog.addEventListener('click', (e) => {
 dialog.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') showPicture(shown - 1);
   if (e.key === 'ArrowRight') showPicture(shown + 1);
-});
-
-// on the 3D scene: while a device is in focus, offer its guided tour beside it
-const tourBtn = document.querySelector('.tour-btn');
-let focusedShown = -1, sceneTouring = false;
-function sceneTour(i) {
-  if (i !== focusedShown) {
-    focusedShown = i;
-    tourBtn.hidden = i < 0;
-    if (i >= 0) track('demo-focus', { project: slugOf(PROJECTS[i]) });
-    else sceneTouring = false;
-  }
-  if (i < 0) return;
-  // to the right of the device's screens when there is room, else centred under them
-  let r = null;
-  for (const s of chapters[1].live.el.children) {
-    if (s.style.visibility !== 'visible') continue;
-    const b = s.getBoundingClientRect();
-    r = r ? { left: Math.min(r.left, b.left), right: Math.max(r.right, b.right), top: Math.min(r.top, b.top), bottom: Math.max(r.bottom, b.bottom) } : { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
-  }
-  if (!r) return;
-  const w = tourBtn.offsetWidth, h = tourBtn.offsetHeight;
-  const beside = innerWidth - r.right > w + 72;
-  const x = beside ? r.right + 48 : Math.min(innerWidth - w - 12, Math.max(12, (r.left + r.right) / 2 - w / 2));
-  const y = beside ? (r.top + r.bottom) / 2 - h / 2 : Math.min(innerHeight - h - 12, r.bottom + 14);
-  tourBtn.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
-}
-tourBtn.addEventListener('pointerenter', () => chapters[1].live.hold());
-tourBtn.addEventListener('pointerleave', () => { if (!sceneTouring) chapters[1].live.release(); });
-tourBtn.addEventListener('click', () => {
-  if (focusedShown < 0) return;
-  sceneTouring = chapters[1].live.tour();
-  if (sceneTouring) track('tour', { project: slugOf(PROJECTS[focusedShown]), where: 'scene' });
 });
 
 // English / Nederlands
