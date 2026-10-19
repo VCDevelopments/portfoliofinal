@@ -1,0 +1,129 @@
+/* iOS look for the demo apps: an iPhone 16 Pro screen (393 × 852 points) with the status bar,
+   Dynamic Island and home indicator, plus the standard system controls. No Apple logos or assets:
+   icons are drawn here, and the system font is used where the visitor's device has it. */
+:root {
+  --blue: #007aff; --green: #34c759; --red: #ff3b30; --orange: #ff9500; --yellow: #ffcc00;
+  --bg: #f2f2f7; --bg2: #fff; --fill: rgba(120, 120, 128, 0.12); --sep: rgba(60, 60, 67, 0.29);
+  --label: #000; --label2: rgba(60, 60, 67, 0.6); --label3: rgba(60, 60, 67, 0.3);
+  --tint: var(--blue);
+  --bar: rgba(249, 249, 249, 0.86);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+.dark {
+  --bg: #000; --bg2: #1c1c1e; --bg3: #2c2c2e; --fill: rgba(118, 118, 128, 0.24); --sep: rgba(84, 84, 88, 0.65);
+  --label: #fff; --label2: rgba(235, 235, 245, 0.6); --label3: rgba(235, 235, 245, 0.3);
+  --bar: rgba(22, 22, 24, 0.86);
+  --blue: #0a84ff; --green: #30d158; --red: #ff453a; --orange: #ff9f0a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--label); }
+body { font-size: 17px; line-height: 22px; letter-spacing: -0.41px; user-select: none; -webkit-user-select: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; letter-spacing: inherit; }
+input { font: inherit; letter-spacing: inherit; }
+svg { display: block; }
+
+/* the phone screen: everything lives in here */
+.screen { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+
+/* status bar: time on the left, signal / Wi-Fi / battery on the right, either side of the island */
+.statusbar { position: absolute; z-index: 90; top: 0; left: 0; right: 0; height: 54px; display: flex; justify-content: space-between; align-items: center; padding: 3px 0 0; pointer-events: none; color: var(--sb, var(--label)); }
+.statusbar .time { width: 140px; text-align: center; font-weight: 590; font-size: 17px; letter-spacing: -0.4px; }
+.statusbar .icons { width: 140px; display: flex; gap: 6px; justify-content: center; align-items: center; }
+.island { position: absolute; z-index: 95; top: 11px; left: 50%; width: 126px; height: 37px; margin-left: -63px; border-radius: 19px; background: #000; pointer-events: none; }
+.home-indicator { position: absolute; z-index: 95; bottom: 8px; left: 50%; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: var(--hi, var(--label)); pointer-events: none; }
+
+/* pages: one visible at a time, pushed in from the right like a navigation stack */
+.page { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; background: var(--bg); padding: 54px 0 calc(83px + 16px); scrollbar-width: none; transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s; }
+.page::-webkit-scrollbar { display: none; }
+.page.no-tabs { padding-bottom: 40px; }
+.page[hidden] { display: block; visibility: hidden; pointer-events: none; }
+.page.pushed-out { transform: translateX(-30%); }
+.page.pushed-in { transform: translateX(100%); }
+
+/* navigation bar */
+.navbar { position: sticky; top: -54px; z-index: 20; margin-top: -54px; padding-top: 54px; height: 98px; display: flex; align-items: center; justify-content: space-between; padding-left: 8px; padding-right: 16px; background: var(--bar); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); border-bottom: 0.33px solid var(--sep); }
+.navbar .title { position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none; }
+.navbar.plain { background: transparent; border-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.back { display: flex; align-items: center; gap: 3px; color: var(--tint); height: 44px; padding-right: 8px; position: relative; z-index: 1; }
+.back svg { width: 13px; height: 21px; }
+.nav-action { color: var(--tint); position: relative; z-index: 1; height: 44px; }
+.large-title { font-size: 34px; line-height: 41px; font-weight: 700; letter-spacing: 0.37px; padding: 4px 16px 8px; }
+
+/* inset grouped lists */
+.section-head { font-size: 13px; line-height: 18px; letter-spacing: -0.08px; text-transform: uppercase; color: var(--label2); padding: 22px 32px 7px; }
+.section-foot { font-size: 13px; line-height: 18px; letter-spacing: -0.08px; color: var(--label2); padding: 7px 32px 0; }
+.list { margin: 0 16px; background: var(--bg2); border-radius: 10px; overflow: hidden; }
+.cell { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 11px 16px; width: 100%; text-align: left; }
+.cell + .cell::before { content: ""; position: absolute; top: 0; left: var(--inset, 16px); right: 0; border-top: 0.33px solid var(--sep); }
+button.cell:active { background: var(--fill); }
+.cell .grow { flex: 1; min-width: 0; }
+.cell .sub { font-size: 15px; line-height: 20px; color: var(--label2); letter-spacing: -0.24px; }
+.cell .value { color: var(--label2); }
+.cell .chev { width: 8px; height: 14px; color: var(--label3); flex: 0 0 auto; }
+.cell .icon { width: 29px; height: 29px; border-radius: 7px; display: grid; place-items: center; color: #fff; flex: 0 0 auto; }
+.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* switch, 51 × 31 */
+.switch { position: relative; width: 51px; height: 31px; border-radius: 16px; background: var(--fill); transition: background 0.25s; flex: 0 0 auto; }
+.dark .switch { background: rgba(120, 120, 128, 0.32); }
+.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 3px 1px rgba(0, 0, 0, 0.06); transition: transform 0.25s cubic-bezier(0.3, 0.7, 0.4, 1.2); }
+.switch[aria-checked="true"] { background: var(--green); }
+.switch[aria-checked="true"]::after { transform: translateX(20px); }
+
+/* segmented control */
+.segmented { display: flex; position: relative; margin: 0 16px; padding: 2px; border-radius: 9px; background: var(--fill); }
+.segmented button { flex: 1; height: 28px; font-size: 13px; font-weight: 500; letter-spacing: -0.08px; border-radius: 7px; position: relative; z-index: 1; }
+.segmented button[aria-pressed="true"] { font-weight: 600; background: var(--seg, #fff); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04); }
+.dark .segmented button[aria-pressed="true"] { --seg: #636366; }
+
+/* buttons */
+.btn { display: flex; align-items: center; justify-content: center; gap: 6px; height: 50px; border-radius: 12px; background: var(--tint); color: #fff; font-weight: 600; width: 100%; transition: opacity 0.15s, transform 0.15s; }
+.btn:active { opacity: 0.7; }
+.btn.tinted { background: color-mix(in srgb, var(--tint) 15%, transparent); color: var(--tint); }
+.btn.small { height: 34px; width: auto; padding: 0 14px; border-radius: 17px; font-size: 15px; }
+.btn[disabled] { opacity: 0.35; pointer-events: none; }
+.pad { padding: 0 16px; }
+
+/* tab bar: 49 points of tabs above the home indicator area */
+.tabbar { position: absolute; z-index: 80; left: 0; right: 0; bottom: 0; height: 83px; display: flex; padding: 0 2px 34px; background: var(--bar); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); border-top: 0.33px solid var(--sep); }
+.tabbar[hidden] { display: none; }
+.tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 7px; color: rgba(153, 153, 153, 1); font-size: 10px; line-height: 12px; font-weight: 500; letter-spacing: 0.1px; }
+.tabbar button[aria-selected="true"] { color: var(--tint); }
+.tabbar svg { width: 28px; height: 24px; }
+
+/* sheet sliding up from the bottom, with its grabber */
+.scrim { position: absolute; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.4); opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.scrim.open { opacity: 1; pointer-events: auto; }
+.sheet { position: absolute; z-index: 101; left: 0; right: 0; bottom: 0; max-height: calc(100% - 64px); overflow-y: auto; background: var(--sheet, var(--bg)); border-radius: 13px 13px 0 0; padding: 5px 0 34px; transform: translateY(105%); transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1); }
+.sheet.open { transform: none; }
+.sheet .grabber { width: 36px; height: 5px; border-radius: 3px; background: var(--label3); margin: 0 auto 8px; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px 12px; font-weight: 600; }
+
+/* action sheet */
+.actions { position: absolute; z-index: 101; left: 8px; right: 8px; bottom: 34px; transform: translateY(130%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+.actions.open { transform: none; }
+.actions .group { background: rgba(250, 250, 250, 0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 14px; overflow: hidden; margin-top: 8px; }
+.dark .actions .group { background: rgba(44, 44, 46, 0.92); }
+.actions .group .title { font-size: 13px; line-height: 18px; color: var(--label2); text-align: center; padding: 14px 16px; }
+.actions .group button { display: block; width: 100%; height: 57px; font-size: 20px; color: var(--blue); border-top: 0.33px solid var(--sep); }
+.actions .group button.destructive { color: var(--red); }
+.actions .group button.cancel { font-weight: 600; border-top: 0; }
+
+/* HUD toast: a rounded square with an icon, like "Saved" */
+.hud { position: absolute; z-index: 120; left: 50%; top: 42%; width: 160px; min-height: 140px; margin-left: -80px; padding: 22px 12px 18px; border-radius: 16px; background: rgba(120, 120, 128, 0.36); backdrop-filter: blur(30px) saturate(1.6); -webkit-backdrop-filter: blur(30px) saturate(1.6); color: var(--label); text-align: center; font-weight: 600; font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px; opacity: 0; transform: scale(0.9); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+.hud.show { opacity: 1; transform: none; }
+.hud svg { width: 54px; height: 54px; }
+
+/* banner notification sliding down from the top */
+.banner { position: absolute; z-index: 110; top: 58px; left: 8px; right: 8px; display: flex; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 22px; background: rgba(245, 245, 245, 0.8); color: #000; backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); transform: translateY(-160%); transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1); font-size: 15px; line-height: 20px; }
+.dark .banner { background: rgba(40, 40, 42, 0.8); color: #fff; }
+.banner.show { transform: none; }
+.banner .app { width: 38px; height: 38px; border-radius: 9px; flex: 0 0 auto; display: grid; place-items: center; }
+.banner b { font-weight: 600; }
+
+.spinner { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--label3); border-top-color: var(--label2); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01s !important; animation-duration: 0.01s !important; } }

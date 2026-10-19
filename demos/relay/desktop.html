@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1280" />
+  <title>Relay · laptop demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { font: 400 15px/1.45 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif; color: #0b2a2e; background: #eef5f4; -webkit-font-smoothing: antialiased; }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    .bar { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #e3e8e8; border-bottom: 1px solid #d3dad9; }
+    .bar i { width: 12px; height: 12px; border-radius: 50%; background: #c9d0cf; }
+    .bar .url { margin-left: 18px; flex: 0 0 360px; height: 28px; border-radius: 7px; background: #fff; display: flex; align-items: center; padding: 0 12px; font-size: 13px; color: #556; }
+    main { display: grid; grid-template-columns: 1fr 300px; gap: 40px; padding: 44px 64px; height: calc(100% - 44px); }
+    h1 { font-size: 40px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
+    .lead { margin-top: 8px; color: #33504f; font-size: 17px; }
+    .drop { margin-top: 26px; height: 170px; border: 2px dashed #6bc2b0; border-radius: 14px; background: #f7fbfa; display: grid; place-items: center; text-align: center; color: #11806f; font-weight: 600; font-size: 18px; transition: background .2s, border-color .2s, transform .2s; }
+    .drop small { display: block; font-weight: 400; color: #5a7472; font-size: 14px; margin-top: 4px; }
+    .drop.over { background: #e1f6f1; border-color: #11a08a; transform: scale(1.01); }
+    .list { margin-top: 22px; display: grid; gap: 10px; max-height: 330px; overflow-y: auto; }
+    .row { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 12px; background: #fff; box-shadow: 0 1px 2px rgba(11,42,46,.06); }
+    .row.new { animation: pop .5s cubic-bezier(.32,.72,0,1); }
+    @keyframes pop { from { opacity: 0; transform: translateY(-8px); } }
+    .row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .row .meta { color: #5a7472; font-size: 14px; white-space: nowrap; }
+    .row button { padding: 6px 12px; border-radius: 8px; font-size: 14px; color: #11806f; font-weight: 600; }
+    .row button:hover { background: #e1f6f1; }
+    .row button.del { color: #c0392b; }
+    .row button.del:hover { background: #fdecea; }
+    aside { padding-top: 92px; text-align: center; }
+    .qr { width: 220px; height: 220px; margin: 0 auto; padding: 12px; background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(11,42,46,.1); }
+    .status { margin-top: 18px; font-weight: 600; }
+    .status small { display: block; font-weight: 400; color: #5a7472; margin-top: 2px; }
+    .status.on { color: #11806f; }
+    .status.on::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #34c759; margin-right: 8px; vertical-align: 1px; box-shadow: 0 0 0 4px rgba(52,199,89,.2); }
+    .toast { position: fixed; left: 50%; bottom: 30px; transform: translate(-50%, 30px); opacity: 0; background: #0b2a2e; color: #fff; padding: 10px 18px; border-radius: 10px; transition: .3s; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <div class="bar"><i></i><i></i><i></i><span class="url">192.168.1.24:8090</span></div>
+  <main>
+    <section>
+      <h1>Relay</h1>
+      <p class="lead">Drop files here, or send them from your phone. Same Wi-Fi only.</p>
+      <label class="drop" id="drop">
+        <span>Drop files to share<small>or click to choose. In this demo they stay in your browser.</small></span>
+        <input type="file" id="pick" multiple hidden />
+      </label>
+      <div class="list" id="list"></div>
+    </section>
+    <aside>
+      <div class="qr" id="qr"></div>
+      <p class="status" id="status">Scan with your phone<small>to connect it</small></p>
+    </aside>
+  </main>
+  <div class="toast" id="toast"></div>
+<script type="module">
+  import { files, state, onChange, addFile, deleteFile, newId, size, kindOf, thumb, qr } from './shared.js';
+  const $ = (s) => document.querySelector(s);
+  $('#qr').innerHTML = qr();
+  const toast = (t) => { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 1800); };
+
+  function render(fresh) {
+    $('#list').replaceChildren(...files.filter((f) => !f.uploading).map((f) => {
+      const r = document.createElement('div');
+      r.className = `row${f.id === fresh ? ' new' : ''}`;
+      r.append(thumb(f, 40));
+      r.insertAdjacentHTML('beforeend', '<span class="name"></span><span class="meta"></span><button type="button" class="get">Download</button><button type="button" class="del">Delete</button>');
+      r.querySelector('.name').textContent = f.name;
+      r.querySelector('.meta').textContent = `${size(f.size)} · from ${f.from}`;
+      r.querySelector('.get').onclick = () => toast(`${f.name} saved to Downloads`);
+      r.querySelector('.del').onclick = () => deleteFile(f.id);
+      return r;
+    }));
+    const s = $('#status');
+    s.classList.toggle('on', state.paired);
+    s.innerHTML = state.paired ? 'Phone connected<small>Files appear on both devices</small>' : 'Scan with your phone<small>to connect it</small>';
+  }
+  render();
+  onChange((e) => {
+    render(e.t === 'add' ? e.file.id : null);
+    if (e.t === 'add' && !e.local) toast(`${e.file.name} arrived from your phone`);
+  });
+
+  // real files from the visitor's computer: only their name, size and (for photos) the picture are used, locally
+  const take = (list) => {
+    for (const file of list) {
+      const kind = kindOf(file.name, file.type);
+      addFile({ id: newId(), name: file.name, size: file.size, from: 'laptop', kind, blob: kind === 'image' && file.size < 15e6 ? file : undefined });
+    }
+  };
+  const drop = $('#drop');
+  addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  addEventListener('dragleave', (e) => { if (!e.relatedTarget) drop.classList.remove('over'); });
+  addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('over'); take(e.dataTransfer.files); });
+  $('#pick').addEventListener('change', (e) => { take(e.target.files); e.target.value = ''; });
+</script>
+</body>
+</html>

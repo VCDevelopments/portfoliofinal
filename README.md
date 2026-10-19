@@ -3,7 +3,9 @@
 Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL experience built with Three.js.
 
 1. The neon VCDevelopments logo in a snowy valley, with a periodic blueprint scan. Click it to shatter it; click anywhere else for a gust of snow (which also drifts away from the cursor). The Night switch darkens the valley.
-2. Projects shown on 3D laptops and phones, each with an overview card. Hover a device to light up its screen; click (or use Learn more) for a pop-up with the project's full story and pictures.
+2. Each project runs on a 3D iPhone (Relay also on a laptop) with an overview card. The screens are working demos you can use right there; the pop-up (click a device or Learn more) has a full-size iPhone with the same demo, plus the project's story and pictures.
+
+The demos live in `demos/`: small iOS-style apps with sample data (`demos/ios.css` and `demos/ios.js` hold the shared iPhone screen and controls). ShotGuide can use the visitor's own camera if they allow it; Relay's phone and laptop sync inside the browser, and dropped files never leave it. Phones and tablets show a picture on the 3D phones and run the demo in the pop-up.
 3. Segmented blueprint rings that assemble, then a fly-through.
 4. Snow that bursts into the spinning neon logo, with a contact section and GitHub / LinkedIn links.
 

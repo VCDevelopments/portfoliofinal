@@ -4,7 +4,9 @@
 export const PROJECTS = [
   {
     name: 'Pulse',
-    device: { laptop: 'img/screens/pulse-laptop.jpg' }, // shown on this device's screen in the 3D scene
+    // the working demo on the 3D phone and in the pop-up; `poster` shows until it has loaded
+    device: { phone: { demo: 'demos/pulse/', poster: 'img/screens/pulse-phone.jpg' } },
+    demoNote: 'A working demo with sample data: switch the range, drag across the chart, open a campaign or run the autopilot.',
     started: '2026-10-13', // first day of work; the live timer counts from here
     blurb: 'Ads on autopilot: learns what\nsells and moves the budget there',
     stack: 'Python · SQLite · ML · Meta & TikTok APIs · Claude',
@@ -29,7 +31,8 @@ export const PROJECTS = [
   },
   {
     name: 'Relay',
-    device: { laptop: 'img/screens/relay-laptop.jpg', phone: 'img/screens/relay-phone.jpg' },
+    device: { phone: { demo: 'demos/relay/', poster: 'img/screens/relay-phone.jpg' }, laptop: { demo: 'demos/relay/desktop.html', poster: 'img/screens/relay-laptop.jpg' } },
+    demoNote: 'Scan the code with the phone, then send photos from it or drop real files on the laptop: they appear on the other side. Your files never leave your browser.',
     started: '2026-10-15',
     blurb: 'Share files between laptop\nand phone with a QR code',
     stack: 'Python · HTML · HTTPS · QR',
@@ -54,7 +57,8 @@ export const PROJECTS = [
   },
   {
     name: 'ShotGuide',
-    device: { phone: 'img/screens/shotguide-phone.jpg' },
+    device: { phone: { demo: 'demos/shotguide/', poster: 'img/screens/shotguide-phone.jpg' } },
+    demoNote: 'Pick a photo, start shooting and line up the shot until everything is green. Tap “Use my camera” to try it with your own camera; it is only used on your device.',
     started: '2026-10-16',
     blurb: 'iOS camera that coaches you to\nrecreate any aesthetic photo',
     stack: 'Swift · SwiftUI · AVFoundation · Vision · Apple Intelligence · Claude',
@@ -80,7 +84,8 @@ export const PROJECTS = [
   },
   {
     name: 'VCDevelopments',
-    device: { laptop: 'img/screens/vcdevelopments-laptop.jpg' },
+    device: { phone: { demo: 'demos/vcdevelopments/', poster: 'img/screens/vcdevelopments-phone.jpg' } },
+    demoNote: 'The phone version of this site in Safari: tap the logo, turn on Night and swipe through the projects.',
     started: '2026-10-15',
     blurb: 'This portfolio: a scroll-driven\n3D site built with Three.js',
     stack: 'JavaScript · Three.js · GLSL · WebGL',
@@ -91,9 +96,9 @@ export const PROJECTS = [
       status: 'Live',
       intro: 'The site you are on: a scroll-driven 3D experience written from scratch with Three.js, without a framework or a build step.',
       sections: [
-        { title: 'Four scenes, one scroll', text: 'A snowy valley with the neon logo, these projects running on 3D laptops and phones, a wireframe blueprint gyroscope, and a cloud of snow that becomes the logo. Each scene is drawn off-screen, and a final shader blends them with a glitch transition as you scroll.' },
-        { title: 'Generated, not modelled', text: 'The terrain, the devices and the logo are all built in code, no 3D models loaded. Every device shows the real project on its screen, with a live timer underneath counting the time put into it.' },
-        { title: 'Made to be played with', text: 'Click a logo and it bursts into particles that rebuild it from the bottom up. Hover a device and it turns to face you with its screen lighting up. The sound follows how fast you scroll.' },
+        { title: 'Four scenes, one scroll', text: 'A snowy valley with the neon logo, these projects running live on 3D phones you can use, a wireframe blueprint gyroscope, and a cloud of snow that becomes the logo. Each scene is drawn off-screen, and a final shader blends them with a glitch transition as you scroll.' },
+        { title: 'Generated, not modelled', text: 'The terrain, the devices and the logo are all built in code, no 3D models loaded. Every phone runs a working demo of its project that you can tap through, with a live timer underneath counting the time put into it.' },
+        { title: 'Made to be played with', text: 'Click a logo and it bursts into particles that rebuild it from the bottom up. Hover a phone and it turns to face you so you can try the app on it. The sound follows how fast you scroll.' },
         { title: 'Kept smooth', text: 'Scrolling follows a spring for smooth motion, pictures are loaded before they are needed, scenes out of view skip their work, and every file is versioned so visitors always get the latest one.' },
       ],
     },

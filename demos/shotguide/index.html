@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ShotGuide · demo</title>
+  <link rel="stylesheet" href="../ios.css" />
+  <style>
+    :root { --tint: #e2703a; }
+    /* CSS-drawn photos: every scene scales with its box */
+    .scene { position: relative; overflow: hidden; container-type: size; }
+    .scene > * { position: absolute; }
+    .search { margin: 0 16px 10px; height: 36px; border-radius: 10px; background: var(--fill); display: flex; align-items: center; gap: 6px; padding: 0 8px; color: var(--label2); }
+    .search input { flex: 1; border: 0; background: none; outline: none; color: var(--label); font-size: 17px; }
+    .grid { columns: 2; column-gap: 8px; padding: 12px 16px 0; }
+    .tile { display: block; width: 100%; margin-bottom: 8px; border-radius: 14px; overflow: hidden; break-inside: avoid; position: relative; }
+    .tile .scene { width: 100%; }
+    .tile .who { position: absolute; left: 8px; bottom: 8px; font-size: 12px; line-height: 16px; font-weight: 600; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
+    .tile:active { transform: scale(.98); }
+    .insp { margin: 6px 16px 0; border-radius: 16px; overflow: hidden; aspect-ratio: 4 / 5; }
+    .insp .scene { width: 100%; height: 100%; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 16px; }
+    .card { background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
+    .card .k { font-size: 12px; line-height: 16px; color: var(--label2); text-transform: uppercase; letter-spacing: 0; }
+    .card .v { font-size: 17px; line-height: 22px; font-weight: 600; margin-top: 2px; }
+    .shimmer { background: linear-gradient(90deg, var(--fill) 25%, rgba(120,120,128,.04) 50%, var(--fill) 75%); background-size: 200% 100%; animation: sh 1.1s linear infinite; border-radius: 6px; color: transparent !important; }
+    @keyframes sh { to { background-position: -200% 0; } }
+    .steps { counter-reset: s; }
+    .steps .cell::after { counter-increment: s; content: counter(s); position: absolute; left: 16px; width: 24px; height: 24px; border-radius: 50%; background: var(--tint); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; }
+    .steps .cell { padding-left: 52px; font-size: 15px; line-height: 20px; --inset: 52px; }
+    .look { display: flex; gap: 6px; align-items: center; }
+    .look i { width: 18px; height: 18px; border-radius: 5px; }
+
+    /* camera */
+    #camera { background: #000; padding: 0; overflow: hidden; --sb: #fff; }
+    .view { position: absolute; left: 0; right: 0; top: 98px; height: 524px; overflow: hidden; touch-action: none; cursor: grab; background: #111; }
+    .world { position: absolute; left: -50%; top: -50%; width: 200%; height: 200%; transform-origin: center; will-change: transform; }
+    .world .scene, .world video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .aim { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #3de08a; box-shadow: 0 0 0 6px rgba(61,224,138,.25), 0 0 20px 6px rgba(61,224,138,.6); pointer-events: none; z-index: 3; }
+    .aim::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 1.5px solid rgba(61,224,138,.6); animation: ping 1.6s ease-out infinite; }
+    @keyframes ping { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    .ring { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 2px solid rgba(255,255,255,.9); z-index: 2; pointer-events: none; transition: border-color .2s, transform .2s; }
+    .ring.on { border-color: #3de08a; transform: scale(1.08); }
+    .thirds { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, transparent 33.2%, rgba(255,255,255,.22) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,.22) 66.6%, transparent 66.8%), linear-gradient(transparent 33.2%, rgba(255,255,255,.22) 33.3%, transparent 33.5%, transparent 66.5%, rgba(255,255,255,.22) 66.6%, transparent 66.8%); }
+    .tip { position: absolute; z-index: 4; top: 12px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 14px; background: rgba(0,0,0,.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fff; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background .3s; }
+    .tip.good { background: rgba(48,160,90,.85); }
+    .cam-top { position: absolute; top: 54px; left: 0; right: 0; height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; color: #fff; }
+    .cam-top button { height: 32px; padding: 0 12px; border-radius: 16px; background: rgba(255,255,255,.14); font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .cam-top .live[aria-pressed="true"] { background: #ffd60a; color: #000; }
+    .lenses { position: absolute; z-index: 4; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; padding: 4px; border-radius: 20px; background: rgba(0,0,0,.35); }
+    .lenses button { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,.4); color: #fff; font-size: 12px; font-weight: 700; }
+    .lenses button[aria-pressed="true"] { color: #ffd60a; width: 40px; height: 40px; margin: -2px 0; font-size: 13px; }
+    .lenses button.want { box-shadow: 0 0 0 1.5px #3de08a inset; }
+    .checks { position: absolute; top: 632px; left: 0; right: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; padding: 0 12px; }
+    .checks span { font-size: 12px; line-height: 16px; font-weight: 600; padding: 4px 9px; border-radius: 12px; background: rgba(255,255,255,.12); color: rgba(255,255,255,.7); transition: background .3s, color .3s; }
+    .checks span.ok { background: rgba(48,209,88,.9); color: #fff; }
+    .checks span.ok::before { content: "✓ "; }
+    .snap { position: absolute; left: 50%; top: 712px; width: 78px; height: 78px; margin-left: -39px; }
+    .snap svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .snap button { position: absolute; inset: 9px; border-radius: 50%; background: #fff; transition: transform .12s; }
+    .snap button:active { transform: scale(.9); }
+    .snap.ready button { animation: breathe 1.2s ease-in-out infinite; }
+    @keyframes breathe { 50% { transform: scale(.92); } }
+    .flash { position: absolute; inset: 0; z-index: 200; background: #fff; opacity: 0; pointer-events: none; }
+    .flash.go { animation: flash .4s ease-out; }
+    @keyframes flash { from { opacity: .9; } to { opacity: 0; } }
+    .camnote { position: absolute; z-index: 4; left: 16px; right: 16px; bottom: 64px; text-align: center; font-size: 13px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+
+    /* result */
+    #result { background: #000; color: #fff; --sb: #fff; }
+    .photo { position: relative; margin: 54px 0 0; aspect-ratio: 4 / 5; overflow: hidden; background: #111; }
+    .photo > * { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .photo .compare { opacity: 0; transition: opacity .2s; }
+    .photo.comparing .compare { opacity: 1; }
+    .photo .badge { inset: auto auto 10px 10px; width: auto; height: auto; padding: 4px 8px; border-radius: 8px; background: rgba(0,0,0,.5); font-size: 12px; font-weight: 600; }
+    .res-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+    .res-actions .btn.tinted { background: rgba(255,255,255,.14); color: #fff; }
+    .res-note { text-align: center; font-size: 13px; color: rgba(255,255,255,.6); }
+    .lib { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 8px; }
+    .lib div { aspect-ratio: 4 / 5; overflow: hidden; position: relative; }
+    
+    .empty { color: var(--label2); text-align: center; padding: 60px 30px; font-size: 15px; line-height: 20px; }
+  </style>
+</head>
+<body>
+<div class="screen">
+  <section class="page" id="discover" data-root>
+    <div class="large-title">Discover</div>
+    <label class="search"><svg viewBox="0 0 20 20" width="16" height="16"><circle cx="8.5" cy="8.5" r="6" fill="none" stroke="currentColor" stroke-width="2"/><path d="m13 13 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input placeholder="Golden hour, street, portrait…" id="q" /></label>
+    <div class="segmented" id="source"><button type="button" data-value="pin" aria-pressed="true">Pinterest</button><button type="button" data-value="open" aria-pressed="false">Openverse</button><button type="button" data-value="photos" aria-pressed="false">Photos</button></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="page no-tabs" id="shot" hidden>
+    <div class="navbar"><button class="back" type="button" data-back></button><span class="title">Breakdown</span><span></span></div>
+    <div class="insp" id="insp"></div>
+    <div class="section-head">How it was taken</div>
+    <div class="cards" id="cards"></div>
+    <div class="section-head">Steps</div>
+    <div class="list steps" id="steps"></div>
+    <div class="section-foot" id="engine"></div>
+    <div class="pad" style="margin-top:16px"><button class="btn" id="go" type="button" disabled>Start shooting</button></div>
+  </section>
+
+  <section class="page no-tabs" id="camera" hidden>
+    <div class="cam-top"><button type="button" id="cam-close">✕</button><button type="button" class="live" id="live" aria-pressed="false">● Use my camera</button></div>
+    <div class="view" id="view">
+      <div class="world" id="world"></div>
+      <div class="thirds"></div>
+      <div class="ring" id="ring"></div>
+      <div class="aim" id="aim"></div>
+      <div class="tip" id="tip">Drag to move the camera</div>
+      <div class="camnote" id="camnote">Drag the view, like turning your phone, until the circle sits on the green dot.</div>
+      <div class="lenses" id="lenses"><button type="button" data-z="0.5">.5</button><button type="button" data-z="1" aria-pressed="true">1×</button><button type="button" data-z="2">2</button></div>
+    </div>
+    <div class="checks" id="checks"></div>
+    <div class="snap" id="snap"><svg viewBox="0 0 78 78"><circle cx="39" cy="39" r="36" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="4"/><circle id="arc" cx="39" cy="39" r="36" fill="none" stroke="#3de08a" stroke-width="4" stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2" style="transition:stroke-dashoffset .3s"/></svg><button type="button" id="shutter" aria-label="Take photo"></button></div>
+    <div class="flash" id="flash"></div>
+  </section>
+
+  <section class="page no-tabs" id="result" hidden>
+    <div class="photo" id="photo"></div>
+    <div class="res-note">Touch and hold the photo to compare with the inspiration</div>
+    <div class="res-actions"><button class="btn tinted" type="button" id="retake">Retake</button><button class="btn" type="button" id="save">Save</button></div>
+  </section>
+
+  <section class="page" id="library" data-root hidden>
+    <div class="large-title">Library</div>
+    <div class="lib" id="lib"></div>
+  </section>
+
+  <nav class="tabbar" id="tabbar">
+    <button type="button" data-tab="discover" aria-selected="true"><svg viewBox="0 0 28 24"><circle cx="14" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="m18 8-2.5 6.5L9 17l2.5-6.5z" fill="currentColor"/></svg>Discover</button>
+    <button type="button" data-tab="library" aria-selected="false"><svg viewBox="0 0 28 24"><rect x="4" y="4" width="20" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="m6 18 6-6 4 4 3-3 4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Library</button>
+  </nav>
+</div>
+
+<script type="module">
+  import { $, $$, ICON, chrome, tabs, push, pop, bindSegmented, hud, wait, onPause } from '../ios.js';
+  chrome();
+  const showTab = tabs();
+  $$('[data-back]').forEach((b) => { b.innerHTML = `${ICON.back}<span>Discover</span>`; });
+
+  // CSS-drawn scenes, so the demo needs no photos
+  const SCENES = {
+    sunset: () => `<div style="inset:0;background:linear-gradient(180deg,#f4c79a 0%,#f0a27a 38%,#c2697a 62%,#5b3a5a 100%)"></div>
+      <div style="width:24cqw;height:24cqw;left:58cqw;top:30cqh;border-radius:50%;background:#fff3dc;box-shadow:0 0 12cqw 4cqw rgba(255,226,180,.6)"></div>
+      <div style="left:-20cqw;right:-20cqw;top:70cqh;height:60cqh;border-radius:50%;background:#2a1c2c"></div>
+      <div style="left:44cqw;top:52cqh;width:7cqw;height:20cqh;border-radius:3.5cqw 3.5cqw 1cqw 1cqw;background:#1d1320"></div>`,
+    city: () => `<div style="inset:0;background:linear-gradient(180deg,#0d1030,#2a1a4a 50%,#120c1e)"></div>
+      ${[[10, 30, '#ff4fa3'], [70, 22, '#4fd4ff'], [40, 40, '#ffb84f'], [85, 50, '#ff4fa3'], [20, 58, '#4fd4ff'], [60, 62, '#ffe14f']].map(([x, y, c]) => `<div style="left:${x}cqw;top:${y}cqh;width:14cqw;height:14cqw;border-radius:50%;background:${c};opacity:.55;filter:blur(2cqw)"></div>`).join('')}
+      <div style="left:0;right:0;bottom:0;height:22cqh;background:linear-gradient(180deg,#1d1530,#07050c)"></div>
+      <div style="left:30cqw;bottom:14cqh;width:8cqw;height:30cqh;border-radius:4cqw 4cqw 1cqw 1cqw;background:#05030a"></div>`,
+    beach: () => `<div style="inset:0;background:linear-gradient(180deg,#bfe3f2,#f7e6d4 55%)"></div>
+      <div style="left:0;right:0;top:48cqh;height:20cqh;background:linear-gradient(180deg,#6fb7cf,#a9d8e3)"></div>
+      <div style="left:0;right:0;top:66cqh;bottom:0;background:linear-gradient(180deg,#f3dcc0,#e8c79f)"></div>
+      <div style="left:62cqw;top:42cqh;width:5cqw;height:26cqh;border-radius:2.5cqw;background:#3c2a24"></div>`,
+    forest: () => `<div style="inset:0;background:linear-gradient(180deg,#dfe8e0,#9fb8a2 60%,#4d6b55)"></div>
+      ${[8, 26, 48, 70, 88].map((x, i) => `<div style="left:${x - 4}cqw;bottom:0;width:${6 + (i % 2) * 3}cqw;height:${70 + (i % 3) * 10}cqh;background:rgba(40,60,45,${0.35 + (i % 3) * 0.2})"></div>`).join('')}
+      <div style="left:0;right:0;top:30cqh;height:40cqh;background:linear-gradient(180deg,transparent,rgba(255,255,255,.45),transparent)"></div>`,
+    coffee: () => `<div style="inset:0;background:radial-gradient(circle at 30% 20%,#d9b38c,#8a5a3c 60%,#4a2e1f)"></div>
+      <div style="left:22cqw;top:26cqh;width:56cqw;height:56cqw;border-radius:50%;background:#f4efe8;box-shadow:0 3cqw 6cqw rgba(0,0,0,.35)"></div>
+      <div style="left:30cqw;top:26cqh;width:40cqw;height:40cqw;margin-top:8cqw;border-radius:50%;background:radial-gradient(circle,#e8cfa9 0 18%,#8b5a2b 45%,#5a3416)"></div>`,
+    arch: () => `<div style="inset:0;background:linear-gradient(180deg,#f2e2cf,#e2c4a4)"></div>
+      <div style="left:25cqw;top:22cqh;width:50cqw;height:78cqh;border-radius:25cqw 25cqw 0 0;background:linear-gradient(180deg,#9fd3e8,#e8f2ea)"></div>
+      <div style="left:47cqw;top:62cqh;width:6cqw;height:24cqh;border-radius:3cqw 3cqw 1cqw 1cqw;background:#5a3a2e"></div>`,
+  };
+  const scene = (kind, ratio) => `<div class="scene" style="aspect-ratio:${ratio || 'auto'};height:${ratio ? 'auto' : '100%'}">${SCENES[kind]()}</div>`;
+
+  const SHOTS = [
+    { kind: 'sunset', who: '@golden.hours', ratio: '4/5', lens: 0.5, look: 'sepia(.22) saturate(1.35) hue-rotate(-10deg) contrast(1.05)', lookName: 'Warm fade', swatches: ['#f4c79a', '#c2697a', '#2a1c2c'],
+      facts: [['Lens', '0.5× ultra wide'], ['Height', 'Low, knee level'], ['Tilt', 'Up about 15°'], ['Distance', 'About 4 m'], ['Light', 'Backlit, golden hour'], ['Subject', 'Small, on the right third']],
+      steps: ['Switch to the 0.5× lens', 'Crouch to knee height and tilt up a little', 'Put the person on the right third, sun behind them', 'Expose for the sky so they turn to a silhouette'] },
+    { kind: 'city', who: '@neon.walks', ratio: '3/4', lens: 2, look: 'saturate(1.5) contrast(1.1) hue-rotate(8deg)', lookName: 'Neon night', swatches: ['#ff4fa3', '#4fd4ff', '#120c1e'],
+      facts: [['Lens', '2× telephoto'], ['Height', 'Eye level'], ['Tilt', 'Level'], ['Distance', 'About 8 m'], ['Light', 'Night, neon signs'], ['Subject', 'Left third']],
+      steps: ['Switch to 2× to compress the lights', 'Hold the phone level at eye height', 'Let the signs blur behind the subject', 'Keep still: night shots need a steady hand'] },
+    { kind: 'beach', who: 'Openverse · CC BY', ratio: '1/1', lens: 1, look: 'brightness(1.06) saturate(.9) contrast(.95)', lookName: 'Airy pastel', swatches: ['#bfe3f2', '#f7e6d4', '#6fb7cf'],
+      facts: [['Lens', '1× main'], ['Height', 'Chest level'], ['Tilt', 'Level'], ['Distance', 'About 6 m'], ['Light', 'Soft daylight'], ['Subject', 'Right third']],
+      steps: ['Stay on the 1× lens', 'Keep the horizon perfectly level', 'Leave lots of sky above', 'Brighten a little for an airy feel'] },
+    { kind: 'forest', who: '@misty.trails', ratio: '4/5', lens: 1, look: 'saturate(.8) contrast(1.05) brightness(1.04)', lookName: 'Misty green', swatches: ['#dfe8e0', '#9fb8a2', '#4d6b55'],
+      facts: [['Lens', '1× main'], ['Height', 'Eye level'], ['Tilt', 'Level'], ['Distance', 'Wide'], ['Light', 'Fog, backlit'], ['Subject', 'The trees']],
+      steps: ['Stay on 1×', 'Shoot toward the light so the mist glows', 'Line up the trunks vertically', 'Lower the saturation slightly'] },
+    { kind: 'coffee', who: 'From your Photos', ratio: '1/1', lens: 1, look: 'sepia(.15) contrast(1.08) saturate(1.1)', lookName: 'Café warm', swatches: ['#d9b38c', '#8a5a3c', '#f4efe8'],
+      facts: [['Lens', '1× main'], ['Height', 'Straight above'], ['Tilt', 'Down 90°'], ['Distance', 'About 40 cm'], ['Light', 'Window, from the side'], ['Subject', 'Centred']],
+      steps: ['Stand over the table, phone flat', 'Centre the cup', 'Use window light from one side', 'Add warmth'] },
+    { kind: 'arch', who: '@quiet.places', ratio: '3/4', lens: 0.5, look: 'brightness(1.05) saturate(1.1) sepia(.08)', lookName: 'Sunbaked', swatches: ['#f2e2cf', '#9fd3e8', '#5a3a2e'],
+      facts: [['Lens', '0.5× ultra wide'], ['Height', 'Waist level'], ['Tilt', 'Level'], ['Distance', 'About 3 m'], ['Light', 'Bright, midday'], ['Subject', 'Centred in the arch']],
+      steps: ['Switch to 0.5×', 'Stand in the middle for symmetry', 'Keep the phone level so walls stay straight', 'Frame the person in the arch'] },
+  ];
+  $('#grid').innerHTML = SHOTS.map((s, i) => `<button class="tile" type="button" data-s="${i}">${scene(s.kind, s.ratio)}<span class="who">${s.who}</span></button>`).join('');
+  bindSegmented($('#source'), () => { $$('.tile').forEach((t) => { t.style.order = Math.random(); }); $('#grid').animate([{ opacity: 0.3 }, { opacity: 1 }], 300); });
+
+  // breakdown of the chosen photo
+  let shot;
+  $('#grid').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-s]');
+    if (!b) return;
+    shot = SHOTS[b.dataset.s];
+    $('#insp').innerHTML = scene(shot.kind);
+    $('#cards').innerHTML = shot.facts.map(() => '<div class="card"><div class="k shimmer">Lens</div><div class="v shimmer">Loading</div></div>').join('');
+    $('#steps').innerHTML = '<div class="cell"><span class="shimmer">Working out the steps</span></div>';
+    $('#engine').textContent = 'Analysing on this iPhone…';
+    $('#go').disabled = true;
+    push('shot');
+    await wait(1400);
+    $('#cards').innerHTML = shot.facts.map(([k, v]) => `<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('') +
+      `<div class="card" style="grid-column:span 2"><div class="k">Colour look</div><div class="v look">${shot.swatches.map((c) => `<i style="background:${c}"></i>`).join('')} ${shot.lookName}</div></div>`;
+    $('#steps').innerHTML = shot.steps.map((s) => `<div class="cell">${s}</div>`).join('');
+    $('#engine').textContent = 'Analysed on device. Saved to your Library.';
+    $('#go').disabled = false;
+  });
+
+  // ---- camera: drag the view (like turning the phone) until the circle sits on the green dot ----
+  const view = $('#view'), world = $('#world');
+  const CHECKS = ['Angle', 'Framing', 'Light', 'Focus', 'Steady', 'Background'];
+  $('#checks').innerHTML = CHECKS.map((c) => `<span data-c="${c}">${c}</span>`).join('');
+  let pan = { x: 0, y: 0 }, zoom = 1, held = 0, stream = null, raf = 0, last = 0;
+  const target = { x: 0.6, y: 0.44 }; // where the shot wants the subject, in the world (0..1)
+  $('#go').addEventListener('click', () => {
+    world.innerHTML = scene(shot.kind);
+    world.style.filter = shot.look;
+    pan = { x: -190, y: 160 }; // start off target, so there is something to line up
+    zoom = 1;
+    held = 0;
+    $$('#lenses button').forEach((b) => { b.setAttribute('aria-pressed', String(+b.dataset.z === 1)); b.classList.toggle('want', +b.dataset.z === shot.lens); });
+    $('#tabbar').hidden = true;
+    push('camera');
+    last = performance.now();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  });
+  const LENS_SCALE = { 0.5: 0.7, 1: 1, 2: 1.5 };
+  $('#lenses').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-z]');
+    if (!b) return;
+    zoom = +b.dataset.z;
+    $$('#lenses button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+  });
+  let drag = null;
+  view.addEventListener('pointerdown', (e) => { if (e.target.closest('button')) return; drag = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; view.setPointerCapture(e.pointerId); });
+  view.addEventListener('pointermove', (e) => { if (!drag) return; pan.x = drag.px + (e.clientX - drag.x); pan.y = drag.py + (e.clientY - drag.y); });
+  view.addEventListener('pointerup', () => { drag = null; });
+
+  function tick(now) {
+    if ($('#camera').hidden) return;
+    raf = requestAnimationFrame(tick);
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    const W = view.clientWidth, H = view.clientHeight, s = LENS_SCALE[zoom];
+    // keep the scene covering the view
+    const lim = { x: (W * 2 * s - W) / 2, y: (H * 2 * s - H) / 2 };
+    pan.x = Math.max(-lim.x, Math.min(lim.x, pan.x));
+    pan.y = Math.max(-lim.y, Math.min(lim.y, pan.y));
+    const wobble = drag ? 0 : Math.sin(now / 700) * 1.2; // a hand never holds perfectly still
+    world.style.transform = `translate(${pan.x + wobble}px, ${pan.y}px) scale(${s})`;
+    // the dot sits on the world, so it moves with the view
+    const ax = W / 2 + pan.x + wobble + (target.x - 0.5) * W * 2 * s;
+    const ay = H / 2 + pan.y + (target.y - 0.5) * H * 2 * s;
+    const aim = $('#aim');
+    aim.style.left = `${Math.max(10, Math.min(W - 10, ax))}px`;
+    aim.style.top = `${Math.max(10, Math.min(H - 10, ay))}px`;
+    const dx = ax - W / 2, dy = ay - H / 2, dist = Math.hypot(dx, dy);
+    const framed = dist < 22;
+    held = framed && !drag ? held + dt : 0;
+    const lensOk = zoom === shot.lens;
+    const ok = { Angle: lensOk && framed, Framing: framed, Light: dist < 80, Focus: framed && held > 0.4, Steady: held > 1, Background: lensOk };
+    let n = 0;
+    for (const c of CHECKS) { const el = $(`[data-c="${c}"]`); el.classList.toggle('ok', !!ok[c]); n += ok[c] ? 1 : 0; }
+    $('#arc').style.strokeDashoffset = String(226.2 * (1 - n / CHECKS.length));
+    $('#ring').classList.toggle('on', framed);
+    $('#snap').classList.toggle('ready', n === CHECKS.length);
+    const tip = $('#tip');
+    tip.classList.toggle('good', n === CHECKS.length);
+    tip.textContent = !lensOk ? `Switch to the ${shot.lens === 0.5 ? '.5' : shot.lens + '×'} lens` : dist > 22 ? (Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'Turn right' : 'Turn left') : dy > 0 ? 'Tilt down a little' : 'Tilt up a little') : held < 1 ? 'Hold still…' : 'Everything is green. Shoot!';
+    $('#camnote').hidden = n >= 3;
+  }
+
+  // real camera: the visitor's own camera, with the look applied; switched off as soon as it's not shown
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
+      const v = Object.assign(document.createElement('video'), { autoplay: true, muted: true, playsInline: true, srcObject: stream });
+      world.replaceChildren(v);
+      $('#live').setAttribute('aria-pressed', 'true');
+      $('#live').textContent = '● Live camera';
+    } catch {
+      hud('Camera not available', '<svg viewBox="0 0 54 54"><circle cx="27" cy="27" r="25" fill="none" stroke="currentColor" stroke-width="3"/><path d="M19 19l16 16M35 19 19 35" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>');
+    }
+  }
+  function stopCamera() {
+    stream?.getTracks().forEach((t) => t.stop());
+    stream = null;
+    $('#live').setAttribute('aria-pressed', 'false');
+    $('#live').textContent = '● Use my camera';
+  }
+  $('#live').addEventListener('click', () => {
+    if (stream) { stopCamera(); world.innerHTML = scene(shot.kind); } else startCamera();
+  });
+  onPause(() => { if (stream) { stopCamera(); world.innerHTML = shot ? scene(shot.kind) : ''; } });
+  const leaveCamera = () => { stopCamera(); cancelAnimationFrame(raf); };
+  $('#cam-close').addEventListener('click', async () => { leaveCamera(); await pop(); $('#tabbar').hidden = false; });
+
+  // take the photo: a 4:5 crop of what the camera sees, with the look applied
+  let taken = null;
+  $('#shutter').addEventListener('click', async () => {
+    $('#flash').classList.remove('go');
+    $('#flash').offsetWidth;
+    $('#flash').classList.add('go');
+    const photo = $('#photo');
+    const video = $('video', world);
+    let pic;
+    if (video && video.videoWidth) {
+      const c = document.createElement('canvas');
+      c.width = 800; c.height = 1000;
+      const g = c.getContext('2d');
+      g.filter = shot.look;
+      const vw = video.videoWidth, vh = video.videoHeight, k = Math.min(vw / 800, vh / 1000);
+      g.drawImage(video, (vw - 800 * k) / 2, (vh - 1000 * k) / 2, 800 * k, 1000 * k, 0, 0, 800, 1000);
+      pic = c;
+    } else {
+      // the sample scene: the same framing the viewfinder shows, cut to 4:5
+      pic = document.createElement('div');
+      const W = view.clientWidth, H = view.clientHeight;
+      pic.style.cssText = `overflow:hidden;filter:${shot.look}`;
+      pic.innerHTML = `<div style="position:absolute;left:0;top:${(W * 1.25 - H) / 2}px;width:${W}px;height:${H}px"><div class="world" style="transform:${world.style.transform}">${scene(shot.kind)}</div></div>`;
+    }
+    const compare = document.createElement('div');
+    compare.className = 'compare';
+    compare.innerHTML = scene(shot.kind);
+    photo.replaceChildren(pic, compare);
+    photo.insertAdjacentHTML('beforeend', `<span class="badge">${shot.lookName} · 4:5</span>`);
+    taken = pic;
+    leaveCamera();
+    await wait(250);
+    await push('result');
+  });
+  const photo = $('#photo');
+  photo.addEventListener('pointerdown', () => photo.classList.add('comparing'));
+  addEventListener('pointerup', () => photo.classList.remove('comparing'));
+  $('#retake').addEventListener('click', async () => { await pop(); last = performance.now(); raf = requestAnimationFrame(tick); });
+  $('#save').addEventListener('click', () => {
+    // a small copy of the photo for the grid
+    const item = document.createElement('div');
+    const W = $('#photo').clientWidth, k = ($('#lib').clientWidth - 4) / 3 / W;
+    const copy = taken.cloneNode(true);
+    if (taken.tagName === 'CANVAS') copy.getContext('2d').drawImage(taken, 0, 0);
+    copy.style.cssText += `;position:absolute;left:0;top:0;width:${W}px;height:${W * 1.25}px;transform:scale(${k});transform-origin:0 0`;
+    item.append(copy);
+    $('#lib .empty')?.remove();
+    $('#lib').prepend(item);
+    hud('Saved to Library');
+    setTimeout(() => { $('#tabbar').hidden = false; showTab('library'); }, 900);
+  });
+  $('#lib').innerHTML = `<div style="grid-column:1/-1;aspect-ratio:auto" class="empty">Photos you take with ShotGuide show up here.</div>`;
+</script>
+</body>
+</html>

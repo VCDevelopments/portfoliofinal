@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pulse · demo</title>
+  <link rel="stylesheet" href="../ios.css" />
+  <style>
+    :root { --tint: #9b82ff; --purple: #9b82ff; }
+    .screen { background: #000; }
+    .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 16px 0; }
+    .kpi { background: var(--bg2); border-radius: 12px; padding: 12px 14px; }
+    .kpi .label { font-size: 13px; line-height: 16px; color: var(--label2); letter-spacing: -0.08px; }
+    .kpi .num { font-size: 26px; line-height: 32px; font-weight: 700; letter-spacing: 0.2px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .kpi .delta { font-size: 13px; line-height: 16px; font-weight: 600; color: var(--green); }
+    .kpi .delta.down { color: var(--green); }
+    .chart-card { background: var(--bg2); border-radius: 12px; margin: 10px 16px 0; padding: 14px 0 10px; position: relative; touch-action: none; }
+    .chart-card .head { display: flex; justify-content: space-between; padding: 0 14px; font-size: 13px; color: var(--label2); }
+    .chart-card .head b { color: var(--label); font-weight: 600; font-size: 15px; }
+    .chart { width: 100%; height: 150px; margin-top: 8px; }
+    .chart .area { transition: d 0.6s cubic-bezier(0.32, 0.72, 0, 1); }
+    .chart .line { transition: d 0.6s cubic-bezier(0.32, 0.72, 0, 1); }
+    .chart .goal { transition: d 0.6s cubic-bezier(0.32, 0.72, 0, 1); }
+    .scrub { position: absolute; top: 44px; bottom: 26px; width: 1px; background: rgba(255,255,255,0.4); opacity: 0; pointer-events: none; }
+    .tip { position: absolute; top: 8px; transform: translateX(-50%); background: var(--bg3); border-radius: 8px; padding: 4px 8px; font-size: 12px; line-height: 16px; white-space: nowrap; opacity: 0; pointer-events: none; font-variant-numeric: tabular-nums; }
+    .chart-card.scrubbing .scrub, .chart-card.scrubbing .tip { opacity: 1; }
+    .legend { display: flex; gap: 14px; padding: 4px 14px 0; font-size: 12px; color: var(--label2); }
+    .legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+    .pill { font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    .pill.live { background: rgba(48, 209, 88, 0.18); color: var(--green); }
+    .pill.learn { background: rgba(255, 159, 10, 0.18); color: var(--orange); }
+    .pill.paused { background: var(--fill); color: var(--label2); }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 16px 0; }
+    .metrics .kpi .num { font-size: 20px; line-height: 26px; }
+    .stepper { display: flex; border-radius: 8px; background: var(--fill); overflow: hidden; }
+    .stepper button { width: 46px; height: 32px; font-size: 22px; line-height: 1; }
+    .stepper button + button { border-left: 0.33px solid var(--sep); }
+    .hero { margin: 8px 16px 0; padding: 18px 16px; border-radius: 16px; background: linear-gradient(135deg, #3b2a84, #1c1c1e 70%); display: grid; gap: 4px; }
+    .hero .row { display: flex; justify-content: space-between; align-items: center; }
+    .hero h2 { font-size: 22px; line-height: 28px; font-weight: 700; }
+    .hero .sub { color: var(--label2); font-size: 15px; }
+    .adset { padding: 12px 16px; position: relative; }
+    .adset + .adset::before { content: ""; position: absolute; top: 0; left: 16px; right: 0; border-top: 0.33px solid var(--sep); }
+    .adset .row { display: flex; justify-content: space-between; font-size: 15px; }
+    .adset .row span:last-child { font-variant-numeric: tabular-nums; color: var(--label2); }
+    .bar { height: 6px; border-radius: 3px; background: var(--fill); margin-top: 8px; overflow: hidden; }
+    .bar i { display: block; height: 100%; border-radius: 3px; background: var(--purple); transition: width 0.9s cubic-bezier(0.32, 0.72, 0, 1), background 0.4s; }
+    .adset.cut .bar i { background: var(--red); }
+    .adset.up .bar i { background: var(--green); }
+    .log { min-height: 44px; }
+    .log .cell { font-size: 15px; line-height: 20px; animation: drop 0.4s cubic-bezier(0.32, 0.72, 0, 1); }
+    @keyframes drop { from { opacity: 0; transform: translateY(-8px); } }
+    .log .when { font-size: 12px; color: var(--label2); font-variant-numeric: tabular-nums; }
+    .empty { color: var(--label2); font-size: 15px; padding: 12px 16px; }
+  </style>
+</head>
+<body>
+<div class="screen">
+
+  <!-- Overview -->
+  <section class="page" id="overview" data-root>
+    <div class="large-title">Overview</div>
+    <div class="segmented" id="range">
+      <button type="button" data-value="7" aria-pressed="false">7 Days</button>
+      <button type="button" data-value="30" aria-pressed="true">30 Days</button>
+      <button type="button" data-value="90" aria-pressed="false">90 Days</button>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="label">Spend</div><div class="num" id="k-spend"></div><div class="delta" id="d-spend"></div></div>
+      <div class="kpi"><div class="label">Sales</div><div class="num" id="k-sales"></div><div class="delta" id="d-sales"></div></div>
+      <div class="kpi"><div class="label">Cost per sale</div><div class="num" id="k-cps"></div><div class="delta" id="d-cps"></div></div>
+      <div class="kpi"><div class="label">Return on ad spend</div><div class="num" id="k-roas"></div><div class="delta" id="d-roas"></div></div>
+    </div>
+    <div class="chart-card" id="chart-card">
+      <div class="head"><b>Revenue vs. spend</b><span>Touch and drag</span></div>
+      <svg class="chart" viewBox="0 0 361 150" preserveAspectRatio="none">
+        <defs><linearGradient id="fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9b82ff" stop-opacity="0.5"/><stop offset="1" stop-color="#9b82ff" stop-opacity="0"/></linearGradient></defs>
+        <path class="area" fill="url(#fill)"/>
+        <path class="line" fill="none" stroke="#9b82ff" stroke-width="2.4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <path class="goal" fill="none" stroke="#30d158" stroke-width="1.6" stroke-dasharray="4 4" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <div class="scrub"></div><div class="tip"></div>
+      <div class="legend"><span><i style="background:#9b82ff"></i>Revenue</span><span><i style="background:#30d158"></i>Ad spend</span></div>
+    </div>
+    <div class="section-head">Latest from autopilot</div>
+    <div class="list" id="recent"></div>
+  </section>
+
+  <!-- Campaigns -->
+  <section class="page" id="campaigns" data-root hidden>
+    <div class="large-title">Campaigns</div>
+    <div class="list" id="camp-list" style="--inset:36px"></div>
+    <div class="section-foot">Tap a campaign to see how it is doing and change its budget.</div>
+  </section>
+
+  <section class="page no-tabs" id="campaign" hidden>
+    <div class="navbar"><button class="back" type="button" data-back></button><span class="title" id="c-title"></span><span></span></div>
+    <div class="large-title" id="c-name" style="font-size:28px;line-height:34px"></div>
+    <div style="padding:0 16px 6px"><span class="pill" id="c-pill"></span></div>
+    <div class="metrics">
+      <div class="kpi"><div class="label">Spend</div><div class="num" id="c-spend"></div></div>
+      <div class="kpi"><div class="label">Sales</div><div class="num" id="c-sales"></div></div>
+      <div class="kpi"><div class="label">ROAS</div><div class="num" id="c-roas"></div></div>
+    </div>
+    <div class="section-head">Settings</div>
+    <div class="list">
+      <div class="cell"><span class="grow">Active</span><button class="switch" id="c-active" type="button" aria-label="Active"></button></div>
+      <div class="cell"><span class="grow">Daily budget<div class="sub" id="c-budget"></div></span><div class="stepper"><button type="button" id="c-minus" aria-label="Lower budget">−</button><button type="button" id="c-plus" aria-label="Raise budget">+</button></div></div>
+      <div class="cell"><span class="grow">Let autopilot manage</span><button class="switch" id="c-auto" type="button" aria-checked="true" aria-label="Autopilot"></button></div>
+    </div>
+    <div class="section-foot">Autopilot moves at most 30% of a budget per day.</div>
+    <div class="section-head">Best ad</div>
+    <div class="list"><div class="cell"><span class="icon" style="background:linear-gradient(160deg,#ffb38a,#5a3a2e)">▶</span><span class="grow">UGC · hook 3<div class="sub" id="c-best"></div></span></div></div>
+  </section>
+
+  <!-- Autopilot -->
+  <section class="page" id="autopilot" data-root hidden>
+    <div class="large-title">Autopilot</div>
+    <div class="hero">
+      <div class="row"><h2>Autopilot</h2><button class="switch" id="ap-switch" type="button" aria-checked="true" aria-label="Autopilot"></button></div>
+      <div class="sub" id="ap-status">Next run in 3 h 12 min · €50 a day</div>
+    </div>
+    <div class="pad" style="margin-top:14px"><button class="btn" id="run" type="button">Run now</button></div>
+    <div class="section-head">Budget per ad set</div>
+    <div class="list" id="adsets"></div>
+    <div class="section-head">Activity</div>
+    <div class="list log" id="log"><div class="empty">Tap Run now to watch it move the budget.</div></div>
+    <div class="section-head">Guardrails</div>
+    <div class="list">
+      <div class="cell"><span class="grow">Max change per day</span><span class="value">30%</span></div>
+      <div class="cell"><span class="grow">Minimum to keep learning</span><span class="value">€4</span></div>
+      <div class="cell"><span class="grow">Total daily limit</span><span class="value">€50</span></div>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <button type="button" data-tab="overview" aria-selected="true"><svg viewBox="0 0 28 24"><path d="M4 20V11M10 20V4M16 20v-7M22 20V8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" fill="none"/></svg>Overview</button>
+    <button type="button" data-tab="campaigns" aria-selected="false"><svg viewBox="0 0 28 24"><path d="M4 9.5v5l3 .5 2 5.5h3l-1.5-5 9 3V3.5l-9 5z" fill="currentColor"/></svg>Campaigns</button>
+    <button type="button" data-tab="autopilot" aria-selected="false"><svg viewBox="0 0 28 24"><path d="M15.5 2 6 13.5h7L11.5 22 21 10.5h-7z" fill="currentColor"/></svg>Autopilot</button>
+  </nav>
+</div>
+
+<script type="module">
+  import { $, $$, ICON, chrome, tabs, push, bindSwitch, bindSegmented, countTo, wait, banner } from '../ios.js';
+  chrome();
+  tabs();
+  $$('[data-back]').forEach((b) => { b.innerHTML = `${ICON.back}<span>Campaigns</span>`; });
+
+  const eur = (v) => `€${Math.round(v).toLocaleString('en-US')}`;
+  const eur2 = (v) => `€${v.toFixed(2)}`;
+  // a deterministic, upward-trending series for each range
+  const series = (n, seed) => Array.from({ length: n }, (_, i) => {
+    const t = i / (n - 1);
+    return { rev: 120 + t * 160 + Math.sin(i * 0.9 + seed) * 22 + Math.sin(i * 0.31 + seed * 2) * 30, spend: 40 + t * 10 + Math.sin(i * 0.6 + seed) * 4 };
+  });
+  const RANGES = {
+    7: { data: series(7, 1), spend: 312, sales: 94, d: ['+4%', '+12%', '−7%', '+9%'] },
+    30: { data: series(30, 2), spend: 1340, sales: 371, d: ['+6%', '+18%', '−11%', '+14%'] },
+    90: { data: series(45, 3), spend: 3910, sales: 1006, d: ['+21%', '+46%', '−17%', '+22%'] },
+  };
+  let current = RANGES[30];
+  const path = (pts, key, max, close) => {
+    const n = pts.length;
+    const xy = pts.map((p, i) => [(i / (n - 1)) * 361, 140 - (p[key] / max) * 125]);
+    let d = `M${xy[0][0]},${xy[0][1]}`;
+    for (let i = 1; i < n; i++) { const [x0, y0] = xy[i - 1], [x1, y1] = xy[i]; const cx = (x0 + x1) / 2; d += ` C${cx},${y0} ${cx},${y1} ${x1},${y1}`; }
+    return close ? `${d} L361,150 L0,150 Z` : d;
+  };
+  function showRange(r) {
+    current = RANGES[r];
+    const { data, spend, sales, d } = current;
+    // resample to 30 points so the path morphs smoothly between ranges
+    const pts = Array.from({ length: 30 }, (_, i) => {
+      const f = (i / 29) * (data.length - 1), k = Math.min(data.length - 2, Math.floor(f)), t = f - k;
+      return { rev: data[k].rev * (1 - t) + data[k + 1].rev * t, spend: data[k].spend * (1 - t) + data[k + 1].spend * t };
+    });
+    $('.chart .area').setAttribute('d', path(pts, 'rev', 320, true));
+    $('.chart .line').setAttribute('d', path(pts, 'rev', 320));
+    $('.chart .goal').setAttribute('d', path(pts, 'spend', 320));
+    countTo($('#k-spend'), spend, eur);
+    countTo($('#k-sales'), sales, (v) => Math.round(v).toLocaleString('en-US'));
+    countTo($('#k-cps'), spend / sales, eur2);
+    countTo($('#k-roas'), (data.reduce((s, p) => s + p.rev, 0) / data.reduce((s, p) => s + p.spend, 0)), (v) => `${v.toFixed(2)}×`);
+    ['spend', 'sales', 'cps', 'roas'].forEach((k, i) => { $(`#d-${k}`).textContent = `${d[i]} vs. before`; });
+  }
+  bindSegmented($('#range'), showRange);
+  showRange(30);
+
+  // touch and drag across the chart to read single days
+  const card = $('#chart-card');
+  const scrub = (e) => {
+    const svg = $('.chart').getBoundingClientRect(), box = card.getBoundingClientRect();
+    const k = Math.min(1, Math.max(0, (e.clientX - svg.left) / svg.width));
+    const i = Math.round(k * (current.data.length - 1));
+    const x = svg.left - box.left + (i / (current.data.length - 1)) * svg.width;
+    $('.scrub', card).style.left = `${x}px`;
+    const tip = $('.tip', card);
+    tip.style.left = `${Math.min(box.width - 70, Math.max(70, x))}px`;
+    const p = current.data[i];
+    tip.textContent = `Day ${i + 1} · ${eur(p.rev)} revenue · ${eur(p.spend)} spend`;
+  };
+  card.addEventListener('pointerdown', (e) => { card.classList.add('scrubbing'); card.setPointerCapture(e.pointerId); scrub(e); });
+  card.addEventListener('pointermove', (e) => { if (card.classList.contains('scrubbing') || e.pointerType === 'mouse') { card.classList.add('scrubbing'); scrub(e); } });
+  card.addEventListener('pointerup', () => card.classList.remove('scrubbing'));
+  card.addEventListener('pointerleave', () => card.classList.remove('scrubbing'));
+
+  const recent = [
+    ['Moved €6 to UGC · hook 3', 'It sells at €2.90 per sale', '2 h ago'],
+    ['Paused Static · discount', '€18 spent, no sales in 3 days', '6 h ago'],
+    ['New campaign ready to check', 'Spring launch · 3 video ads', 'Yesterday'],
+  ];
+  $('#recent').innerHTML = recent.map(([t, s, w]) => `<div class="cell"><span class="grow">${t}<div class="sub">${s}</div></span><span class="value" style="font-size:13px">${w}</span></div>`).join('');
+
+  // campaigns and their detail page
+  const CAMPAIGNS = [
+    { name: 'Spring launch', status: 'live', budget: 18, spend: 412, sales: 142, roas: 3.4 },
+    { name: 'Retargeting', status: 'live', budget: 12, spend: 286, sales: 121, roas: 4.1 },
+    { name: 'Brand video', status: 'learn', budget: 8, spend: 164, sales: 31, roas: 1.8 },
+    { name: 'Bestsellers · TikTok', status: 'live', budget: 10, spend: 331, sales: 77, roas: 2.6 },
+    { name: 'Static · discount', status: 'paused', budget: 4, spend: 147, sales: 0, roas: 0 },
+  ];
+  const STATUS = { live: ['#30d158', 'Active', 'live'], learn: ['#ff9f0a', 'Learning', 'learn'], paused: ['#8e8e93', 'Paused by rule', 'paused'] };
+  function renderCampaigns() {
+    $('#camp-list').innerHTML = CAMPAIGNS.map((c, i) => `<button class="cell" type="button" data-i="${i}"><span class="dot" style="background:${STATUS[c.status][0]}"></span><span class="grow">${c.name}<div class="sub">${STATUS[c.status][1]} · €${c.budget} a day</div></span><span class="value">${c.roas ? c.roas.toFixed(1) + '×' : '–'}</span>${ICON.chevron.replace('<svg', '<svg class="chev"')}</button>`).join('');
+  }
+  renderCampaigns();
+  let open = null;
+  $('#camp-list').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    open = CAMPAIGNS[b.dataset.i];
+    $('#c-title').textContent = open.name;
+    $('#c-name').textContent = open.name;
+    $('#c-spend').textContent = eur(open.spend);
+    $('#c-sales').textContent = open.sales;
+    $('#c-roas').textContent = open.roas ? `${open.roas.toFixed(1)}×` : '–';
+    $('#c-best').textContent = open.sales ? `${Math.round(open.sales * 0.4)} sales · €${(open.spend / open.sales * 0.8).toFixed(2)} per sale` : 'No sales yet';
+    $('#c-active').setAttribute('aria-checked', String(open.status !== 'paused'));
+    showBudget();
+    push('campaign');
+  });
+  const showBudget = () => {
+    const pill = $('#c-pill');
+    pill.className = `pill ${STATUS[open.status][2]}`;
+    pill.textContent = STATUS[open.status][1];
+    $('#c-budget').textContent = `€${open.budget} a day`;
+  };
+  bindSwitch($('#c-active'), (on) => { open.status = on ? 'live' : 'paused'; showBudget(); renderCampaigns(); });
+  bindSwitch($('#c-auto'));
+  $('#c-minus').onclick = () => { open.budget = Math.max(1, open.budget - 1); showBudget(); renderCampaigns(); };
+  $('#c-plus').onclick = () => { open.budget = Math.min(50, open.budget + 1); showBudget(); renderCampaigns(); };
+
+  // autopilot: moves budget toward ad sets that sell, within the guardrails
+  const ADSETS = [
+    { name: 'UGC · hook 3', budget: 12, cps: 2.9 },
+    { name: 'Carousel · bestsellers', budget: 11, cps: 4.1 },
+    { name: 'Video · how it works', budget: 10, cps: 3.6 },
+    { name: 'Static · discount', budget: 9, cps: 11.8 },
+    { name: 'Lookalike 2%', budget: 8, cps: 5.2 },
+  ];
+  function renderAdsets(marks = {}) {
+    $('#adsets').innerHTML = ADSETS.map((a) => `<div class="adset ${marks[a.name] || ''}"><div class="row"><span>${a.name}</span><span>€${a.budget.toFixed(0)} · €${a.cps.toFixed(2)}/sale</span></div><div class="bar"><i style="width:${(a.budget / 20) * 100}%"></i></div></div>`).join('');
+  }
+  renderAdsets();
+  const log = (text, sub) => {
+    const list = $('#log');
+    $('.empty', list)?.remove();
+    const d = new Date();
+    list.insertAdjacentHTML('afterbegin', `<div class="cell"><span class="grow">${text}<div class="sub">${sub}</div></span><span class="when">${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}</span></div>`);
+  };
+  let running = false;
+  $('#run').addEventListener('click', async () => {
+    if (running || $('#ap-switch').getAttribute('aria-checked') !== 'true') return;
+    running = true;
+    const run = $('#run');
+    run.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,.35);border-top-color:#fff"></span> Reading today’s results';
+    await wait(1100);
+    run.textContent = 'Moving budget…';
+    // worst ad set gives up to 30% to the best one; one that spends without selling is cut to the minimum
+    const sorted = [...ADSETS].sort((a, b) => a.cps - b.cps);
+    const best = sorted[0], worst = sorted[sorted.length - 1], second = sorted[1];
+    const moved = Math.round(worst.budget * 0.3 * 10) / 10;
+    worst.budget = Math.max(4, worst.budget - moved * 1.4);
+    best.budget += moved;
+    second.budget += moved * 0.4;
+    renderAdsets({ [best.name]: 'up', [second.name]: 'up', [worst.name]: 'cut' });
+    await wait(500);
+    log(`Moved €${moved.toFixed(0)} to ${best.name}`, `Cheapest sales: €${best.cps.toFixed(2)} each`);
+    await wait(700);
+    log(`Cut ${worst.name} to €${worst.budget.toFixed(0)}`, `€${worst.cps.toFixed(2)} per sale, kept at the minimum to keep learning`);
+    await wait(700);
+    log(`Gave ${second.name} €${(moved * 0.4).toFixed(0)} more`, 'Total stays within €50 a day');
+    // the models learn from today, so the numbers drift a little for the next run
+    ADSETS.forEach((a) => { a.cps = Math.max(2.2, a.cps * (0.92 + Math.random() * 0.14)); });
+    run.textContent = 'Run now';
+    $('#ap-status').textContent = 'Last run just now · next in 4 h';
+    banner('<svg viewBox="0 0 28 24" width="22" height="20"><path d="M15.5 2 6 13.5h7L11.5 22 21 10.5h-7z" fill="#fff"/></svg>', 'Pulse', `Autopilot moved €${moved.toFixed(0)} to ${best.name}.`);
+    $('.banner .app').style.background = '#7c5cf5';
+    running = false;
+  });
+  bindSwitch($('#ap-switch'), (on) => {
+    $('#run').disabled = !on;
+    $('#ap-status').textContent = on ? 'Next run in 3 h 12 min · €50 a day' : 'Off · budgets stay as they are';
+  });
+</script>
+</body>
+</html>

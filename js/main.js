@@ -47,6 +47,7 @@ function resize() {
   renderer.setSize(w, h); // also sizes the canvas element, so it always matches the pixels drawn
   composite.setSize(Math.floor(w * pr), Math.floor(h * pr));
   ui.setSize(w, h);
+  chapters[1]?.live.setSize(w, h);
   ctx.pixelRatio = pr;
   ctx.height = h;
   for (const c of chapters) {
@@ -76,6 +77,8 @@ async function boot() {
     chapters.push(builders[i](env));
     ui.setProgress((i + 1) / (builders.length + 1));
   }
+  // the live demos on the 3D phones sit just above the canvas (phones and tablets keep the pictures)
+  canvas.after(chapters[1].live.el);
   resize();
   // upload the project pictures now, so scrolling into the devices doesn't hitch on them
   for (const t of await chapters[1].ready) renderer.initTexture(t);
@@ -161,6 +164,7 @@ function loop(now) {
 
   const current = b >= 0 && mix >= 0.5 ? b : a;
   updateCards(current === 1 ? chapters[1].state.active : -1);
+  chapters[1].live.render(!lightweight && current === 1 && b < 0);
   ui.setChapter(current);
   const calloutAlpha = b >= 0 ? Math.abs(mix - 0.5) * 2 : 1;
   chapters.forEach((c, i) => ui.drawCallouts(c.callouts, c.camera, i === current ? calloutAlpha : 0));
@@ -241,6 +245,8 @@ function openProject(i) {
   dialog.querySelector('.status').textContent = p.details.status;
   dialog.querySelector('h2').textContent = p.name;
   dialog.querySelector('.intro').textContent = p.details.intro;
+  dialog.querySelector('.devices').replaceChildren(...['laptop', 'phone'].filter((k) => p.device[k]).map((k) => deviceFrame(k, p.device[k], p.name)));
+  dialog.querySelector('.try-note').textContent = p.demoNote;
   dialog.querySelector('.thumbs').replaceChildren(...gallery.map((g, n) => {
     const b = el('button', { type: 'button', onclick: () => showPicture(n) });
     b.setAttribute('aria-label', `Picture ${n + 1}: ${g.caption}`);
@@ -260,8 +266,42 @@ function openProject(i) {
   dialog.style.setProperty('--glow', p.colors[2]);
   showPicture(0);
   dialog.showModal();
+  fitDevices();
   dialog.querySelector('.sheet').scrollTop = 0;
 }
+// a full-size iPhone (and, for Relay, a laptop) running the project's demo, scaled to fit the pop-up
+const FRAME = { phone: [427, 886], laptop: [1340, 876] };
+function deviceFrame(kind, def, name) {
+  const slot = el('div', { className: `slot ${kind}` });
+  const body = el('div', { className: kind === 'phone' ? 'iphone' : 'macbook' });
+  const screen = el('div', { className: 'glass' });
+  const frame = el('iframe', { src: def.demo, title: `${name}: try the app` });
+  frame.allow = 'camera';
+  screen.append(frame);
+  if (kind === 'phone') body.append(el('div', { className: 'bezel' }), ...['action', 'vol-up', 'vol-down', 'side', 'camera'].map((b) => el('i', { className: b })));
+  body.append(screen);
+  if (kind === 'laptop') body.append(el('div', { className: 'base' }));
+  slot.append(body);
+  return slot;
+}
+function fitDevices() {
+  const box = dialog.querySelector('.devices');
+  const room = box.clientWidth;
+  const k = Math.min(0.82, (innerHeight * 0.74) / FRAME.phone[1], room / FRAME.phone[0]);
+  const laptop = box.querySelector('.laptop');
+  // the laptop shows beside the phone only when there is room for both
+  const kl = laptop && Math.min((k * FRAME.phone[1] * 0.78) / FRAME.laptop[1], (room - FRAME.phone[0] * k - 32) / FRAME.laptop[0]);
+  if (laptop) laptop.hidden = kl < 0.32;
+  for (const [slot, kind, scale] of [[box.querySelector('.phone'), 'phone', k], [laptop, 'laptop', kl]]) {
+    if (!slot) continue;
+    slot.style.width = `${FRAME[kind][0] * scale}px`;
+    slot.style.height = `${FRAME[kind][1] * scale}px`;
+    slot.firstChild.style.transform = `scale(${scale})`;
+  }
+}
+addEventListener('resize', () => { if (dialog.open) fitDevices(); });
+// closing the pop-up unloads the demos (ShotGuide's camera turns off with it)
+dialog.addEventListener('close', () => dialog.querySelector('.devices').replaceChildren());
 ctx.openProject = openProject;
 dialog.addEventListener('click', (e) => {
   if (e.target === dialog || e.target.closest('.close')) dialog.close();

@@ -348,3 +348,33 @@ body.is-grab { cursor: pointer; }
 #project-dialog .page, #project-dialog .code { padding: 12px 16px; border: 1px solid #fff; color: #fff; text-decoration: none; font: 500 12px/1 var(--mono); }
 #project-dialog .page:hover, #project-dialog .page:focus-visible, #project-dialog .code:hover, #project-dialog .code:focus-visible { background: #fff; color: #1e242e; }
 @media (prefers-reduced-motion: reduce) { #project-dialog[open] { animation: none; } }
+
+/* ---------- live demos ---------- */
+/* on the 3D phones: CSS3D layer over the canvas; only the screens themselves take the pointer */
+.live-screens { position: fixed !important; inset: 0; pointer-events: none; }
+.live-screen { overflow: hidden; background: #000; pointer-events: auto; backface-visibility: hidden; }
+.live-screen iframe { width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity 0.4s; }
+.live-screen.loaded iframe { opacity: 1; }
+/* in the pop-up: a full-size iPhone 16 Pro (393 × 852 screen), and a laptop for Relay; no logos */
+#project-dialog .try { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 0 8px; border-top: 1px solid rgba(255, 255, 255, 0.15); border-bottom: 1px solid rgba(255, 255, 255, 0.15); }
+#project-dialog .try-label { align-self: flex-start; font: 500 11px/1 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--glow, #fff); }
+#project-dialog .devices { width: 100%; display: flex; justify-content: center; align-items: flex-end; gap: 32px; }
+#project-dialog .slot { position: relative; flex: 0 0 auto; }
+#project-dialog .slot[hidden] { display: none; }
+#project-dialog .slot > div { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+#project-dialog .try-note { max-width: 60ch; text-align: center; font: 300 15px/1.5 "Outfit", sans-serif; color: #dbe2ea; }
+.iphone { width: 427px; height: 886px; border-radius: 72px; background: linear-gradient(135deg, #a7aaae, #55575b 28%, #9a9da1 52%, #47494d 78%, #aeb1b5); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.iphone .bezel { position: absolute; inset: 4px; border-radius: 68px; background: #000; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06); }
+.iphone .glass { position: absolute; left: 17px; top: 17px; width: 393px; height: 852px; border-radius: 55px; overflow: hidden; background: #000; }
+.iphone i { position: absolute; width: 5px; border-radius: 2px; background: linear-gradient(90deg, #6e7175, #b3b6ba 60%, #7c7f83); }
+.iphone .action { left: -4px; top: 150px; height: 32px; }
+.iphone .vol-up { left: -4px; top: 205px; height: 62px; }
+.iphone .vol-down { left: -4px; top: 280px; height: 62px; }
+.iphone .side { right: -4px; top: 240px; height: 100px; }
+.iphone .camera { right: -3px; top: 520px; height: 70px; width: 4px; opacity: 0.8; }
+.macbook { width: 1340px; height: 876px; }
+.macbook .glass { position: absolute; left: 30px; top: 22px; width: 1280px; height: 800px; overflow: hidden; border-radius: 6px; background: #fff; }
+.macbook::before { content: ""; position: absolute; left: 0; top: 0; width: 1340px; height: 852px; border-radius: 30px 30px 8px 8px; background: #0b0c0e; box-shadow: inset 0 0 0 3px #b9bcc1; }
+.macbook .base { position: absolute; left: -80px; top: 850px; width: 1500px; height: 26px; border-radius: 2px 2px 26px 26px; background: linear-gradient(#dfe2e6, #9ea2a7); box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45); }
+.macbook .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 220px; height: 10px; margin-left: -110px; border-radius: 0 0 10px 10px; background: #b3b7bc; }
+#project-dialog iframe { width: 100%; height: 100%; border: 0; display: block; }

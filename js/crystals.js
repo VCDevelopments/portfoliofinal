@@ -1,24 +1,28 @@
-// Chapter 1 — portfolio: each project runs on a 3D laptop and/or phone showing its real screen.
-// Callouts name it; clicking the device opens the project's pop-up.
+// Chapter 1 — portfolio: each project runs on a 3D iPhone (Relay also on a laptop). The screens are
+// live: a working demo of the project sits on each one (CSS3D, lined up with the 3D screen), so
+// visitors can try it right there. Callouts name it; clicking the device opens the project's pop-up.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { rng } from './noise.js';
 import { PROJECTS } from './projects.js';
 
 const BG = 0xb6b9bf;
 const SPACING = 15;
+// iPhone 16 Pro: a 393 × 852 point screen with 55 point corners, inside a 427 × 886 body
+const IOS = { w: 393, h: 852, r: 55, bodyW: 427, bodyH: 886 };
+const LAPTOP_PX = { w: 1280, h: 800 };
 
 const ITEMS = PROJECTS.map((p, i) => ({ ...p, code: `PROJECT_${String(i + 1).padStart(2, '0')}`, side: i % 2 ? 1 : -1 })); // device sits on this side, the overview card on the other
 
 // shared device parts
 const aluminium = new THREE.MeshStandardMaterial({ color: 0xc4c8ce, metalness: 0.9, roughness: 0.3, envMapIntensity: 1.2 });
-const graphite = new THREE.MeshStandardMaterial({ color: 0x2b2e34, metalness: 0.85, roughness: 0.28, envMapIntensity: 1.2 });
-const glassBlack = new THREE.MeshStandardMaterial({ color: 0x07080a, metalness: 0.3, roughness: 0.12 });
+const titanium = new THREE.MeshStandardMaterial({ color: 0x8a8d91, metalness: 0.95, roughness: 0.34, envMapIntensity: 1.3 });
+const glassBlack = new THREE.MeshStandardMaterial({ color: 0x050607, metalness: 0.3, roughness: 0.1 });
 const keysMat = new THREE.MeshStandardMaterial({ color: 0x1b1d22, metalness: 0.2, roughness: 0.7 });
 const padMat = new THREE.MeshStandardMaterial({ color: 0xb4b8be, metalness: 0.85, roughness: 0.42 });
 
-// a rounded rectangle with 0..1 UVs, for screens and glass with round corners
-function roundedRect(w, h, r) {
+function roundedShape(w, h, r) {
   const s = new THREE.Shape();
   const x = -w / 2, y = -h / 2;
   s.moveTo(x + r, y);
@@ -30,13 +34,17 @@ function roundedRect(w, h, r) {
   s.quadraticCurveTo(x, y + h, x, y + h - r);
   s.lineTo(x, y + r);
   s.quadraticCurveTo(x, y, x + r, y);
-  const g = new THREE.ShapeGeometry(s, 10);
+  return s;
+}
+// a rounded rectangle with 0..1 UVs, for screens and glass with round corners
+function roundedRect(w, h, r) {
+  const g = new THREE.ShapeGeometry(roundedShape(w, h, r), 12);
   const p = g.attributes.position, uv = g.attributes.uv;
-  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) - x) / w, (p.getY(i) - y) / h);
+  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) + w / 2) / w, (p.getY(i) + h / 2) / h);
   return g;
 }
 
-// the screen itself: unlit, so the project's picture shows in its true colours; brightens on hover
+// the screen itself: unlit, so the app shows in its true colours; brightens on hover
 const screenMat = (map) => new THREE.MeshBasicMaterial({ map, toneMapped: false, color: 0xd9d9d9 });
 
 // A 16:10 laptop, opened a little past upright and tipped toward the viewer so the keyboard shows
@@ -67,41 +75,54 @@ function laptop(map) {
   hinge.add(lid);
   g.add(base, hinge);
   g.rotation.x = 0.38; // tipped toward the viewer
-  return { group: g, screens: [screen.material] };
+  return { group: g, screens: [{ mesh: screen, width: sw, px: LAPTOP_PX, radius: 0 }] };
 }
 
-// A phone: graphite frame, black glass, the screen with rounded corners and a small island at the top
+// An iPhone, 1:1 in proportion: titanium frame with rounded corners, black glass, the screen, and the
+// buttons on its sides (action button and volume on the left, side button and camera control on the right)
 function phone(map) {
-  const W = 0.82, H = 1.74, T = 0.085;
+  const W = 0.9, k = W / IOS.bodyW, H = IOS.bodyH * k, T = 0.075;
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new RoundedBoxGeometry(W, H, T, 6, 0.12), graphite);
-  const glass = new THREE.Mesh(roundedRect(W - 0.03, H - 0.03, 0.105), glassBlack);
+  const bevel = 0.012;
+  const bodyGeo = new THREE.ExtrudeGeometry(roundedShape(W - bevel * 2, H - bevel * 2, (IOS.r + 17) * k - bevel), { depth: T - bevel * 2, bevelEnabled: true, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 4, curveSegments: 20 });
+  bodyGeo.translate(0, 0, -(T - bevel * 2) / 2);
+  const body = new THREE.Mesh(bodyGeo, titanium);
+  const glass = new THREE.Mesh(roundedRect(W - 0.012, H - 0.012, (IOS.r + 15) * k), glassBlack);
   glass.position.z = T / 2 + 0.001;
-  const sh = H - 0.09, sw = sh * (552 / 1232);
-  const screen = new THREE.Mesh(roundedRect(sw, sh, 0.09), screenMat(map));
+  const sw = IOS.w * k, sh = IOS.h * k;
+  const screen = new THREE.Mesh(roundedRect(sw, sh, IOS.r * k), screenMat(map));
   screen.position.z = T / 2 + 0.002;
   body.add(glass, screen);
+  const button = (side, y, len) => {
+    const b = new THREE.Mesh(new RoundedBoxGeometry(0.012, len * k, T * 0.45, 2, 0.005), titanium);
+    b.position.set(side * (W / 2 + 0.003), H / 2 - y * k - (len * k) / 2, 0);
+    body.add(b);
+  };
+  button(-1, 150, 32); // action button
+  button(-1, 205, 62); // volume up
+  button(-1, 280, 62); // volume down
+  button(1, 240, 100); // side button
+  button(1, 520, 70); // camera control
   g.add(body);
-  return { group: g, screens: [screen.material] };
+  return { group: g, screens: [{ mesh: screen, width: sw, px: { w: IOS.w, h: IOS.h }, radius: IOS.r }] };
 }
 
-// what each project runs on: a laptop, a phone, or both side by side
+// what each project runs on: an iPhone, or (Relay) a laptop with the phone beside it
 function device(item, load) {
   const g = new THREE.Group();
   const screens = [];
-  const add = ({ group, screens: s }, x, y, z, ry, scale = 1) => {
+  const add = ({ group, screens: s }, def, x, y, z, ry, scale = 1) => {
     group.position.set(x, y, z);
     group.rotation.y = ry;
     group.scale.multiplyScalar(scale);
     g.add(group);
-    screens.push(...s);
+    for (const sc of s) screens.push({ ...sc, demo: def.demo, material: sc.mesh.material });
   };
   const { laptop: lap, phone: ph } = item.device;
-  if (lap && ph) {
-    add(laptop(load(lap)), -0.35, 0, 0, 0);
-    add(phone(load(ph)), 1.45, -0.32, 0.75, -0.32, 0.82);
-  } else if (lap) add(laptop(load(lap)), 0, 0, 0, 0);
-  else add(phone(load(ph)), 0, 0, 0, 0, 1.3);
+  if (lap) {
+    add(laptop(load(lap.poster)), lap, -0.45, 0, 0, 0);
+    add(phone(load(ph.poster)), ph, 1.3, -0.3, 0.8, -0.3, 0.95);
+  } else add(phone(load(ph.poster)), ph, 0, 0, 0, 0, 1.7);
   // centre the whole thing on the group's origin
   const box = new THREE.Box3().setFromObject(g);
   const centre = box.getCenter(new THREE.Vector3());
@@ -155,8 +176,43 @@ export function createCrystals(env) {
     const { group, screens, size, proxy } = device(item, load);
     group.position.set(0, -i * SPACING, 0);
     scene.add(group);
-    return { item, group, screens, size, proxy, h: 0, hv: 0 };
+    return { item, group, screens, size, proxy, h: 0, hv: 0, near: 0 };
   });
+
+  // live demos on the screens: an iframe per screen, laid exactly over the 3D screen with CSS3D.
+  // Each loads the first time its project comes into view, and is hidden (and paused) when it leaves.
+  const css = new CSS3DRenderer();
+  css.domElement.className = 'live-screens';
+  for (const c of crystals) for (const sc of c.screens) {
+    const el = document.createElement('div');
+    el.className = 'live-screen';
+    el.style.cssText = `width:${sc.px.w}px;height:${sc.px.h}px;border-radius:${sc.radius}px;visibility:hidden`;
+    const frame = document.createElement('iframe');
+    frame.title = `${c.item.name}: try the app`;
+    frame.allow = 'camera';
+    frame.addEventListener('load', () => el.classList.toggle('loaded', frame.src !== ''));
+    el.append(frame);
+    const obj = new CSS3DObject(el);
+    obj.scale.setScalar(sc.width / sc.px.w);
+    obj.position.z = 0.0005;
+    sc.mesh.add(obj);
+    Object.assign(sc, { el, frame, shown: false });
+  }
+  // `on`: the projects chapter is on screen by itself (not mid-transition) on a device that can afford it
+  function renderLive(on) {
+    for (const c of crystals) for (const sc of c.screens) {
+      const show = on && c.near > 0;
+      if (show && !sc.frame.getAttribute('src')) sc.frame.src = sc.demo;
+      if (show !== sc.shown) {
+        sc.shown = show;
+        sc.el.style.visibility = show ? 'visible' : 'hidden';
+        if (!show) sc.frame.contentWindow?.postMessage('vcd:pause', location.origin);
+      }
+      if (show) sc.el.style.opacity = String(c.near);
+    }
+    css.domElement.style.display = on ? '' : 'none';
+    if (on) css.render(scene, camera);
+  }
 
   // drifting ice dust along the whole column
   const DN = 900;
@@ -359,14 +415,17 @@ export function createCrystals(env) {
       c.hv += ((hovered === c ? 1 : 0) - c.h) * 90 * ctx.dt - c.hv * 10 * ctx.dt;
       c.h += c.hv * ctx.dt;
       const h = THREE.MathUtils.clamp(c.h, 0, 1.2);
-      const loose = (ctx.reduced ? 0 : 1) * (1 - Math.min(1, h) * 0.85); // reduced motion: devices hold still
+      const loose = (ctx.reduced ? 0 : 1) * (1 - Math.min(1, h)); // reduced motion: devices hold still; hovered ones too, so they can be used
       const pass = THREE.MathUtils.clamp((c.group.position.y - camY) / SPACING, -1, 1); // -1 above … 1 below
       c.group.rotation.y = (Math.sin(time * 0.2 + i * 2) * 0.22 + mouse.x * 0.25 + pass * 0.7) * loose; // turns as it passes
       c.group.rotation.x = (Math.sin(time * 0.3 + i) * 0.06 + mouse.y * 0.1) * loose;
       c.group.rotation.z = Math.sin(time * 0.25 + i * 2) * 0.03 * loose;
-      c.group.position.y = -i * SPACING + (ctx.reduced ? 0 : Math.sin(time * 0.5 + i) * 0.08); // floats gently
+      c.group.position.y = -i * SPACING + Math.sin(time * 0.5 + i) * 0.08 * loose; // floats gently
       c.group.scale.setScalar(1 + h * 0.08);
-      for (const m of c.screens) m.color.setScalar(0.85 + Math.min(1, h) * 0.15);
+      for (const sc of c.screens) sc.material.color.setScalar(0.85 + Math.min(1, h) * 0.15);
+
+      // the live demo fades in as the device settles in front of the camera
+      c.near = THREE.MathUtils.clamp((2.6 - Math.abs(c.group.position.y - camY)) / 1, 0, 1);
 
       const active = Math.abs(c.group.position.y - camY) < 4.2;
       if (Math.abs(c.group.position.y - camY) < SPACING * 0.3) state.active = i;
@@ -382,5 +441,5 @@ export function createCrystals(env) {
 
   // `pictures`: loaded textures, so they can be uploaded to the GPU before the first scroll reaches them
   const ready = Promise.all(pictures).then(() => maps);
-  return { scene, camera, update, callouts, state, ready };
+  return { scene, camera, update, callouts, state, ready, live: { el: css.domElement, setSize: (w, h) => css.setSize(w, h), render: renderLive } };
 }
