@@ -1,9 +1,8 @@
 // Chapter 1 — portfolio: each project runs on a 3D iPhone (Relay also on a laptop). The screens are
-// live: a working demo of the project sits on each one (CSS3D, lined up with the 3D screen), so
+// live: a working demo of the project sits on each one, warped onto the 3D screen's corners, so
 // visitors can try it right there. Callouts name it; clicking the device opens the project's pop-up.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
 import { rng } from './noise.js';
 import { PROJECTS } from './projects.js';
 
@@ -75,7 +74,7 @@ function laptop(map) {
   hinge.add(lid);
   g.add(base, hinge);
   g.rotation.x = 0.38; // tipped toward the viewer
-  return { group: g, screens: [{ mesh: screen, width: sw, px: LAPTOP_PX, radius: 0 }] };
+  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: LAPTOP_PX, radius: 0 }] };
 }
 
 // An iPhone, 1:1 in proportion: titanium frame with rounded corners, black glass, the screen, and the
@@ -104,7 +103,7 @@ function phone(map) {
   button(1, 240, 100); // side button
   button(1, 520, 70); // camera control
   g.add(body);
-  return { group: g, screens: [{ mesh: screen, width: sw, px: { w: IOS.w, h: IOS.h }, radius: IOS.r }] };
+  return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: { w: IOS.w, h: IOS.h }, radius: IOS.r }] };
 }
 
 // what each project runs on: an iPhone, or (Relay) a laptop with the phone beside it
@@ -179,39 +178,66 @@ export function createCrystals(env) {
     return { item, group, screens, size, proxy, h: 0, hv: 0, near: 0 };
   });
 
-  // live demos on the screens: an iframe per screen, laid exactly over the 3D screen with CSS3D.
-  // Each loads the first time its project comes into view, and is hidden (and paused) when it leaves.
-  const css = new CSS3DRenderer();
-  css.domElement.className = 'live-screens';
+  // live demos on the screens: an iframe per screen, warped so its four corners land exactly on the
+  // 3D screen's corners (a projective CSS matrix3d). Each loads the first time its project comes
+  // into view, and is hidden (and paused) when it leaves.
+  const layer = document.createElement('div');
+  layer.className = 'live-screens';
   for (const c of crystals) for (const sc of c.screens) {
     const el = document.createElement('div');
     el.className = 'live-screen';
     el.style.cssText = `width:${sc.px.w}px;height:${sc.px.h}px;border-radius:${sc.radius}px;visibility:hidden`;
     const frame = document.createElement('iframe');
-    frame.title = `${c.item.name}: try the app`;
+    frame.setAttribute('aria-label', `${c.item.name}: try the app`); // a label, not a title: no tooltip over the app
     frame.allow = 'camera';
     frame.addEventListener('load', () => el.classList.toggle('loaded', frame.src !== ''));
     el.append(frame);
-    const obj = new CSS3DObject(el);
-    obj.scale.setScalar(sc.width / sc.px.w);
-    obj.position.z = 0.0005;
-    sc.mesh.add(obj);
-    Object.assign(sc, { el, frame, shown: false });
+    layer.append(el);
+    const w = sc.width / 2, h = sc.height / 2;
+    // top-left, top-right, bottom-right, bottom-left of the screen, in the screen mesh's own space
+    Object.assign(sc, { el, frame, shown: false, corners: [[-w, h], [w, h], [w, -h], [-w, -h]].map(([x, y]) => new THREE.Vector3(x, y, 0.0005)) });
+  }
+  const pt = new THREE.Vector3(), toEye = new THREE.Vector3(), normal = new THREE.Vector3();
+  // the CSS matrix that maps a w × h element onto four points on screen (top-left, top-right, bottom-right, bottom-left)
+  function warp([[x0, y0], [x1, y1], [x2, y2], [x3, y3]], w, h) {
+    const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3;
+    const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+    const den = dx1 * dy2 - dx2 * dy1;
+    const g = (dx3 * dy2 - dx2 * dy3) / den, k = (dx1 * dy3 - dx3 * dy1) / den;
+    const a = x1 - x0 + g * x1, b = x3 - x0 + k * x3, d = y1 - y0 + g * y1, e = y3 - y0 + k * y3;
+    return `matrix3d(${a / w},${d / w},0,${g / w},${b / h},${e / h},0,${k / h},0,0,1,0,${x0},${y0},0,1)`;
   }
   // `on`: the projects chapter is on screen by itself (not mid-transition) on a device that can afford it
   function renderLive(on) {
+    layer.style.display = on ? '' : 'none';
+    const W = innerWidth, H = innerHeight;
     for (const c of crystals) for (const sc of c.screens) {
-      const show = on && c.near > 0;
+      let show = on && c.near > 0;
+      let quad;
+      if (show) {
+        sc.mesh.updateWorldMatrix(true, false);
+        // only while the screen faces the viewer and sits fully in front of the camera
+        normal.set(0, 0, 1).transformDirection(sc.mesh.matrixWorld);
+        toEye.copy(camera.position).sub(pt.setFromMatrixPosition(sc.mesh.matrixWorld));
+        quad = sc.corners.map((p) => {
+          pt.copy(p).applyMatrix4(sc.mesh.matrixWorld).applyMatrix4(camera.matrixWorldInverse);
+          if (pt.z > -camera.near) show = false;
+          pt.applyMatrix4(camera.projectionMatrix);
+          return [(pt.x * 0.5 + 0.5) * W, (0.5 - pt.y * 0.5) * H];
+        });
+        if (normal.dot(toEye) <= 0) show = false;
+      }
       if (show && !sc.frame.getAttribute('src')) sc.frame.src = sc.demo;
       if (show !== sc.shown) {
         sc.shown = show;
         sc.el.style.visibility = show ? 'visible' : 'hidden';
         if (!show) sc.frame.contentWindow?.postMessage('vcd:pause', location.origin);
       }
-      if (show) sc.el.style.opacity = String(c.near);
+      if (show) {
+        sc.el.style.opacity = String(c.near);
+        sc.el.style.transform = warp(quad, sc.px.w, sc.px.h);
+      }
     }
-    css.domElement.style.display = on ? '' : 'none';
-    if (on) css.render(scene, camera);
   }
 
   // drifting ice dust along the whole column
@@ -441,5 +467,5 @@ export function createCrystals(env) {
 
   // `pictures`: loaded textures, so they can be uploaded to the GPU before the first scroll reaches them
   const ready = Promise.all(pictures).then(() => maps);
-  return { scene, camera, update, callouts, state, ready, live: { el: css.domElement, setSize: (w, h) => css.setSize(w, h), render: renderLive } };
+  return { scene, camera, update, callouts, state, ready, live: { el: layer, render: renderLive } };
 }

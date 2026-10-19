@@ -47,7 +47,6 @@ function resize() {
   renderer.setSize(w, h); // also sizes the canvas element, so it always matches the pixels drawn
   composite.setSize(Math.floor(w * pr), Math.floor(h * pr));
   ui.setSize(w, h);
-  chapters[1]?.live.setSize(w, h);
   ctx.pixelRatio = pr;
   ctx.height = h;
   for (const c of chapters) {
@@ -275,7 +274,8 @@ function deviceFrame(kind, def, name) {
   const slot = el('div', { className: `slot ${kind}` });
   const body = el('div', { className: kind === 'phone' ? 'iphone' : 'macbook' });
   const screen = el('div', { className: 'glass' });
-  const frame = el('iframe', { src: def.demo, title: `${name}: try the app` });
+  const frame = el('iframe', { src: def.demo });
+  frame.setAttribute('aria-label', `${name}: try the app`); // a label, not a title: no tooltip over the app
   frame.allow = 'camera';
   screen.append(frame);
   if (kind === 'phone') body.append(el('div', { className: 'bezel' }), ...['action', 'vol-up', 'vol-down', 'side', 'camera'].map((b) => el('i', { className: b })));
