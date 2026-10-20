@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { createHero } from './hero.js';
+import { loadFullLogo } from './neonLogo.js';
 import { createCrystals } from './crystals.js';
 import { createRings } from './rings.js';
 import { createParticles } from './particles.js';
@@ -79,6 +80,7 @@ function resolve(p) {
 async function boot() {
   const pmrem = new THREE.PMREMGenerator(renderer);
   const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  if (innerWidth > innerHeight) await loadFullLogo(); // wide screens: the landing sign's letters come from the font file
   const builders = [createHero, createCrystals, createRings, createParticles];
   for (let i = 0; i < builders.length; i++) {
     await frame();

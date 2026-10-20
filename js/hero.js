@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { fbm3, smoothstep, lerp, easeInOut, easeOut, rng } from './noise.js';
 import { getTextures } from './textures.js';
 import { createShatter, SHATTER_DURATION } from './shatter.js';
-import { LOGO, BOUNDS, neonGeometries, neonWireGeometry, neonMaterial } from './neonLogo.js';
+import { FULL, MARK, neonMaterial } from './neonLogo.js';
 
 const BG = 0x9a9ea6;
 
@@ -138,9 +138,14 @@ export function createHero(env) {
   scene.add(new THREE.Mesh(tGeo, new THREE.MeshStandardMaterial({ color: 0xaeb3ba, roughness: 0.96, normalMap: tex.terrainNormal, normalScale: new THREE.Vector2(0.18, 0.18) })));
 
   const base = terrainHeight(0, 0) - 0.12;
-  const { minX, maxX, W, H, center } = BOUNDS;
+  // wide screens get the full logo (the mark and "developments"), scaled to span about 15 m of the valley
+  // and centred; portrait screens keep the mark alone, as before
+  const LOGO_SIGN = FULL && innerWidth > innerHeight ? FULL : MARK;
+  const { minX, maxX, W, H, center } = LOGO_SIGN.bounds;
+  const SIGN = LOGO_SIGN.wide ? 15 / W : 1;
   const monument = new THREE.Group();
-  monument.position.y = base;
+  monument.scale.setScalar(SIGN);
+  monument.position.set(LOGO_SIGN.wide ? -center.x * SIGN : 0, base, 0);
   monument.rotation.y = -0.12;
   scene.add(monument);
 
@@ -150,7 +155,7 @@ export function createHero(env) {
   // the neon logo; it pivots around its own centre
   const solid = new THREE.Group();
   solid.position.copy(center);
-  const neonGeos = neonGeometries();
+  const neonGeos = LOGO_SIGN.geometries();
   // a light source: not fogged (the intro fog would hide its farther tubes first), it fades in whole instead
   const neonMat = neonMaterial({ fog: false, transparent: true, opacity: 0 });
   solid.add(...neonGeos.map((g) => new THREE.Mesh(g, neonMat)));
@@ -171,7 +176,7 @@ export function createHero(env) {
   }
 
   // click: the outline bursts into sparks that land back bottom-up, the neon growing behind them
-  const shatter = createShatter(neonGeos, { count: 6000, spread: 2.4, size: 110, color: new THREE.Color(0.85, 0.97, 1) });
+  const shatter = createShatter(neonGeos, { count: LOGO_SIGN.wide ? 11000 : 6000, spread: 2.4, size: 110, color: new THREE.Color(0.85, 0.97, 1) });
   shatter.points.position.copy(center);
   monument.add(shatter.points);
   neonMat.clippingPlanes = [shatter.plane];
@@ -192,7 +197,7 @@ export function createHero(env) {
     monument.add(shadow);
   }
   // snow piled against the feet of the V and the C
-  for (const x of [LOGO.b.x, LOGO.c.x]) {
+  for (const x of LOGO_SIGN.feet) {
     const drift = new THREE.Mesh(driftGeometry(0.75), snowMat);
     drift.position.x = x;
     drift.scale.set(1, 1, 0.55);
@@ -211,7 +216,7 @@ export function createHero(env) {
     fragmentShader: `uniform float uDraw, uA, uScan; varying float vLocalY; varying float vY;
       void main(){
         float on = 1.0 - smoothstep(uDraw - 0.2, uDraw, vLocalY);
-        float edge = exp(-pow((vLocalY - uDraw) * 7.0, 2.0)) * step(uDraw, ${(BOUNDS.H + 0.2).toFixed(3)});
+        float edge = exp(-pow((vLocalY - uDraw) * 7.0, 2.0)) * step(uDraw, ${(H + 0.2).toFixed(3)});
         float band = exp(-pow((vY - uScan) * 2.2, 2.0));
         float a = max(uA * (on * 0.85 + edge * 1.2), band * 0.95);
         gl_FragColor = vec4(vec3(0.75, 1.25, 2.1) * a, a);
@@ -219,7 +224,7 @@ export function createHero(env) {
   });
   const wire = new THREE.Group();
   wire.position.copy(center);
-  wire.add(new THREE.LineSegments(neonWireGeometry(), wireMat));
+  wire.add(new THREE.LineSegments(LOGO_SIGN.wire(), wireMat));
   monument.add(wire);
 
   // faint construction lines flickering around the wireframe while it loads
@@ -304,7 +309,7 @@ export function createHero(env) {
   const callouts = [
     { text: `W ${W.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(center.x, 0.02, 2.2), offset: [20, 26] },
     { text: `H ${H.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(minX - 0.9, H * 0.5, 0), offset: [-24, -10] },
-    { text: 'VCD // MONUMENT_01\nLOGO 28', local: new THREE.Vector3(maxX - 0.4, H * 0.85, 0), offset: [90, -60] },
+    { text: `VCD // MONUMENT_01\nLOGO 28${LOGO_SIGN.wide ? ' · FULL' : ''}`, local: new THREE.Vector3(maxX - 0.4, H * 0.85, 0), offset: [90, -60] },
   ].map((c) => ({ ...c, anchor: new THREE.Vector3(), visible: false }));
 
   function update(local, ctx) {
@@ -338,11 +343,20 @@ export function createHero(env) {
 
     // slow orbit that settles as the scene appears
     const orbit = (1 - reveal) * 0.55;
-    // portrait screens: step back so the logo keeps breathing room at the sides
-    const fit = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 0.5 : 1;
-    const cx = (lerp(0, 2.6, t) + mouse.x * 0.9) * fit, cz = lerp(30, 12.5, t) * fit;
-    camera.position.set(cx * Math.cos(orbit) - cz * Math.sin(orbit), base + lerp(6.6, 4.0, t) + mouse.y * 0.45 + (1 - reveal) * 2, cx * Math.sin(orbit) + cz * Math.cos(orbit));
-    camera.lookAt(0, base + lerp(3.0, 2.6, t), 0);
+    if (LOGO_SIGN.wide) {
+      // settle at the distance where the whole sign fits with room at the sides
+      const fitDist = (W * SIGN * 1.3) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect);
+      const signY = H * SIGN * 0.55;
+      const cx = lerp(0, 1.2, t) + mouse.x * 0.9, cz = lerp(Math.max(24, fitDist * 1.35), Math.max(11, fitDist), t);
+      camera.position.set(cx * Math.cos(orbit) - cz * Math.sin(orbit), base + lerp(6.6, signY + 1.6, t) + mouse.y * 0.45 + (1 - reveal) * 2, cx * Math.sin(orbit) + cz * Math.cos(orbit));
+      camera.lookAt(0, base + lerp(3.0, signY + 0.5, t), 0);
+    } else {
+      // portrait screens: step back so the logo keeps breathing room at the sides
+      const fit = camera.aspect < 1 ? 1 + (1 - camera.aspect) * 0.5 : 1;
+      const cx = (lerp(0, 2.6, t) + mouse.x * 0.9) * fit, cz = lerp(30, 12.5, t) * fit;
+      camera.position.set(cx * Math.cos(orbit) - cz * Math.sin(orbit), base + lerp(6.6, 4.0, t) + mouse.y * 0.45 + (1 - reveal) * 2, cx * Math.sin(orbit) + cz * Math.cos(orbit));
+      camera.lookAt(0, base + lerp(3.0, 2.6, t), 0);
+    }
     camera.updateMatrixWorld();
     monument.updateMatrixWorld();
 

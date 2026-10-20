@@ -1,6 +1,8 @@
 // The VCDevelopments logo (logo 28: a slanted V blade and an open C arc) as a neon sign, shared by the
-// landing scene and the finale. Geometry is in world units, centred on the logo's bounding box.
+// landing scene (with the wordmark, see loadFullLogo) and the finale. Geometry is in world units, centred on the logo's bounding box.
 import * as THREE from 'three';
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
+import { Font } from 'three/addons/loaders/FontLoader.js';
 
 // Logo 28 in world units, standing on y = 0.
 const LS = 24; // logo px per world unit
@@ -67,3 +69,56 @@ export function neonWireGeometry() {
 
 // The tubes' glow: brighter than white, so it stays luminous through tone mapping and post.
 export const neonMaterial = (o = {}) => new THREE.MeshBasicMaterial({ color: new THREE.Color(1.1, 2.4, 4), toneMapped: false, ...o });
+
+// ---- the full logo, for the landing scene on wide screens: the mark reads as the "vc", followed by
+// "developments" in Outfit ExtraLight (the header's wordmark), every letter traced in neon like the mark.
+// Built from the font file once it has loaded; portrait screens and the finale keep the mark alone.
+
+const TEXT_Z = 0.16; // the letters are thinner signs than the mark
+// the mark alone, in the same shape as FULL, for the scenes that show just the mark
+export const MARK = { wide: false, bounds: BOUNDS, feet: [LOGO.b.x, LOGO.c.x], geometries: neonGeometries, wire: neonWireGeometry };
+export let FULL = null;
+
+export async function loadFullLogo(base = '') {
+  const ttf = new TTFLoader();
+  const light = new Font(await ttf.loadAsync(`${base}brand/fonts/Outfit-200.ttf`));
+  // the header's proportions: the mark is 1.45 em tall and sits centred on the line
+  const markH = BOUNDS.H, em = markH / 1.45;
+  const baseline = markH / 2 - em * 0.36;
+  const x = BOUNDS.maxX + em * 0.22;
+  const textShapes = light.generateShapes('developments', em).map((shape) => ({ shape, dx: x }));
+  // every outline as a closed loop of points: the mark's two parts, then each letter's outline and holes
+  const loops = logoShapes().map((s) => ({ pts: outlinePoints(s, 240), z: NEON_Z }));
+  for (const { shape, dx } of textShapes) {
+    for (const path of [shape, ...shape.holes]) {
+      const n = Math.max(24, Math.min(220, Math.round(path.getLength() * 26)));
+      loops.push({ pts: outlinePoints(path, n).map((p) => new THREE.Vector2(p.x + dx, p.y + baseline)), z: TEXT_Z });
+    }
+  }
+  let minX = Infinity, maxX = -Infinity, maxY = 0;
+  for (const l of loops) for (const p of l.pts) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); }
+  const bounds = { minX, maxX, W: maxX - minX, H: maxY, center: new THREE.Vector3((minX + maxX) / 2, maxY / 2, 0) };
+  const shift = (g) => g.translate(-bounds.center.x, -bounds.center.y, 0);
+  FULL = {
+    wide: true,
+    bounds,
+    // where snow drifts against the sign: the feet of the V and the C
+    feet: [LOGO.b.x, LOGO.c.x],
+    geometries: () => loops.flatMap(({ pts, z }) => [-z, z].map((zz) => shift(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(p.x, p.y, zz)), true), Math.max(60, pts.length * 2), NEON_R, 8, true)))),
+    wire: () => {
+      const pos = [];
+      for (const { pts, z } of loops) {
+        const step = Math.max(1, Math.round(pts.length / 60));
+        for (let i = 0; i < pts.length; i += step) {
+          const a = pts[i], b = pts[(i + step) % pts.length];
+          for (const zz of [-z, z]) pos.push(a.x, a.y, zz, b.x, b.y, zz);
+          if ((i / step) % 3 === 0) pos.push(a.x, a.y, -z, a.x, a.y, z);
+        }
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      return shift(g);
+    },
+  };
+  return FULL;
+}
