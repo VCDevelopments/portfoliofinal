@@ -1,2 +1,4 @@
 .DS_Store
 .impeccable/
+videos/*.mp4
+!videos/*-web.mp4

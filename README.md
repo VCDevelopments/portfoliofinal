@@ -15,7 +15,7 @@ Every demo has a guided tour ("Show me how it works" in the pop-up): a fingertip
 
 Visits and events (project opened, tour played, inquiry, language) can be counted without cookies through Umami: set `UMAMI_ID` in `js/track.js`.
 
-Case-study videos (4:5) are recorded from the demos' tours with `node tools/record-reels.mjs` (site served locally, Chrome installed) into `videos/`: `<slug>.mp4` at 1080 × 1350 for LinkedIn, `<slug>-web.mp4` and `<slug>-poster.jpg` for the site and the project pages.
+Case-study videos (4:5) are recorded from the demos' tours with `node tools/record-reels.mjs` (site served locally, Chrome installed) into `videos/`: `<slug>.mp4` at 1080 × 1350 for LinkedIn (kept out of the repository), `<slug>-web.mp4` and `<slug>-poster.jpg` for the site and the project pages.
 4. Snow that bursts into the spinning neon logo, with a contact section and GitHub / LinkedIn links.
 
 With reduced motion turned on in the device settings, the intro is skipped and scene changes are plain crossfades. Phones get a lighter render (lower pixel density, less anti-aliasing, fewer particles).

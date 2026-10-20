@@ -16,7 +16,7 @@ function page(p) {
   const pics = p.gallery.map((g) => `<figure><img src="../../${esc(g.src)}" alt="${esc(g.caption)}" width="1200" height="800" loading="lazy" /><figcaption>${esc(g.caption)}</figcaption></figure>`).join('\n      ');
   const sections = p.details.sections.map((s) => `<section><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p></section>`).join('\n      ');
   // the case-study video (tools/record-reels.mjs), when it has been recorded
-  const video = existsSync(new URL(`videos/${slug}.mp4`, root)) && `videos/${slug}.mp4`;
+  const video = existsSync(new URL(`videos/${slug}-web.mp4`, root)) && `videos/${slug}-web.mp4`; // the full-size file stays local, for LinkedIn
   const ld = { '@context': 'https://schema.org', '@type': 'CreativeWork', name: p.name, description: desc, url, image: `${SITE}/${p.image}`, author: { '@type': 'Person', name: 'Lothar Van Cauwenbergh', url: SITE }, ...(p.url ? { codeRepository: p.url } : {}) };
   return `<!doctype html>
 <html lang="en">
@@ -39,8 +39,8 @@ function page(p) {
   <meta property="og:video" content="${SITE}/${video}" />
   <meta property="og:video:secure_url" content="${SITE}/${video}" />
   <meta property="og:video:type" content="video/mp4" />
-  <meta property="og:video:width" content="1080" />
-  <meta property="og:video:height" content="1350" />` : ''}
+  <meta property="og:video:width" content="720" />
+  <meta property="og:video:height" content="900" />` : ''}
   <meta name="theme-color" content="#1e242e" />
   <link rel="icon" type="image/svg+xml" href="../../brand/vcd-logo-28.svg" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Outfit:wght@300;700;800&display=swap" rel="stylesheet" />
