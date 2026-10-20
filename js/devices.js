@@ -168,7 +168,7 @@ function phone(map) {
   return { group: g, screens: [{ mesh: screen, width: sw, height: sh, px: { w: IOS.w, h: IOS.h }, radius: `${IOS.r}px` }] };
 }
 
-// what each project runs on: an iPhone, or (Relay) a laptop with the phone beside it
+// what each project runs on: an iPhone, a MacBook, or both side by side
 export function device(item, load) {
   const g = new THREE.Group();
   const screens = [];
@@ -180,10 +180,11 @@ export function device(item, load) {
     for (const sc of s) screens.push({ ...sc, demo: def.demo, material: sc.mesh.material });
   };
   const { laptop: lap, phone: ph } = item.device;
-  if (lap) {
+  if (lap && ph) {
     add(laptop(load(lap.poster)), lap, -0.55, 0, 0, 0, 1.05);
     add(phone(load(ph.poster)), ph, 1.6, -0.4, 1.1, -0.25, 1);
-  } else add(phone(load(ph.poster)), ph, 0, 0, 0, 0, 2.3);
+  } else if (lap) add(laptop(load(lap.poster)), lap, 0, 0, 0, 0, 1.2);
+  else add(phone(load(ph.poster)), ph, 0, 0, 0, 0, 2.3);
   // centre the whole thing on the group's origin
   const box = new THREE.Box3().setFromObject(g);
   const centre = box.getCenter(new THREE.Vector3());

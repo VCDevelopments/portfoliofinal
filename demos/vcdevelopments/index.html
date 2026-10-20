@@ -3,190 +3,54 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>VCDevelopments · demo</title>
+  <title>VCDevelopments on iPhone · demo</title>
+  <!-- The real site, vcdevelopments.info, as an iPhone shows it in Safari. -->
   <link rel="stylesheet" href="../ios.css" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Outfit:wght@300;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../safari.css" />
   <style>
-    /* mobile Safari showing the portfolio's phone version */
-    .web { position: absolute; inset: 0; overflow-y: auto; scrollbar-width: none; background: #1e242e; color: #f2f5f8; font-family: "Outfit", sans-serif; letter-spacing: 0; padding-bottom: 140px; }
-    .web::-webkit-scrollbar { display: none; }
-    .mono { font: 500 11px/1.4 "IBM Plex Mono", monospace; letter-spacing: .12em; text-transform: uppercase; }
-    .hero { position: relative; height: 640px; overflow: hidden; background: radial-gradient(120% 70% at 50% 75%, #c9ced6, #8d949f 55%, #5b616b); transition: background .8s; }
-    .night .hero { background: radial-gradient(120% 70% at 50% 75%, #2b3140, #141822 60%, #090b10); }
-    .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-    .hero header { position: absolute; top: 58px; left: 18px; right: 18px; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
-    .brand { font: 300 20px/1 "Outfit"; display: flex; gap: 8px; align-items: center; }
-    .brand b { font-weight: 800; }
-    .brand svg { width: 26px; height: 26px; }
-    .night-btn { font: 500 11px/1 "IBM Plex Mono", monospace; display: flex; gap: 8px; align-items: center; color: #fff; }
-    .logo { position: absolute; left: 50%; top: 210px; width: 230px; height: 230px; margin-left: -115px; z-index: 1; cursor: pointer; transition: transform .3s; }
-    .logo svg { width: 100%; height: 100%; overflow: visible; }
-    .logo .tube { filter: drop-shadow(0 0 6px #8fd0ff) drop-shadow(0 0 18px #3d8bff); animation: flicker 5s infinite; }
-    .night .logo .tube { filter: drop-shadow(0 0 8px #a8dcff) drop-shadow(0 0 30px #3d8bff) drop-shadow(0 0 60px #2f6fd6); }
-    @keyframes flicker { 0%, 91%, 95%, 100% { opacity: 1; } 92%, 94% { opacity: .55; } }
-    .logo.burst { animation: burst .7s cubic-bezier(.3,.7,.4,1.3); }
-    @keyframes burst { 30% { transform: scale(.82) rotate(-6deg); filter: blur(2px); } }
-    .hero .intro { position: absolute; left: 18px; right: 18px; bottom: 50px; z-index: 2; }
-    .hero h1 { font: 800 40px/0.98 "Outfit"; letter-spacing: -.04em; }
-    .hero p { font: 300 16px/1.45 "Outfit"; margin-top: 10px; color: #eef2f6; max-width: 30ch; }
-    .hero .hint { margin-top: 18px; color: rgba(255,255,255,.75); }
-    section.block { padding: 40px 18px 10px; }
-    section.block h2 { font: 800 32px/1 "Outfit"; letter-spacing: -.035em; margin-top: 8px; }
-    .cards { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 18px 18px 6px; margin: 0 -18px; scrollbar-width: none; }
-    .cards::-webkit-scrollbar { display: none; }
-    .card { flex: 0 0 300px; scroll-snap-align: center; border: 1px solid rgba(255,255,255,.18); background: rgba(14,17,23,.5); padding: 14px; text-align: left; color: inherit; font-family: "Outfit"; }
-    .card img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
-    .card h3 { font: 800 26px/1 "Outfit"; letter-spacing: -.03em; margin-top: 12px; }
-    .card p { font: 300 15px/1.4 "Outfit"; margin-top: 6px; color: #dbe2ea; }
-    .card .more { display: block; max-height: 0; overflow: hidden; transition: max-height .45s ease; }
-    .card[aria-expanded="true"] .more { max-height: 200px; }
-    .card .more span { display: block; margin-top: 10px; font: 300 14px/1.5 "Outfit"; color: #c9d2dc; }
-    .card .tag { margin-top: 10px; display: inline-block; color: var(--g); }
-    .dots { display: flex; gap: 6px; justify-content: center; margin-top: 12px; }
-    .dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.3); transition: background .3s, width .3s; }
-    .dots i.on { background: #fff; width: 18px; border-radius: 3px; }
-    .contact p { font: 300 16px/1.45 "Outfit"; margin-top: 10px; color: #e8edf3; }
-    .contact a { display: flex; align-items: center; justify-content: center; height: 48px; margin-top: 10px; border: 1px solid #fff; color: #fff; text-decoration: none; font: 500 12px/1 "IBM Plex Mono", monospace; }
-    .contact a.primary { background: #fff; color: #1e242e; }
-    footer { padding: 30px 18px; color: rgba(255,255,255,.5); }
-    /* Safari tints the status bar area with the page once it scrolls under it */
-    .topbar { position: absolute; z-index: 70; top: 0; left: 0; right: 0; height: 54px; background: rgba(30, 36, 46, .94); opacity: 0; transition: opacity .25s; pointer-events: none; }
-    .scrolled .topbar { opacity: 1; }
-
-    /* Safari's bottom bar: address field + toolbar; shrinks to a small address while you scroll down */
-    .safari { position: absolute; z-index: 80; left: 0; right: 0; bottom: 0; padding: 8px 12px 30px; background: rgba(30, 30, 32, .82); backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8); border-top: .33px solid rgba(255,255,255,.12); transition: padding .3s; }
-    .addr { height: 44px; border-radius: 12px; background: rgba(118,118,128,.28); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-size: 17px; color: #fff; transition: height .3s, background .3s, font-size .3s; }
-    .addr .aa { font-size: 15px; font-weight: 600; letter-spacing: -.5px; }
-    .addr .url { display: flex; gap: 6px; align-items: center; }
-    .addr .url svg { width: 10px; height: 13px; opacity: .8; }
-    .tools { display: flex; justify-content: space-between; padding: 12px 10px 0; color: #0a84ff; transition: opacity .2s, height .3s, padding .3s; height: 42px; overflow: hidden; }
-    .tools button { width: 44px; height: 30px; display: grid; place-items: center; color: inherit; }
-    .tools button[disabled] { color: rgba(235,235,245,.3); }
-    .tools svg { width: 24px; height: 24px; }
-    .compact .safari { padding: 4px 12px 26px; }
-    .compact .addr { height: 26px; background: transparent; font-size: 13px; }
-    .compact .addr .aa, .compact .addr .reload { opacity: 0; }
-    .compact .tools { opacity: 0; height: 0; padding: 0 10px; }
-    .progress { position: absolute; left: 12px; right: 12px; top: 49px; height: 2px; border-radius: 1px; overflow: hidden; }
-    .progress i { display: block; height: 100%; width: 0; background: #0a84ff; }
-    .loading .progress i { animation: load 0.9s ease-out forwards; }
-    @keyframes load { to { width: 100%; opacity: 0; } }
+    :root { --page: #9a9ea6; }
+    .screen { background: var(--page); --sb: #fff; }
   </style>
 </head>
 <body>
-<div class="screen" style="--sb:#fff">
-  <div class="web" id="web">
-    <div class="hero">
-      <canvas id="snow"></canvas>
-      <header><span class="brand"><svg viewBox="0 0 200 200"><g fill="none" stroke="#9cd2ff" stroke-linecap="round"><line x1="36" y1="52" x2="80" y2="150" stroke-width="30"/><path d="M170.3 71.7 A40 40 0 1 0 170.3 128.3" stroke-width="26" opacity="0.6"/></g></svg><span><b>vc</b>developments</span></span>
-        <button class="night-btn" type="button" id="night">☾ Night: <b>Off</b></button></header>
-      <button class="logo" type="button" id="logo" aria-label="Neon logo"><svg viewBox="0 0 200 200"><defs><mask id="tube" maskUnits="userSpaceOnUse"><g fill="none" stroke-linecap="round" transform="translate(-2 -1)"><g stroke="#fff"><line x1="36" y1="52" x2="80" y2="150" stroke-width="34"/><path d="M170.3 71.7 A40 40 0 1 0 170.3 128.3" stroke-width="30"/></g><g stroke="#000"><line x1="36" y1="52" x2="80" y2="150" stroke-width="25"/><path d="M170.3 71.7 A40 40 0 1 0 170.3 128.3" stroke-width="21"/></g></g></mask></defs><rect class="tube" width="200" height="200" fill="#eef8ff" mask="url(#tube)"/></svg></button>
-      <div class="intro"><span class="mono">////// Lothar Van Cauwenbergh</span><h1>Websites, iOS apps &amp; AI tools.</h1><p>Designed and built end to end. Tap the logo, or swipe through the projects below.</p><div class="mono hint">Scroll down to discover ↓</div></div>
-    </div>
-    <section class="block">
-      <span class="mono">////// Projects</span>
-      <h2>Selected work</h2>
-      <div class="cards" id="cards"></div>
-      <div class="dots" id="dots"></div>
-    </section>
-    <section class="block contact">
-      <span class="mono">////// Contact</span>
-      <h2>Let’s build something.</h2>
-      <p>Have an idea for a website, an iOS app or an AI tool? Send me a message.</p>
-      <a class="primary" href="mailto:info.vcdevelopments@gmail.com">Email me ↗</a>
-      <a href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a>
-    </section>
-    <footer class="mono">© VCDevelopments</footer>
-  </div>
-
-  <div class="topbar"></div>
+<div class="screen">
+  <div class="topfill"></div>
+  <iframe class="webview" id="web" src="../../?embed" title="vcdevelopments.info"></iframe>
   <div class="safari">
-    <div class="addr"><span class="aa">aA</span><span class="url"><svg viewBox="0 0 10 13"><rect x="0.5" y="5.5" width="9" height="7" rx="1.5" fill="currentColor"/><path d="M2.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>vcdevelopments.info</span><button class="reload" type="button" id="reload" aria-label="Reload"><svg viewBox="0 0 20 20" width="17" height="17"><path d="M16 10a6 6 0 1 1-2-4.5M16 3v4h-4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-    <div class="progress"><i></i></div>
+    <div class="addr"><span class="aa">aA</span><span class="url"><svg viewBox="0 0 10 13"><rect x="0.5" y="5.5" width="9" height="7" rx="1.5" fill="currentColor"/><path d="M2.5 6V4a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>vcdevelopments.info</span><button type="button" id="reload" aria-label="Reload"><svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true"><path d="M16 10a6 6 0 1 1-2-4.5M16 3v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     <div class="tools">
       <button type="button" disabled aria-label="Back"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <button type="button" disabled aria-label="Forward"><svg viewBox="0 0 24 24"><path d="m9 4 8 8-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <button type="button" aria-label="Share" id="share"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H6v11h12V10h-2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <button type="button" aria-label="Bookmarks" id="book"><svg viewBox="0 0 24 24"><path d="M12 6c-2-1.6-4.6-2-8-2v14c3.4 0 6 .4 8 2 2-1.6 4.6-2 8-2V4c-3.4 0-6 .4-8 2zm0 0v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
+      <button type="button" aria-label="Share"><svg viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H6v11h12V10h-2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button type="button" aria-label="Bookmarks"><svg viewBox="0 0 24 24"><path d="M12 6c-2-1.6-4.6-2-8-2v14c3.4 0 6 .4 8 2 2-1.6 4.6-2 8-2V4c-3.4 0-6 .4-8 2zm0 0v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
       <button type="button" aria-label="Tabs"><svg viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="13" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 4.5h10.5a2.5 2.5 0 0 1 2.5 2.5v10.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
     </div>
   </div>
 </div>
 <script type="module">
-  import { $, $$, chrome, actionSheet, hud, onTour } from '../ios.js';
+  import { $, chrome, onTour, wait } from '../ios.js';
   chrome();
-  const PROJECTS = [
-    ['Pulse', 'Ads on autopilot: learns what sells and moves the budget there.', 'pulse', '#8B6CF6', 'Syncs sales and ad results every 15 minutes, retrains three models and moves the daily budget, within guardrails.'],
-    ['Relay', 'Share files between laptop and phone with a QR code.', 'relay', '#3DE0C0', 'Scan once and the phone stays paired. Files travel across your own Wi-Fi, never through a cloud.'],
-    ['ShotGuide', 'iOS camera that coaches you to recreate any aesthetic photo.', 'shotguide', '#FFB38A', 'Works out the lens, height, tilt and light of a photo, then coaches you live until your shot matches.'],
-    ['VCDevelopments', 'This portfolio: a scroll-driven 3D site built with Three.js.', 'portfolio', '#7DC8FF', 'Four scenes blended by one shader, built in code without a framework or a build step.'],
-  ];
-  $('#cards').innerHTML = PROJECTS.map(([n, b, img, g, more]) => `<button class="card" type="button" aria-expanded="false" style="--g:${g}"><img src="../../img/projects/${img}.jpg" alt="" /><h3>${n}</h3><p>${b}</p><span class="more"><span>${more}</span></span><span class="mono tag">Tap to read more +</span></button>`).join('');
-  $('#dots').innerHTML = PROJECTS.map(() => '<i></i>').join('');
-  $('#cards').addEventListener('click', (e) => {
-    const c = e.target.closest('.card');
-    if (!c) return;
-    const open = c.getAttribute('aria-expanded') !== 'true';
-    c.setAttribute('aria-expanded', String(open));
-    $('.tag', c).textContent = open ? 'Show less −' : 'Tap to read more +';
-  });
-  const dots = () => { const k = Math.round($('#cards').scrollLeft / 312); $$('#dots i').forEach((d, i) => d.classList.toggle('on', i === k)); };
-  $('#cards').addEventListener('scroll', dots);
-  dots();
-
-  // Safari's bar shrinks while scrolling down and comes back when scrolling up
   const web = $('#web');
-  let lastY = 0;
-  web.addEventListener('scroll', () => {
-    const y = web.scrollTop;
-    document.body.classList.toggle('scrolled', y > 8);
-    if (Math.abs(y - lastY) > 6) document.body.classList.toggle('compact', y > lastY && y > 40);
-    lastY = y;
-  });
-  $('.safari').addEventListener('click', (e) => { if (!e.target.closest('button')) document.body.classList.remove('compact'); });
-  $('#reload').addEventListener('click', () => { const s = $('.safari'); s.classList.remove('loading'); s.offsetWidth; s.classList.add('loading'); web.scrollTo({ top: 0, behavior: 'smooth' }); });
-  $('#share').addEventListener('click', async () => { const v = await actionSheet('vcdevelopments.info', [{ label: 'Copy' }, { label: 'Add to Home Screen' }, { label: 'Add Bookmark' }]); if (v) hud(v === 'Copy' ? 'Copied' : v === 'Add Bookmark' ? 'Bookmark added' : 'Added'); });
-  $('#book').addEventListener('click', () => hud('Bookmark added'));
+  const win = () => web.contentWindow, doc = () => web.contentDocument;
+  $('#reload').addEventListener('click', () => win().location.reload());
+  // scroll the site to a fraction of its length (its scenes follow the scroll)
+  const to = (f) => () => (doc().scrollingElement.scrollHeight - win().innerHeight) * f;
+  // a tap on the scene where the finger is: the site reads pointer moves and presses
+  const tapScene = (fx, fy) => async () => {
+    const x = win().innerWidth * fx, y = win().innerHeight * fy, c = doc().getElementById('gl');
+    for (const type of ['pointermove', 'pointerdown', 'pointerup']) c.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true, pointerType: 'touch', isPrimary: true }));
+  };
 
-  // night mode, like the real site
-  $('#night').addEventListener('click', () => { const on = document.body.classList.toggle('night'); $('#night b').textContent = on ? 'On' : 'Off'; });
-
-  // snow drifting across the hero; tapping the logo bursts it, tapping elsewhere sends a gust
-  const cv = $('#snow'), g = cv.getContext('2d');
-  const flakes = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), r: 0.6 + Math.random() * 1.8, s: 0.02 + Math.random() * 0.05, w: Math.random() * 6 }));
-  let gust = 0;
-  function snow(t) {
-    requestAnimationFrame(snow);
-    const W = (cv.width = cv.clientWidth * 2), H = (cv.height = cv.clientHeight * 2);
-    g.fillStyle = 'rgba(255,255,255,.85)';
-    gust *= 0.96;
-    for (const f of flakes) {
-      f.y += f.s * 0.016 * (1 + gust * 0.2);
-      f.x += (Math.sin(t / 1000 + f.w) * 0.0004) + gust * 0.002 * f.s * 10;
-      if (f.y > 1) { f.y = 0; f.x = Math.random(); }
-      f.x = (f.x + 1) % 1;
-      g.beginPath(); g.arc(f.x * W, f.y * H, f.r * 2, 0, 7); g.fill();
-    }
-  }
-  requestAnimationFrame(snow);
-  $('.hero').addEventListener('click', (e) => {
-    if (e.target.closest('#night')) return;
-    if (e.target.closest('#logo')) { const l = $('#logo'); l.classList.remove('burst'); l.offsetWidth; l.classList.add('burst'); }
-    gust = 8;
-  });
-
-  // guided tour
-  onTour([
-    { tap: '#logo', say: 'Tap the neon logo', after: 1000 },
-    { tap: '#night', say: 'Night mode, like the real site', after: 1200 },
-    { scroll: '#web', to: () => $('.block').offsetTop - 70, say: 'Swipe through the projects', after: 500 },
-    { scroll: '#cards', left: 312, after: 300 },
-    { scroll: '#cards', left: 624, after: 300 },
-    { tap: () => $$('.card')[2], say: 'Tap a card to read more', after: 1200 },
-    { scroll: '#web', to: 99999, say: 'And get in touch', after: 1600 },
-    { scroll: '#web', to: 0, say: 'Back to the top', after: 600 },
-    { tap: '#night', say: 'Lights back on', after: 1000 },
-    { tap: '#logo', after: 1400 },
+  onTour(() => [
+    { run: async () => { while (doc().body.classList.contains('is-loading') || doc().body.classList.contains('is-intro')) await wait(200); }, after: 300 },
+    { at: () => doc().getElementById('gl'), run: tapScene(0.5, 0.5), say: 'Tap the neon logo', after: 2200 },
+    { tap: () => doc().querySelector('.lights'), say: 'Night mode', after: 1600 },
+    { scroll: () => doc().scrollingElement, to: to(0.22), say: 'Scroll through the projects', after: 2400 },
+    { scroll: () => doc().scrollingElement, to: to(0.45), after: 2200 },
+    { scroll: () => doc().scrollingElement, to: to(0.68), say: 'What I build, and how', after: 2400 },
+    { scroll: () => doc().scrollingElement, to: to(1), say: 'And get in touch', after: 2400 },
+    { tap: () => doc().querySelector('.lang'), say: 'In English or Dutch', after: 1800 },
+    { tap: () => doc().querySelector('.lang'), after: 600 },
   ]);
 </script>
 </body>

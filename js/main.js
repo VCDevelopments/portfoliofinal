@@ -314,7 +314,7 @@ function tourButton(on) {
   b.setAttribute('aria-pressed', String(on));
 }
 dialog.querySelector('.show-me').addEventListener('click', () => {
-  const phone = dialog.querySelector('.slot.phone iframe');
+  const phone = dialog.querySelector('.slot.phone iframe') || dialog.querySelector('.slot iframe');
   phone?.contentWindow?.postMessage(touring ? 'vcd:pause' : 'vcd:tour', location.origin);
   if (!touring) track('tour', { project: slugOf(PROJECTS[openIndex]), where: 'popup' });
   tourButton(!touring);
@@ -344,10 +344,10 @@ function fitDevices() {
   const box = dialog.querySelector('.devices');
   const room = box.clientWidth;
   const k = Math.min(0.82, (innerHeight * 0.74) / FRAME.phone[1], room / FRAME.phone[0]);
-  const laptop = box.querySelector('.laptop');
-  // the laptop shows beside the phone only when there is room for both
-  const kl = laptop && Math.min((k * FRAME.phone[1] * 0.78) / FRAME.laptop[1], (room - FRAME.phone[0] * k - 32) / FRAME.laptop[0]);
-  if (laptop) laptop.hidden = kl < 0.32;
+  const laptop = box.querySelector('.laptop'), phone = box.querySelector('.phone');
+  // a laptop on its own fills the width; beside a phone it shows only when there is room for both
+  const kl = laptop && (phone ? Math.min((k * FRAME.phone[1] * 0.78) / FRAME.laptop[1], (room - FRAME.phone[0] * k - 32) / FRAME.laptop[0]) : Math.min(room / FRAME.laptop[0], (innerHeight * 0.7) / FRAME.laptop[1]));
+  if (laptop && phone) laptop.hidden = kl < 0.32;
   for (const [slot, kind, scale] of [[box.querySelector('.phone'), 'phone', k], [laptop, 'laptop', kl]]) {
     if (!slot) continue;
     slot.style.width = `${FRAME[kind][0] * scale}px`;

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dropzone</title>
+<!-- VCDevelopments portfolio: Relay's real page (Dropzone), running on mock.js instead of its server. -->
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --ink: #1b1b1a; --muted: #6d6a64; --line: #e4e1da;
+    --accent: #2f6df6; --danger: #c8322a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141413; --card: #1e1e1c; --ink: #f1efe9; --muted: #9b978e; --line: #2e2d2a;
+            --accent: #6f98ff; --danger: #ff6b61; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  h1 { font-size: 22px; margin: 0; letter-spacing: -0.02em; }
+  button, .btn { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+                 border-radius: 10px; padding: 8px 12px; cursor: pointer; text-decoration: none;
+                 display: inline-flex; align-items: center; justify-content: center; min-height: 40px; }
+  button:hover, .btn:hover { border-color: var(--muted); }
+  .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .danger { color: var(--danger); }
+  #drop { border: 2px dashed var(--line); border-radius: 16px; padding: 28px 16px; text-align: center;
+          background: var(--card); transition: border-color .15s, background .15s; }
+  #drop.over { border-color: var(--accent); }
+  #drop p { margin: 10px 0 0; color: var(--muted); }
+  #progress { margin-top: 12px; display: grid; gap: 6px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; }
+  .up { font-size: 13px; color: var(--muted); text-align: left; }
+  #qr { display: none; margin-top: 16px; background: var(--card); border: 1px solid var(--line);
+        border-radius: 16px; padding: 16px; text-align: center; }
+  #qr.show { display: block; }
+  #qrcode { display: inline-block; padding: 10px; background: #fff; border-radius: 8px; }
+  #qr small { display: block; color: var(--muted); margin-top: 8px; word-break: break-all; }
+  #grid { margin-top: 20px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+          display: flex; flex-direction: column; }
+  .thumb { aspect-ratio: 4/3; background: var(--line); display: flex; align-items: center; justify-content: center;
+           color: var(--muted); font-weight: 600; font-size: 13px; text-transform: uppercase; }
+  .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .meta { padding: 10px 12px 4px; }
+  .name { font-weight: 600; overflow-wrap: anywhere; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 12px; }
+  .actions > * { flex: 1 1 auto; font-size: 14px; }
+  #empty { color: var(--muted); text-align: center; margin-top: 40px; }
+  #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+           padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Dropzone</h1>
+    <button id="qrBtn" type="button">Connect phone</button>
+  </header>
+
+  <div id="qr">
+    <div id="qrcode"></div>
+    <small id="qrUrl"></small>
+    <small>Scan with your phone camera. First visit: tap “Show Details → visit this website” on the certificate warning.</small>
+  </div>
+
+  <div id="drop">
+    <label class="btn primary" for="picker">Choose files or photos</label>
+    <input id="picker" type="file" multiple hidden>
+    <p>…or drag files here, or paste (Ctrl/⌘ V)</p>
+    <div id="progress"></div>
+  </div>
+
+  <div id="grid"></div>
+  <div id="empty" hidden>No files yet. Send something from any device.</div>
+</main>
+<div id="toast" role="status"></div>
+
+<script src="mock.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const grid = $("#grid"), progress = $("#progress");
+const canShareFiles = !!(navigator.canShare && window.isSecureContext);
+const blobs = new Map();          // name -> File, ready to share on the next tap
+let lastList = "";
+
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2500);
+}
+function fmtSize(n) {
+  const u = ["B", "KB", "MB", "GB"]; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return (i ? n.toFixed(1) : n) + " " + u[i];
+}
+const fileUrl = (name) => window.relayFileUrl(name); // demo: files live in the browser (mock.js)
+
+// ---- list -------------------------------------------------------------
+async function refresh() {
+  const res = await fetch("/api/files");
+  if (!res.ok) return;
+  const files = await res.json();
+  const sig = JSON.stringify(files);
+  if (sig === lastList) return;   // avoid re-rendering (and reloading videos) when nothing changed
+  lastList = sig;
+  grid.replaceChildren(...files.map(card));
+  $("#empty").hidden = files.length > 0;
+}
+
+function card(f) {
+  const el = document.createElement("div");
+  el.className = "card";
+  const thumb = document.createElement("div");
+  thumb.className = "thumb";
+  const isImg = f.type.startsWith("image/"), isVid = f.type.startsWith("video/");
+  if (isImg) {
+    const img = new Image(); img.loading = "lazy"; img.src = fileUrl(f.name); img.alt = f.name;
+    thumb.append(img);
+  } else if (isVid) {
+    const v = document.createElement("video");
+    v.src = fileUrl(f.name) + "#t=0.1"; v.preload = "metadata"; v.controls = true; v.playsInline = true;
+    thumb.append(v);
+  } else {
+    thumb.textContent = (f.name.split(".").pop() || "file").slice(0, 6);
+  }
+  if (isImg) { thumb.style.cursor = "zoom-in"; thumb.onclick = () => window.open(fileUrl(f.name), "_blank"); }
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.innerHTML = `<div class="name"></div><div class="sub"></div>`;
+  meta.querySelector(".name").textContent = f.name;
+  meta.querySelector(".sub").textContent = `${fmtSize(f.size)} · ${new Date(f.mtime * 1000).toLocaleString()}`;
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+  const dl = document.createElement("a");
+  dl.className = "btn"; dl.href = fileUrl(f.name); dl.textContent = "Download"; dl.download = f.name;
+  actions.append(dl);
+
+  if ((isImg || isVid) && canShareFiles) {
+    const save = document.createElement("button");
+    save.type = "button"; save.className = "primary"; save.textContent = "Save to Photos";
+    save.onclick = () => saveToPhotos(f, save);
+    actions.append(save);
+  }
+  const del = document.createElement("button");
+  del.type = "button"; del.className = "danger"; del.textContent = "Delete";
+  del.onclick = async () => {
+    if (!confirm(`Delete “${f.name}” from all devices?`)) return;
+    const r = await fetch("/api/files/" + encodeURIComponent(f.name), { method: "DELETE" });
+    toast(r.ok ? "Deleted" : "Delete failed"); refresh();
+  };
+  actions.append(del);
+
+  el.append(thumb, meta, actions);
+  return el;
+}
+
+// Opens the phone share sheet ("Save Image" / "Save Video" / "Save to Photos").
+// Safari only allows sharing right after a tap, so a slow download may need a second tap.
+async function saveToPhotos(f, btn) {
+  let file = blobs.get(f.name);
+  if (!file) {
+    btn.disabled = true; btn.textContent = "Preparing…";
+    try {
+      const blob = await (await fetch(fileUrl(f.name))).blob();
+      file = new File([blob], f.name, { type: f.type });
+      blobs.set(f.name, file);
+    } catch { toast("Could not load file"); btn.disabled = false; btn.textContent = "Save to Photos"; return; }
+    btn.disabled = false;
+  }
+  if (!navigator.canShare({ files: [file] })) { toast("This browser can't save this file type — use Download"); return; }
+  try {
+    await navigator.share({ files: [file] });
+    btn.textContent = "Save to Photos";
+  } catch (e) {
+    if (e.name === "NotAllowedError") { btn.textContent = "Tap again to save"; }
+    else if (e.name !== "AbortError") { toast("Share failed: " + e.message); btn.textContent = "Save to Photos"; }
+    else { btn.textContent = "Save to Photos"; }
+  }
+}
+
+// ---- upload -----------------------------------------------------------
+function upload(file) {
+  const row = document.createElement("div");
+  row.innerHTML = `<div class="up"></div><div class="bar"><i></i></div>`;
+  row.querySelector(".up").textContent = file.name;
+  progress.append(row);
+  const bar = row.querySelector("i");
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/api/upload?name=" + encodeURIComponent(file.name || "pasted-file"));
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) bar.style.width = (e.loaded / e.total * 100) + "%"; };
+    xhr.onloadend = () => {
+      if (xhr.status !== 201) toast(`Upload failed: ${file.name}`);
+      row.remove(); refresh(); resolve();
+    };
+    xhr.send(file);
+  });
+}
+async function uploadAll(files) {
+  files = [...files];
+  if (!files.length) return;
+  for (const f of files) await upload(f);
+  toast(files.length === 1 ? "Uploaded" : `Uploaded ${files.length} files`);
+}
+
+$("#picker").onchange = (e) => { uploadAll(e.target.files); e.target.value = ""; };
+const drop = $("#drop");
+["dragenter", "dragover"].forEach((t) => document.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((t) => document.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+document.addEventListener("drop", (e) => uploadAll(e.dataTransfer.files));
+document.addEventListener("paste", (e) => {
+  const files = [...e.clipboardData.files];
+  if (files.length) uploadAll(files.map((f) => f.name && f.name !== "image.png" ? f
+    : new File([f], `pasted-${Date.now()}.${(f.type.split("/")[1] || "bin")}`, { type: f.type })));
+});
+
+// ---- phone QR -----------------------------------------------------------
+$("#qrBtn").onclick = async () => {
+  const box = $("#qr");
+  box.classList.toggle("show");
+  if (!box.classList.contains("show") || $("#qrcode").childElementCount) return;
+  const { phoneUrl } = await (await fetch("/api/info")).json();
+  $("#qrUrl").textContent = phoneUrl;
+  if (window.QRCode) new QRCode($("#qrcode"), { text: phoneUrl, width: 200, height: 200 });
+  else $("#qrcode").hidden = true;
+};
+
+refresh();
+setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+</script>
+</body>
+</html>

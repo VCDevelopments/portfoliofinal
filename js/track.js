@@ -4,7 +4,7 @@
 const UMAMI_ID = '';
 
 export function initAnalytics() {
-  if (!UMAMI_ID) return;
+  if (!UMAMI_ID || new URLSearchParams(location.search).has('embed')) return; // the site shown inside its own demo doesn't count
   const s = document.createElement('script');
   s.defer = true;
   s.src = 'https://cloud.umami.is/script.js';
