@@ -306,9 +306,10 @@ export function createHero(env) {
     dims.renderOrder = 3;
     hud.add(dims);
   }
+  // sizes in metres as the sign stands in the valley (the geometry is drawn at another scale)
   const callouts = [
-    { text: `W ${W.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(center.x, 0.02, 2.2), offset: [20, 26] },
-    { text: `H ${H.toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(minX - 0.9, H * 0.5, 0), offset: [-24, -10] },
+    { text: `W ${(W * SIGN).toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(center.x, 0.02, 2.2), offset: [20, 26] },
+    { text: `H ${(H * SIGN).toFixed(2)} M`, cls: 'tag', local: new THREE.Vector3(minX - 0.9, H * 0.5, 0), offset: [-24, -10] },
     { text: `VCD // MONUMENT_01\nLOGO 28${LOGO_SIGN.wide ? ' · FULL' : ''}`, local: new THREE.Vector3(maxX - 0.4, H * 0.85, 0), offset: [90, -60] },
   ].map((c) => ({ ...c, anchor: new THREE.Vector3(), visible: false }));
 
