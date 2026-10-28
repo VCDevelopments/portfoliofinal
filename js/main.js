@@ -271,6 +271,9 @@ function openProject(i) {
   const code = dialog.querySelector('.code');
   code.hidden = !p.url;
   if (p.url) code.href = p.url;
+  const site = dialog.querySelector('.site');
+  site.hidden = !p.site;
+  if (p.site) site.href = p.site;
   dialog.style.setProperty('--glow', p.colors[2]);
   showPicture(0);
   dialog.showModal();
@@ -306,7 +309,7 @@ function projectText() {
   showPicture(shown);
 }
 onLang(() => { if (dialog.open) projectText(); });
-// "Show me how it works" plays the demo's guided tour on the phone (Relay's laptop follows along)
+// "Show me how it works" plays the demo's guided tour on the phone (a laptop beside it follows along)
 let touring = false;
 function tourButton(on) {
   touring = on;
@@ -325,7 +328,7 @@ addEventListener('message', (e) => {
   if (e.origin !== location.origin || e.data !== 'vcd:tour-done') return;
   if (dialog.open) tourButton(false);
 });
-// a full-size iPhone (and, for Relay, a laptop) running the project's demo, scaled to fit the pop-up
+// a full-size iPhone (and a laptop where the project has one) running the project's demo, scaled to fit the pop-up
 const FRAME = { phone: [427, 886], laptop: [1420, 900] };
 function deviceFrame(kind, def, name) {
   const slot = el('div', { className: `slot ${kind}` });
@@ -358,7 +361,7 @@ function fitDevices() {
   }
 }
 addEventListener('resize', () => { if (dialog.open) fitDevices(); });
-// closing the pop-up unloads the demos (ShotGuide's camera turns off with it)
+// closing the pop-up unloads the demos
 dialog.addEventListener('close', () => dialog.querySelector('.devices').replaceChildren());
 ctx.openProject = openProject;
 dialog.addEventListener('click', (e) => {

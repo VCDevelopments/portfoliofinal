@@ -82,7 +82,7 @@ function page(p) {
     </div>
     <div class="foot">
       <span>${esc(p.stack)}</span>
-      <span>${p.url ? `<a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener">View the code on GitHub ↗</a> ` : ''}<a class="btn" href="mailto:info.vcdevelopments@gmail.com">Email me ↗</a> <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a></span>
+      <span>${p.site ? `<a class="btn" href="${esc(p.site)}" target="_blank" rel="noopener">Visit the site ↗</a> ` : ''}${p.url ? `<a class="btn" href="${esc(p.url)}" target="_blank" rel="noopener">View the code on GitHub ↗</a> ` : ''}<a class="btn" href="mailto:info.vcdevelopments@gmail.com">Email me ↗</a> <a class="btn" href="https://www.linkedin.com/in/lotharvancauwenbergh/" target="_blank" rel="noopener">Message me on LinkedIn ↗</a></span>
     </div>
   </main>
 </body>
@@ -104,7 +104,7 @@ ${urls.map((u) => `  <url><loc>${SITE}/${u}</loc></url>`).join('\n')}
 writeFileSync(new URL('robots.txt', root), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 // commit activity for projects whose code is private: only the date of the last commit and the
 // number of commits in the last 30 days are published (data/activity.json), read with the GitHub CLI
-const PRIVATE_REPOS = { pulse: 'VCDevelopments/ads' };
+const PRIVATE_REPOS = {}; // slug -> 'owner/repo'
 const activity = {};
 for (const [slug, repo] of Object.entries(PRIVATE_REPOS)) {
   try {

@@ -32,7 +32,7 @@ One person who designs and builds the whole thing, end to end; working prototype
 ## Capabilities and Constraints
 
 - Static site on GitHub Pages, no build step; every change is shown to the owner locally and only pushed live after approval.
-- Demos use sample data; nothing a visitor does leaves their browser (ShotGuide's camera is used only on their device).
+- Demos never send anything: the CreatorSlots copy has its application form and logging switched off.
 - Analytics are cookieless (Umami) and switched off until the owner provides a website ID.
 
 ## Brand Commitments
@@ -43,8 +43,8 @@ One person who designs and builds the whole thing, end to end; working prototype
 
 ## Evidence on Hand
 
-- Four projects with real descriptions and working demos: Pulse (ad autopilot), Relay (laptop–phone file sharing), ShotGuide (iOS photo coaching), VCDevelopments (this site). Data in `js/projects.js`; demos in `demos/`.
-- Real changelogs from git history for Pulse and the portfolio; none yet for Relay and ShotGuide.
+- Two projects: CreatorSlots (creatorslots.net, the main project: custom slot games for Kick streamers on Stake, 18+) and VCDevelopments (this site). Data in `js/projects.js`; demos in `demos/`.
+- Changelogs come from the CreatorSlots night log and the portfolio's git history.
 - No client testimonials, client logos, metrics or prices exist; never invent them. Service timelines on the site are the owner's to confirm.
 
 ## Product Principles

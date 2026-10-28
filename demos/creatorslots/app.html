@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- VCDevelopments portfolio: the real creatorslots.net homepage (its public/index.html), with its form and logging switched off. -->
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' 'sha256-MLQRBtZTmskqABtqRGITBkBouR8e5Po0yUc3wyFaHd0=' 'sha256-BT1h9oR62/3Rk9AAJQxLeJxwZesmTb2U0FHAkpDUEPY=' https://cdn.jsdelivr.net/npm/ https://cdnjs.cloudflare.com/ajax/libs/; object-src 'none'; base-uri 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Custom Slot Games for Streamers · CreatorSlots</title>
+<meta name="description" content="CreatorSlots builds custom slot games for Kick streamers, with their name, look and community jokes, live on Stake. Free for the streamer, who earns a share every month. 18+.">
+<meta name="theme-color" content="#0F1110">
+<link rel="alternate" hreflang="en" href="https://creatorslots.net/">
+<link rel="alternate" hreflang="es" href="https://creatorslots.net/es/">
+<link rel="alternate" hreflang="pt" href="https://creatorslots.net/pt/">
+<link rel="alternate" hreflang="x-default" href="https://creatorslots.net/">
+<link rel="canonical" href="https://creatorslots.net/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CreatorSlots">
+<meta property="og:title" content="Custom Slot Games for Streamers · CreatorSlots">
+<meta property="og:description" content="Your own slot game on Stake, built around your stream. Free to build, and you earn a share every month.">
+<meta property="og:url" content="https://creatorslots.net/">
+<meta property="og:image" content="https://creatorslots.net/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="CreatorSlots: we turn your stream into a slot game">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://creatorslots.net/icons/og-image.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "CreatorSlots", "url": "https://creatorslots.net/", "logo": "https://creatorslots.net/icons/app-icon-512.png", "email": "contact@creatorslots.net", "description": "CreatorSlots designs custom slot games for streamers and publishes them on Stake through Engine."}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "name": "CreatorSlots", "url": "https://creatorslots.net/"}</script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Saira:ital,wght@1,700;1,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="public.css">
+<style>
+
+
+
+  /* hero */
+  .hero { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(32px, 5vw, 80px); align-items: center; padding-top: clamp(28px, 6vh, 72px); padding-bottom: clamp(56px, 9vh, 104px); }
+  h1 { font: italic 800 clamp(46px, 7.4vw, 104px)/.92 var(--display); letter-spacing: -.015em; margin: 18px 0 26px; text-wrap: balance; }
+  h1 em { font-style: italic; color: var(--brand); }
+  .lead { font-size: clamp(17px, 1.4vw, 19px); color: #BFCAC4; max-width: 34em; margin: 0 0 34px; text-wrap: pretty; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
+  .cta .contact-line { font-size: 14.5px; color: var(--muted); }
+  .try-line { margin: 18px 0 0; font-size: 14.5px; }
+  .cta .contact-line a { color: var(--ink); font-weight: 500; text-decoration-color: var(--brand); text-underline-offset: 4px; }
+
+  /* spin demo, restyled as a real cabinet */
+  .machine { position: relative; padding: 20px 20px 16px; border-radius: 22px; background: linear-gradient(180deg, #202724, #141816); border: 1px solid #2D3632;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 40px 80px -30px rgba(0,0,0,.9), 0 0 0 6px #101412, 0 0 0 7px #2D3632; transform: rotate(1.2deg); }
+  .lights { position: absolute; inset: 6px; border-radius: 17px; pointer-events: none; padding: 5px;
+    background: radial-gradient(circle, #83FAC7 0 2px, transparent 2.8px) 0 0 / 20px 20px; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: chase 1.2s steps(2) infinite; opacity: .7; }
+  @keyframes chase { 50% { background-position: 10px 0; opacity: .4; } }
+  .marquee { text-align: center; font: italic 800 24px/1 var(--display); margin: 8px 0 16px; color: var(--ink); }
+  .marquee span { color: var(--brand); }
+  .window { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 10px; border-radius: 12px; background: #080A09; box-shadow: inset 0 8px 24px rgba(0,0,0,.7); }
+  .reel { height: 128px; overflow: hidden; border-radius: 8px; background: linear-gradient(180deg, #D1E0D8, #E4F7EF 40%, #E4F7EF 60%, #CBDBD3); position: relative; }
+  .reel::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,10,9,.5), transparent 28%, transparent 72%, rgba(8,10,9,.5)); pointer-events: none; }
+  .strip { will-change: transform; transition: filter .15s; }
+  .strip.blur { filter: blur(1.6px); }
+  .reel.land { animation: land .3s ease-out; } @keyframes land { 40% { box-shadow: inset 0 0 0 2px rgba(61,220,151,.7); } }
+  .sym { height: 128px; display: grid; place-items: center; font: 800 52px/1 var(--display); }
+  .sym img { width: 62px; height: 62px; }
+  .s7 { color: #C8321E; font-style: italic; } .sbar { font: 800 24px/1 var(--sans); color: #161D1A; letter-spacing: .05em; border: 4px solid #161D1A; border-radius: 6px; padding: 4px 8px; height: auto; width: auto; margin: auto; } .sstar { color: #24CB83; } .scherry { color: #B4233A; }
+  .payline { position: absolute; left: 6px; right: 6px; top: 50%; height: 3px; transform: translateY(-50%); background: linear-gradient(90deg, transparent, var(--brand), transparent); opacity: 0; transition: opacity .3s; }
+  .machine.win .payline { opacity: 1; animation: blink .4s 4 alternate; }
+  .machine.win .window { box-shadow: inset 0 8px 24px rgba(0,0,0,.7), 0 0 0 2px var(--brand), 0 0 40px rgba(61,220,151,.4); }
+  @keyframes blink { to { opacity: .25; } }
+  .reel.tease { box-shadow: inset 0 0 0 3px var(--brand), 0 0 22px rgba(61,220,151,.5); animation: tease .35s ease-in-out infinite alternate; }
+  @keyframes tease { to { box-shadow: inset 0 0 0 3px #83FAC7, 0 0 34px rgba(61,220,151,.8); } }
+  .machine.jp { animation: jpShake .55s cubic-bezier(.36,.07,.19,.97); }
+  @keyframes jpShake { 15%, 55% { transform: translate(-5px, 1px) rotate(.6deg); } 35%, 75% { transform: translate(5px, -1px) rotate(1.8deg); } 90% { transform: rotate(1.2deg) scale(1.02); } }
+  .machine.win .lights { animation-duration: .22s; opacity: 1; }
+  .machine.win .sym img { animation: gemPop .45s ease-in-out 6 alternate; }
+  @keyframes gemPop { to { transform: scale(1.18); filter: drop-shadow(0 0 10px rgba(61,220,151,.9)); } }
+  .jpbanner { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; z-index: 3; pointer-events: none; border-radius: 12px;
+    background: radial-gradient(closest-side, rgba(8,10,9,.85), rgba(8,10,9,.35)); animation: bannerIn .5s cubic-bezier(.2,1.6,.4,1) both, bannerOut .5s ease-in 3.2s forwards; }
+  .jpbanner b { font: italic 800 52px/1 var(--display); background: linear-gradient(180deg, #CAFDE7, #83FAC7 35%, var(--brand) 60%, #1F9D67); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 3px 0 #0D5636); }
+  .jpbanner span { margin-top: 8px; font: 500 15px/1 var(--mono); color: #83FAC7; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
+  @keyframes bannerIn { from { transform: scale(.3); opacity: 0; } }
+  @keyframes bannerOut { to { transform: scale(1.15); opacity: 0; } }
+  .burst { position: absolute; left: 50%; top: 45%; width: 0; height: 0; z-index: 4; pointer-events: none; }
+  .burst i { position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #CAFDE7, var(--brand) 55%, #168153); animation: burst var(--t) cubic-bezier(.15,.6,.5,1) var(--d) both; }
+  .burst i.spark { width: 8px; height: 8px; left: -4px; top: -4px; background: #CAFDE7; }
+  @keyframes burst { 0% { transform: translate(0,0) scale(.3); opacity: 1; } 35% { transform: translate(calc(var(--x) * .55), var(--up)) scale(1) rotate(calc(var(--r) * .4)); opacity: 1; animation-timing-function: cubic-bezier(.5,0,.9,.6); }
+    100% { transform: translate(var(--x), var(--down)) scale(.8) rotate(var(--r)); opacity: 0; } }
+  .mfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; gap: 12px; }
+  .status { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .machine.win .status { color: var(--brand); }
+  .spin { min-height: 44px; padding: 0 24px; border: 0; border-radius: 999px; cursor: pointer; font: italic 800 18px var(--display); color: #0A1610; background: radial-gradient(circle at 30% 25%, #98FBD0, var(--brand) 55%, #25BC7B); box-shadow: 0 5px 0 #168153; transition: transform .08s, box-shadow .08s; }
+  .spin:active { transform: translateY(4px); box-shadow: 0 1px 0 #168153; }
+  .spin:disabled { filter: saturate(.5) brightness(.85); cursor: default; }
+
+
+
+  /* the deal, as a paytable */
+  .deal { padding-top: clamp(72px, 11vh, 128px); padding-bottom: clamp(56px, 9vh, 104px); display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
+  .deal header { position: sticky; top: 32px; }
+  .paytable { margin: 0; border-top: 2px solid var(--ink); }
+  .paytable > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 24px; padding: 22px 0 20px; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .paytable dt { font: 500 12.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .paytable dd:not(.note) { margin: 0; grid-column: 2; grid-row: 1 / span 2; font: italic 800 clamp(30px, 3.4vw, 46px)/1 var(--display); color: var(--brand); text-align: right; font-variant-numeric: tabular-nums; }
+  .paytable .note { margin: 0; grid-column: 1; color: #BFCAC4; font-size: 15.5px; max-width: 30em; }
+
+  /* showcase */
+  .show { padding-top: clamp(40px, 7vh, 80px); padding-bottom: clamp(72px, 11vh, 128px); }
+  .show .frame { position: relative; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: end; gap: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .show .copy { padding: clamp(24px, 4vw, 52px); align-self: center; }
+  .show .copy h2 { font-size: clamp(32px, 3.8vw, 50px); }
+  .show .copy p { color: #BFCAC4; margin: 0 0 22px; max-width: 30em; }
+  .show img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; align-self: center; }
+  .facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 26px; padding: 0; list-style: none; }
+  .facts li { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 7px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: var(--bg); }
+
+  /* process */
+  .how { padding-top: clamp(40px, 7vh, 80px); padding-bottom: clamp(72px, 11vh, 128px); display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(32px, 6vw, 96px); align-items: start; }
+  .how header { position: sticky; top: 32px; }
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 6px 20px; padding: 26px 0; border-top: 1px solid var(--line); }
+  .steps li:last-child { border-bottom: 1px solid var(--line); }
+  .steps li::before { content: counter(s, decimal-leading-zero); grid-row: 1 / span 2; font: italic 800 44px/1 var(--display); color: transparent; -webkit-text-stroke: 1.5px var(--brand); }
+  .steps h3 { margin: 0; font: 600 19px/1.3 var(--sans); }
+  .steps p { margin: 0; grid-column: 2; color: #BFCAC4; font-size: 15.5px; max-width: 32em; }
+  .steps .when { grid-column: 3; grid-row: 1; font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+
+
+  .machine { animation: drop .9s .2s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes drop { from { opacity: 0; transform: translateY(24px) rotate(3deg); } }
+
+
+  @media (prefers-reduced-motion: reduce) { .lights { animation: none; } }
+  @media (max-width: 980px) {
+    .hero, .deal, .how { grid-template-columns: 1fr; }
+    .deal header, .how header { position: static; }
+    .show .frame { grid-template-columns: 1fr; }
+    .show img { order: -1; }
+    .machine { max-width: 460px; width: 100%; transform: none; }
+    @keyframes drop { from { opacity: 0; transform: translateY(24px); } }
+  }
+  @media (max-width: 700px) {
+    .steps li { grid-template-columns: 56px minmax(0, 1fr); }
+    .steps li::before { font-size: 34px; }
+    .steps .when { grid-column: 2; grid-row: auto; }
+    .reel, .sym { height: 104px; } .sym { font-size: 42px; } .sym img { width: 52px; height: 52px; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <a class="wordmark" href="https://creatorslots.net/" target="_blank" rel="noopener"><img src="favicon.svg" alt="">creatorslots<span>.net</span></a>
+  <nav><span class="mono status-tag">Applications open</span><a href="https://creatorslots.net/slots/" target="_blank" rel="noopener">Our slots</a><a href="https://creatorslots.net/faq/" target="_blank" rel="noopener">FAQ</a><a href="https://creatorslots.net/guides/" target="_blank" rel="noopener">Guides</a><a href="https://creatorslots.net/press/" target="_blank" rel="noopener">Press</a><a href="https://creatorslots.net/contact/" target="_blank" rel="noopener">Contact</a><a href="https://creatorslots.net/auth/" target="_blank" rel="noopener">Log in</a></nav>
+</header>
+
+<main id="main">
+  <section class="hero wrap">
+    <div>
+      <p class="mono rise">Slot studio for Kick streamers</p>
+      <h1 class="rise">We turn your stream into a <em>slot game.</em></h1>
+      <p class="lead rise">Your name on the reels, your emotes as symbols and a bonus round built on your community's running jokes. It goes live on Stake, costs you nothing to make, and pays you every month.</p>
+      <div class="cta rise">
+        <button class="btn apply-btn" type="button" id="apply-open">Apply for your slot</button>
+        <span class="contact-line">or email <a href="mailto:contact@creatorslots.net">contact@creatorslots.net</a></span>
+      </div>
+      <p class="rise try-line"><a class="textlink" href="https://creatorslots.net/concept/" target="_blank" rel="noopener">Not sure yet? See a free concept of your slot in seconds</a></p>
+    </div>
+    <div class="machine" aria-label="CreatorSlots slot machine animation">
+      <div class="lights" aria-hidden="true"></div>
+      <div class="marquee">creatorslots<span>.net</span></div>
+      <div class="window">
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="reel"><div class="strip"></div></div>
+        <div class="payline" aria-hidden="true"></div>
+      </div>
+      <div class="mfoot"><span class="status" id="status" aria-live="polite">Coming soon</span><button class="spin" id="spin" type="button">Spin</button></div>
+    </div>
+  </section>
+
+
+  <section class="deal wrap" aria-labelledby="deal-t">
+    <header>
+      <p class="mono">The deal</p>
+      <h2 id="deal-t">Read it like a paytable</h2>
+      <p class="intro">No upfront fees and no small print. This is the whole arrangement for a streamer slot.</p>
+    </header>
+    <dl class="paytable">
+      <div><dt>What you pay</dt><dd>$0</dd><dd class="note">We pay for the design, the maths, the art and the build.</dd></div>
+      <div><dt>Your share</dt><dd>40–50%</dd><dd class="note">Of our royalty on your slot. 40% to start, up to 50% for the biggest channels.</dd></div>
+      <div><dt>When you're paid</dt><dd>Monthly</dd><dd class="note">With every number on your own slot dashboard, so you can see what your community plays.</dd></div>
+      <div><dt>Payout rate</dt><dd>Same for all</dd><dd class="note">Every player gets the same game and the same RTP, and that includes you.</dd></div>
+      <div><dt>Time to launch</dt><dd>1–2 wks</dd><dd class="note">From your first message to launch day, with two rounds of design changes along the way.</dd></div>
+    </dl>
+  </section>
+
+  <section class="estimate wrap" aria-labelledby="est-t">
+    <header>
+      <p class="mono">Estimate</p>
+      <h2 id="est-t">What could your slot earn?</h2>
+      <p class="intro">Move the slider to your average viewers. The range is your monthly share of the royalty, after Stake and after us.</p>
+    </header>
+    <div class="est" data-estimator data-viewers="1000"></div>
+  </section>
+
+  <section class="show wrap" aria-labelledby="show-t">
+    <div class="frame">
+      <div class="copy">
+        <p class="mono">Our first game</p>
+        <h2 id="show-t">Builder Bazinga</h2>
+        <p>Our own slot and the base game we reskin for streamers. A night-shift construction site, a gem mascot who cheers your wins, and free spins where every wild carries a multiplier.</p>
+        <ul class="facts"><li>5×3 · 20 lines</li><li>Up to 5,000×</li><li>Wilds ×2 to ×50</li><li>Coming to Stake</li></ul>
+        <div class="cta"><button class="btn" type="button" data-apply>Get one built for your stream</button><a class="textlink" href="https://creatorslots.net/slots/" target="_blank" rel="noopener">See all our slots</a></div>
+      </div>
+      <img src="bb-cover.webp" width="1600" height="900" alt="Builder Bazinga cover art: the game logo over a night construction site with a hard hat, a bonus blueprint, a crane beam and a BAZINGA! wild" loading="lazy">
+    </div>
+  </section>
+
+  <section class="how wrap" aria-labelledby="how-t">
+    <header>
+      <p class="mono">How it works</p>
+      <h2 id="how-t">From first message to first payout</h2>
+      <p class="intro">You pay nothing at any step. You approve the design before anything goes live.</p>
+      <p class="intro" style="margin-top:18px">More questions? <a class="textlink" href="https://creatorslots.net/faq/" target="_blank" rel="noopener">Read the FAQ</a> or <a class="textlink" href="https://creatorslots.net/contact/" target="_blank" rel="noopener">get in touch</a>.</p>
+    </header>
+    <ol class="steps">
+      <li><h3>Apply</h3><span class="when">Day 1</span><p>Tell us about your stream with the form on this page. We look at every channel and reply within a few days.</p></li>
+      <li><h3>Design it together</h3><span class="when">Days 2 to 3</span><p>We sketch your slot from your emotes, jokes and colours. You get two rounds of changes.</p></li>
+      <li><h3>We build it</h3><span class="when">Days 4 to 10</span><p>Maths, art, sound and animation, tested so every spin is fair.</p></li>
+      <li><h3>Launch on Stake</h3><span class="when">Week 2</span><p>It goes live through Engine, and you open it with a launch stream.</p></li>
+      <li><h3>Get paid</h3><span class="when">Every month</span><p>Your share of the royalty arrives monthly, with the numbers on your own dashboard.</p></li>
+    </ol>
+  </section>
+
+
+  <section class="closer wrap" aria-label="Apply">
+    <h2>Your chat already has the jokes. We'll build the game around them.</h2>
+    <button class="btn" type="button" data-apply>Apply for your slot</button>
+  </section>
+</main>
+
+<script>
+// Homepage slot: real reel physics on requestAnimationFrame (spin up, cruise with blur, staggered eased stops with a bounce).
+(() => {
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const SYMS = ['<img src="favicon.svg" alt="">', '<span class="s7">7</span>', '<span class="sbar">BAR</span>', '<span class="sstar">★</span>', '<span class="scherry">♥</span>'];
+  const GEM = 0, N = SYMS.length, REPEAT = 4;                       // strip = symbols repeated, so it wraps seamlessly
+  const machine = document.querySelector(".machine"), btn = document.getElementById("spin"), status = document.getElementById("status");
+  const reels = [...document.querySelectorAll(".reel")].map(el => {
+    const strip = el.querySelector(".strip");
+    strip.innerHTML = Array.from({ length: N * REPEAT }, (_, i) => `<div class="sym">${SYMS[i % N]}</div>`).join("");
+    return { el, strip, pos: 0, H: 0 };
+  });
+  const measure = () => reels.forEach(r => { r.H = r.el.clientHeight; });
+  measure(); addEventListener("resize", () => { measure(); reels.forEach(draw); });
+  const draw = r => { const loop = N * r.H; r.strip.style.transform = `translate3d(0, ${-(((r.pos % loop) + loop) % loop)}px, 0)`; };
+  reels.forEach(r => { r.pos = GEM * r.H; draw(r); });
+
+  const easeOutBack = t => { const c = 1.25; return 1 + (c + 1) * (t - 1) ** 3 + c * (t - 1) ** 2; };
+  let spinning = false, spins = 0;
+
+  function spin() {
+    if (spinning) return; spinning = true; spins++;
+    machine.classList.remove("win", "jp"); machine.querySelectorAll(".jpbanner, .burst").forEach(e => e.remove()); btn.disabled = true; status.textContent = "Spinning…";
+    const rnd = k => Math.floor(Math.random() * k), roll = Math.random();
+    const jackpot = spins > 1 && roll < 0.12;                          // ~1 in 8; the auto spin on page load never wins
+    let targets;
+    if (jackpot) targets = [GEM, GEM, GEM];
+    else if (roll < 0.45) targets = [GEM, GEM, 1 + rnd(N - 1)];        // near miss: two gems, third reel teases
+    else do targets = [rnd(N), rnd(N), rnd(N)]; while (targets[0] === targets[1] && targets[1] === targets[2]);
+    const tease = !reduce && targets[0] === GEM && targets[1] === GEM;  // first two gems: third reel spins longer
+    const start = performance.now(), SPEED = 2.6;                     // cells per 100 ms at full speed
+    reels.forEach((r, i) => Object.assign(r, { phase: "spin", stopAt: reduce ? 0 : 1100 + i * 420 + (tease && i === 2 ? 1300 : 0), v: 0, p0: 0, pT: 0, t0: 0 }));
+    let last = start;
+    function frame(now) {
+      const dt = Math.min(50, now - last); last = now;   // real frame time, so speed is the same at 60 Hz and 120 Hz
+      let busy = false;
+      reels.forEach((r, i) => {
+        const el = now - start;
+        if (r.phase === "spin") {
+          busy = true;
+          r.v = Math.min(1, el / 280) * SPEED * r.H / 100;               // accelerate over 280 ms
+          r.pos += r.v * dt;
+          r.strip.classList.toggle("blur", r.v > SPEED * r.H / 100 * 0.6);
+          if (el >= r.stopAt) {                                         // plan an exact landing on the target symbol
+            const loop = N * r.H, ahead = r.pos + r.H * 3;
+            let pT = Math.ceil(ahead / loop) * loop + targets[i] * r.H;
+            while (pT - ahead > loop) pT -= loop;
+            Object.assign(r, { phase: "stop", p0: r.pos, pT, t0: now });
+            r.strip.classList.remove("blur");
+          }
+        } else if (r.phase === "stop") {
+          const t = Math.min(1, (now - r.t0) / 520);
+          r.pos = r.p0 + (r.pT - r.p0) * easeOutBack(t);
+          if (t < 1) busy = true; else { r.phase = "done"; r.pos = r.pT; r.el.classList.add("land"); setTimeout(() => r.el.classList.remove("land"), 300);
+            if (tease && i === 1) reels[2].el.classList.add("tease"); if (i === 2) r.el.classList.remove("tease"); }
+        }
+        draw(r);
+      });
+      if (busy) requestAnimationFrame(frame); else finish();
+    }
+    function finish() {
+      spinning = false; btn.disabled = false;
+      if (jackpot) { machine.classList.add("win"); status.textContent = "Jackpot · coming soon"; celebrate(); }
+      else status.textContent = tease ? "So close · coming soon" : "Spin again · coming soon";
+    }
+    requestAnimationFrame(frame);
+  }
+  function celebrate() {
+    const win = machine.querySelector(".window"), banner = document.createElement("div");
+    banner.className = "jpbanner"; banner.innerHTML = "<b>JACKPOT</b><span>WIN 0×</span>"; win.append(banner);
+    const amt = banner.querySelector("span"), t0 = performance.now();
+    (function count(now) {                                              // count up to 10,000× with an ease-out
+      const t = Math.min(1, (now - t0) / 1800); amt.textContent = `WIN ${Math.round(10000 * (1 - (1 - t) ** 3)).toLocaleString("en-US")}×`;
+      if (t < 1) requestAnimationFrame(count);
+    })(t0);
+    setTimeout(() => banner.remove(), 3800);
+    if (reduce) return;
+    void machine.offsetWidth; machine.classList.add("jp");
+    const burst = document.createElement("div"); burst.className = "burst";
+    burst.innerHTML = Array.from({ length: 46 }, (_, i) => {
+      const a = Math.random() * Math.PI, d = 160 + Math.random() * 260, spark = i % 3 === 0;
+      return `<i class="${spark ? "spark" : ""}" style="--x:${Math.cos(a) * d * (Math.random() < .5 ? 1 : -1)}px;--up:${-120 - Math.random() * 220}px;--down:${220 + Math.random() * 260}px;--r:${rnd(900) - 450}deg;--t:${1.3 + Math.random() * .8}s;--d:${(i % 2) * .25 + Math.random() * .2}s"></i>`;
+    }).join("");
+    machine.append(burst); setTimeout(() => burst.remove(), 3000);
+    function rnd(k) { return Math.floor(Math.random() * k); }
+  }
+  btn.onclick = spin;
+  setTimeout(spin, reduce ? 0 : 900);
+
+})();
+</script>
+<footer>
+  <span>© 2026 CreatorSlots · 18+ · Play responsibly</span>
+  <nav><a href="https://creatorslots.net/slots/" target="_blank" rel="noopener">Our slots</a><a href="https://creatorslots.net/concept/" target="_blank" rel="noopener">Free concept</a><a href="https://creatorslots.net/guides/" target="_blank" rel="noopener">Guides</a><a href="https://creatorslots.net/faq/" target="_blank" rel="noopener">FAQ</a><a href="https://creatorslots.net/press/" target="_blank" rel="noopener">Press</a><a href="https://creatorslots.net/contact/" target="_blank" rel="noopener">Contact</a><a href="https://creatorslots.net/privacy/" target="_blank" rel="noopener">Privacy policy</a><a href="https://creatorslots.net/auth/" target="_blank" rel="noopener">Log in</a></nav>
+  <span class="langs"><a href="https://creatorslots.net/" target="_blank" rel="noopener" hreflang="en" lang="en">English</a> · <a href="https://creatorslots.net/es/" target="_blank" rel="noopener" hreflang="es" lang="es">Español</a> · <a href="https://creatorslots.net/pt/" target="_blank" rel="noopener" hreflang="pt" lang="pt">Português</a></span>
+</footer>
+<dialog class="apply" id="apply" aria-labelledby="apply-t">
+  <button class="x" type="button" id="apply-x" aria-label="Close">×</button>
+  <form id="apply-f" novalidate>
+    <h2 id="apply-t">Get your own slot</h2>
+    <p class="lead2">Tell us about your stream. We build it at no cost to you, it goes live on Stake, and you earn a share every month. We'll get back to you within a few days.</p>
+    <label>Kick channel<input name="kick" required maxlength="40" placeholder="kick.com/yourname or yourname" autocomplete="off"></label>
+    <div class="g2">
+      <label>Your name<input name="name" maxlength="80" autocomplete="name"></label>
+      <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email"></label>
+      <label>Average live viewers<input name="avg_viewers" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 3000"></label>
+      <label>Do you stream on Stake?<select name="on_stake"><option value="">Choose…</option><option value="yes">Yes</option><option value="no">No, but I'm open to it</option><option value="other">I'm signed with another casino</option></select></label>
+    </div>
+    <label>Anything we should know?<textarea name="message" maxlength="1500" placeholder="Your community's jokes, emotes, a bonus idea…"></textarea></label>
+    <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+    <p class="msg" id="apply-msg" role="alert"></p>
+    <div class="af"><small>18+ only. We only use these details to talk to you about a slot. <a href="https://creatorslots.net/privacy/" target="_blank" rel="noopener">Privacy policy</a></small><button class="btn" type="submit">Send application</button></div>
+  </form>
+</dialog>
+<script>
+// homepage application form: opens in a dialog, posts to /api/apply
+(() => {
+  const d = document.getElementById("apply"), f = document.getElementById("apply-f"), msg = document.getElementById("apply-msg");
+  document.querySelectorAll("#apply-open, [data-apply]").forEach(b => b.onclick = () => { d.showModal(); f.kick.focus(); });
+  document.getElementById("apply-x").onclick = () => d.close();
+  d.addEventListener("click", e => { if (e.target === d) d.close(); });
+  f.onsubmit = async e => {
+    e.preventDefault(); msg.className = "msg"; msg.textContent = "";
+    if (!f.kick.value.trim()) { msg.className = "msg bad"; msg.textContent = "Enter your Kick channel."; return f.kick.focus(); }
+    if (!f.email.checkValidity() || !f.email.value) { msg.className = "msg bad"; msg.textContent = "Enter a valid email address."; return f.email.focus(); }
+    const b = f.querySelector('[type=submit]'); b.disabled = true; b.textContent = "Sending…";
+    try {
+      const r = { ok: true, json: async () => ({}) }; await new Promise((ok) => setTimeout(ok, 700)); // portfolio copy: nothing is sent
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || "Something went wrong. Please email contact@creatorslots.net.");
+      f.outerHTML = `<div class="done"><b>Application sent (demo)</b><p style="color:var(--muted);margin:0">This is a copy of the site inside a portfolio, so nothing was sent. Apply for real on creatorslots.net.</p></div>`;
+    } catch (x) { msg.className = "msg bad"; msg.textContent = x.message; b.disabled = false; b.textContent = "Send application"; }
+  };
+})();
+</script>
+<script type="module" src="estimator.js"></script>
+</body>
+</html>

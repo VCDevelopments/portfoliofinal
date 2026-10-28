@@ -13,7 +13,7 @@ export function initAnalytics() {
   document.head.append(s);
 }
 
-// e.g. track('project-open', { project: 'pulse' })
+// e.g. track('project-open', { project: 'creatorslots' })
 export function track(name, data) {
   try { window.umami?.track(name, data); } catch {}
 }

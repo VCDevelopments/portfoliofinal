@@ -169,7 +169,7 @@ export function countTo(el, to, format, ms = 600) {
   })(t0);
 }
 
-// the portfolio pauses demos it hides (e.g. ShotGuide turns its camera off)
+// the portfolio pauses demos it hides (anything a demo should stop when it is hidden)
 export function onPause(fn) {
   addEventListener('message', (e) => { if (e.origin === location.origin && e.data === 'vcd:pause') fn(); });
   addEventListener('pagehide', fn);

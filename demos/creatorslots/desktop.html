@@ -3,28 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=1280" />
-  <title>Relay on the laptop · demo</title>
-  <!-- Relay's real page (app.html) as the laptop shows it: a Safari window on localhost:8000. -->
+  <title>CreatorSlots on the laptop · demo</title>
+  <!-- creatorslots.net (its real homepage, app.html) as the laptop shows it: a Safari window. -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; background: #f6f5f2; }
+    html, body { height: 100%; overflow: hidden; background: #0f1412; }
     body { font: 13px/1 -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
     /* macOS menu bar (no logo); the display's notch sits in the middle of it */
     .menubar { height: 32px; display: flex; align-items: center; gap: 18px; padding: 0 16px; background: #26272b; color: #fff; }
     .menubar b { font-weight: 700; }
     .menubar .right { margin-left: auto; display: flex; gap: 14px; align-items: center; }
     /* Safari's toolbar */
-    .bar { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #ecebe8; border-bottom: 1px solid #d9d7d1; color: #6d6a64; }
+    .bar { height: 44px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #1d2421; border-bottom: 1px solid #2d3632; color: #9fb0a8; }
     .bar i { width: 12px; height: 12px; border-radius: 50%; }
     .bar i:nth-child(1) { background: #ff5f57; } .bar i:nth-child(2) { background: #febc2e; } .bar i:nth-child(3) { background: #28c840; }
-    .bar .url { margin: 0 auto; width: 420px; height: 28px; border-radius: 7px; background: #fff; display: flex; align-items: center; justify-content: center; gap: 6px; color: #1b1b1a; }
+    .bar .url { margin: 0 auto; width: 420px; height: 28px; border-radius: 7px; background: #2d3632; display: flex; align-items: center; justify-content: center; gap: 6px; color: #e5eeea; }
     iframe { display: block; width: 100%; height: calc(100% - 76px); border: 0; }
   </style>
 </head>
 <body>
   <div class="menubar"><b>Safari</b><span>File</span><span>Edit</span><span>View</span><span>History</span><span>Window</span><span class="right"><span id="clock"></span></span></div>
-  <div class="bar"><i></i><i></i><i></i><span class="url">localhost:8000</span></div>
-  <iframe src="app.html" title="Relay"></iframe>
+  <div class="bar"><i></i><i></i><i></i><span class="url">creatorslots.net</span></div>
+  <iframe src="app.html" title="creatorslots.net"></iframe>
   <script>
     const clock = () => { document.getElementById('clock').textContent = new Date().toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); };
     clock();

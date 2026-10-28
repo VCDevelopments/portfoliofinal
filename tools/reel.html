@@ -92,7 +92,7 @@
   const slug = new URLSearchParams(location.search).get('p');
   const index = PROJECTS.findIndex((x) => slugOf(x) === slug);
   const p = PROJECTS[index];
-  const TAGS = { pulse: 'Ad autopilot', relay: 'File sharing', shotguide: 'Photo coach', vcdevelopments: '3D portfolio' };
+  const TAGS = { creatorslots: 'Slot studio', vcdevelopments: '3D portfolio' };
   const root = document.documentElement.style;
   root.setProperty('--c0', p.colors[0]);
   root.setProperty('--c1', p.colors[1]);
@@ -144,7 +144,7 @@
 
   // frame the device in the lower part of the sheet, under the title
   const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-  const wide = dev.size.x > dev.size.y; // Relay: the laptop with its phone
+  const wide = dev.size.x > dev.size.y; // a laptop with its phone
   const fit = Math.max(dev.size.y / 0.56, dev.size.x / (wide ? 0.7 : 0.78) / camera.aspect);
   const dist = fit / (2 * tanH) + dev.size.z / 2;
   const viewH = 2 * dist * tanH;
@@ -289,7 +289,7 @@
       lx = side === 'right' ? W - 72 - cw : 72;
       ly = Math.min(H - 140 - ch, Math.max(300, py - ch / 2));
     } else {
-      // no room beside a wide device (Relay): the callout sits above it, on the right
+      // no room beside a wide device (laptop and phone): the callout sits above it, on the right
       side = 'right';
       cw = 520;
       lx = W - 72 - cw;

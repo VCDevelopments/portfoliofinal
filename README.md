@@ -5,7 +5,7 @@ Portfolio site of Lothar Van Cauwenbergh (VCDevelopments): a scroll-driven WebGL
 1. The neon VCDevelopments logo in a snowy valley, with a periodic blueprint scan. Click it to shatter it; click anywhere else for a gust of snow (which also drifts away from the cursor). The Night switch darkens the valley.
 2. Each project's case-study video plays on a floating panel as you arrive at it, with an overview card. Click it (or Learn more) for the pop-up: a full-size iPhone (and, for Relay, a MacBook) running the working demo, plus the project's story and pictures.
 
-The demos live in `demos/` and are the real things: Pulse is AdPilot's own dashboard (`demos/pulse/app.html`, generated with `python -m adpilot dashboard` on its sample store) in a Safari window; Relay is Dropzone's own page (`demos/relay/app.html`) on the laptop and in iPhone Safari, with `mock.js` standing in for its server so files stay in the browser and the two views sync; VCDevelopments is this site itself in iPhone Safari; ShotGuide is rebuilt for the web from the SwiftUI app's layout and wording (`demos/ios.css` and `demos/ios.js` hold the iPhone screen). `demos/tour.js` plays each demo's guided tour. The device models (`js/devices.js`) appear in the case-study videos.
+The demos live in `demos/` and are the real things: CreatorSlots is the real creatorslots.net homepage (`demos/creatorslots/app.html`, copied from the site's `public/index.html` with its form and logging switched off) on a MacBook and in iPhone Safari; VCDevelopments is this site itself in iPhone Safari. `demos/tour.js` plays each demo's guided tour.
 
 3. Segmented blueprint rings that assemble, then a fly-through, with what I build (and typical timelines) and how a project runs.
 
@@ -37,6 +37,6 @@ Then open http://localhost:5173.
 
 - Projects and social links: `js/projects.js`
   - after editing projects, run `node tools/build-pages.mjs` to regenerate each project's shareable page (`projects/<slug>/`), `sitemap.xml` and `robots.txt`
-  - `#project-<slug>` on the home page opens that project's pop-up (e.g. `/#project-shotguide`)
+  - `#project-<slug>` on the home page opens that project's pop-up (e.g. `/#project-creatorslots`)
 - Project pictures: `img/projects/` (rendered from the designs in `shots-src/`)
 - Logo and LinkedIn banner files: `brand/`
