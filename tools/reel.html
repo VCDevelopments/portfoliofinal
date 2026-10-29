@@ -298,7 +298,9 @@
     callout.classList.toggle('left', side === 'left');
     Object.assign(callout.style, { left: `${lx}px`, top: `${ly}px`, width: `${cw}px` });
     const ex = side === 'right' ? lx - 18 : lx + cw + 18, ey = ly + 24, kx = side === 'right' ? ex - 36 : ex + 36;
-    leader.setAttribute('points', `${px},${py} ${kx},${ey} ${ex},${ey}`);
+    // a callout above the devices drops straight down to a point below it, clear of the other screen
+    const below = ly + ch < py && px > lx + 24 && px < lx + cw;
+    leader.setAttribute('points', below ? `${px},${py} ${px},${ly + ch + 18}` : `${px},${py} ${kx},${ey} ${ex},${ey}`);
     dot.setAttribute('cx', px);
     dot.setAttribute('cy', py);
   }

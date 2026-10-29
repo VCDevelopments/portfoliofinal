@@ -33,11 +33,32 @@ const finger = () => {
   }
   return f;
 };
+// scroll with requestAnimationFrame rather than behavior: 'smooth', so it also glides in the recorded videos
+// (those step the page clock, which the browser's own smooth scroll ignores)
+const scrollEase = (el, top, left, ms = 700) => new Promise((done) => {
+  const t0 = top - el.scrollTop, l0 = left - el.scrollLeft, y = el.scrollTop, x = el.scrollLeft, w = el.ownerDocument.defaultView;
+  const start = w.performance.now();
+  const step = (now) => {
+    const k = Math.min(1, (now - start) / ms), e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
+    el.scrollTo(x + l0 * e, y + t0 * e);
+    k < 1 ? w.requestAnimationFrame(step) : done();
+  };
+  w.requestAnimationFrame(step);
+});
+const scroller = (el) => {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    const o = getComputedStyle(p).overflowY;
+    if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight) return p;
+  }
+  return el.ownerDocument.scrollingElement;
+};
 const find = (s) => (typeof s === 'function' ? s() : $(s));
-// an element's centre in this page's coordinates, also for elements inside a (same-origin) frame on it
+// the centre of an element's visible part in this page's coordinates, also for elements inside a
+// (same-origin) frame on it; a scrolled page reports its viewport rather than the whole document
 const centre = (el) => {
-  const r = el.getBoundingClientRect();
-  let x = r.left + r.width / 2, y = r.top + r.height / 2, w = el.ownerDocument.defaultView;
+  let w = el.ownerDocument.defaultView;
+  const r = el.getBoundingClientRect(), mid = (a, b, max) => (Math.max(a, 0) + Math.min(b, max)) / 2;
+  let x = mid(r.left, r.right, w.innerWidth), y = mid(r.top, r.bottom, w.innerHeight);
   while (w && w !== window && w.frameElement) { const f = w.frameElement.getBoundingClientRect(); x += f.left; y += f.top; w = w.parent; }
   return [x, y];
 };
@@ -91,13 +112,17 @@ export async function tour(steps) {
         report({ vcd: 'point', x, y });
         await glide(f, x, y);
         const v = (k) => (typeof s[k] === 'function' ? s[k]() : s[k]);
-        el.scrollTo({ top: v('to') ?? el.scrollTop, left: v('left') ?? el.scrollLeft, behavior: 'smooth' });
-        await wait(900);
+        await scrollEase(el, v('to') ?? el.scrollTop, v('left') ?? el.scrollLeft);
+        await wait(200);
         continue;
       }
       // bring it into view first (and let the smooth scroll land) when it is off screen
       const r = el.getBoundingClientRect(), vh = el.ownerDocument.defaultView.innerHeight;
-      if (r.top < 0 || r.bottom > vh) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); await wait(600); }
+      if (r.top < 0 || r.bottom > vh) {
+        const sc = scroller(el), box = sc.getBoundingClientRect?.() ?? { top: 0 }, top0 = sc === el.ownerDocument.scrollingElement ? 0 : box.top;
+        await scrollEase(sc, sc.scrollTop + r.top - top0 - (Math.min(sc.clientHeight, vh) - r.height) / 2, sc.scrollLeft, 550);
+        await wait(50);
+      }
       const [x, y] = centre(el);
       report({ vcd: 'point', x, y });
       await glide(f, x, y);

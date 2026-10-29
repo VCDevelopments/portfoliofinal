@@ -3,8 +3,8 @@
 // each is tools/reel.html with the project's demo playing its guided tour.
 // Needs the site served locally and Google Chrome:
 //   python3 -m http.server 5173 &   node tools/record-reels.mjs [slug …]
-// Chrome renders the reel headless; the frames it paints are collected over the DevTools protocol and
-// then encoded at a steady 30 fps with the browser's own H.264 encoder (WebCodecs) into an MP4.
+// Chrome renders the reel headless on a stepped virtual clock; each frame is captured over the DevTools
+// protocol and then encoded at a steady 30 fps with the browser's own H.264 encoder (WebCodecs) into an MP4.
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -46,25 +46,29 @@ await send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceSc
 const wanted = process.argv.slice(2);
 for (const p of PROJECTS.filter((x) => !wanted.length || wanted.includes(slugOf(x)))) {
   const slug = slugOf(p);
-  // 1. play the reel and keep every painted frame with its time
+  // 1. play the reel on a paused virtual clock, stepping it 1/30 s at a time and capturing every
+  // frame, so the video stays smooth however slowly Chrome renders
   const frames = [];
-  handlers.set('Page.screencastFrame', ({ data, metadata, sessionId }) => {
-    frames.push({ data, t: metadata.timestamp });
-    send('Page.screencastFrameAck', { sessionId });
-  });
   await send('Page.navigate', { url: `${SITE}/tools/reel.html?p=${slug}&r=${Date.now()}` });
   for (let k = 0; k < 60 && !(await evaluate("document.body?.dataset.ready === '1'").catch(() => false)); k++) await sleep(250);
-  await send('Page.startScreencast', { format: 'jpeg', quality: 90, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
-  await sleep(600);
+  // let every nested demo frame finish loading in real time before the clock is paused
+  const loaded = `(function done(w) { try { return w.document.readyState === 'complete' && [...w.frames].every(done); } catch { return true; } })(window)`;
+  for (let k = 0; k < 80 && !(await evaluate(loaded)); k++) await sleep(250);
+  await sleep(1500);
+  await send('Emulation.setVirtualTimePolicy', { policy: 'pause' });
   await evaluate('play()');
-  const t0 = Date.now();
-  while (Date.now() - t0 < MAX_SECONDS * 1000) {
-    await sleep(500);
-    if (await evaluate("document.body.dataset.done === '1'")) break;
+  let tail = Math.round(TAIL * 30);
+  for (let k = 0; k < MAX_SECONDS * 30 && tail > 0; k++) {
+    const expired = new Promise((r) => handlers.set('Emulation.virtualTimeBudgetExpired', r));
+    await send('Emulation.setVirtualTimePolicy', { policy: 'pauseIfNetworkFetchesPending', budget: 1000 / 30 });
+    await expired;
+    const { result } = await send('Page.captureScreenshot', { format: 'jpeg', quality: 90 });
+    frames.push({ data: result.data, t: k / 30 });
+    if (k % 15 === 0 && (await evaluate("document.body.dataset.done === '1'"))) tail--;
+    else if (tail < Math.round(TAIL * 30)) tail--;
   }
-  await sleep(TAIL * 1000);
-  await send('Page.stopScreencast');
-  handlers.delete('Page.screencastFrame');
+  handlers.delete('Emulation.virtualTimeBudgetExpired');
+  await send('Emulation.setVirtualTimePolicy', { policy: 'advance' });
   console.log(`${slug}: ${frames.length} frames captured, encoding…`);
   if (process.env.DUMP) for (const q of [0.2, 0.5, 0.8]) writeFileSync(`${process.env.DUMP}/${slug}-${q}.jpg`, Buffer.from(frames[Math.floor(frames.length * q)].data, 'base64'));
   // 2. re-time the frames onto a canvas and record it
